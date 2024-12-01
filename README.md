@@ -1,86 +1,55 @@
-# flox README
+<h1 align="center">
+  <a href="https://flox.dev" target="_blank">
+    <picture>
+      <source media="(prefers-color-scheme: dark)"  srcset="assets/flox-logo-white-on-black.png" />
+      <source media="(prefers-color-scheme: light)" srcset="assets/flox-logo-black-on-white.png" />
+      <img src="assets//flox-logo-black-on-white.png" alt="flox logo" />
+    </picture>
+  </a>
+</h1>
 
-This is the README for your extension "flox". After writing up a brief
-description, we recommend including the following sections.
+<h2 align="center">
+  Developer environments you can take with you
+</h2>
 
-## Features
+<h3 align="center">
+   &emsp;
+   <a href="https://discourse.flox.dev"><b>Discourse</b></a>
+   &emsp; | &emsp; 
+   <a href="https://flox.dev/docs"><b>Documentation</b></a>
+   &emsp; | &emsp; 
+   <a href="https://flox.dev/blog"><b>Blog</b></a>
+   &emsp; | &emsp;  
+   <a href="https://twitter.com/floxdevelopment"><b>Twitter</b></a>
+   &emsp; | &emsp; 
+   <a href="https://go.flox.dev/slack"><b>Slack</b></a>
+   &emsp;
+</h3>
 
-Describe specific features of your extension including screenshots of your
-extension in action. Image paths are relative to this README file.
+[Flox][website] is a virtual environment and package manager all in one. With
+Flox you create environments that layer and replace dependencies just where it
+matters, making them portable across the full software lifecycle.
 
-For example if there is an image subfolder under your extension project
-workspace:
+`flox-vscode` is a VSCode editor extension that integrated Flox environments
+with VSCode editor.
 
-\!\[feature X\]\(images/feature-x.png\)
+<!-- TODO: List features (with screenshots) -->
 
-> Tip: Many popular extensions utilize animations. This is an excellent way to
-> show off your extension! We recommend short, focused animations that are easy
-> to follow.
+## 🤝 Found a bug? Missing a specific feature?
 
-## Requirements
+Feel free to [file a new issue][new-issue] with a respective title and
+description on the `flox/flox-vscode` repository. If you already found a
+solution to your problem, we would love to review your pull request!
 
-If you have any requirements or dependencies, add a section describing those
-and how to install and configure them.
+## ⭐️ Contribute
 
-## Extension Settings
+We welcome contributions to this project. Please read the [Contributor
+guide](./CONTRIBUTING.md) first.
 
-Include if your extension adds any VS Code settings through the
-`contributes.configuration` extension point.
+## 🪪 License
 
-For example:
+The Flox CLI is licensed under the GPLv2. See [LICENSE](./LICENSE).
 
-This extension contributes the following settings:
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
-
-## Known Issues
-
-Calling out known issues can help limit users opening duplicate issues against
-your extension.
-
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best
-practices for creating your extension.
-
-* [Extension
-Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful
-editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and
-Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown
-snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown
-Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax
-Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+[website]: https://flox.dev
+[new-issue]: https://github.com/flox/flox-vscode/issues/new/choose

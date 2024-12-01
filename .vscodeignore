@@ -3,6 +3,7 @@
 src/**
 .gitignore
 .yarnrc
+.flox
 vsc-extension-quickstart.md
 **/tsconfig.json
 **/eslint.config.mjs
