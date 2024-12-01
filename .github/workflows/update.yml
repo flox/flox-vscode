@@ -1,0 +1,40 @@
+name: "Update Flox environment"
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 0 * * 1"
+
+env:
+  FLOX_DISABLE_METRICS: "true"
+
+jobs:
+
+  upgrade:
+    name: "Upgrade Flox environment"
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 30
+
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@v4"
+
+      - name: "Install flox"
+        uses: "flox/install-flox-action@main"
+
+      - name: "Run upgrade"
+        run: "flox -vvv upgrade"
+
+      - name: "Create Pull Request"
+        uses: "peter-evans/create-pull-request@v6"
+        with:
+          token: "${{ secrets.MANAGED_FLOXBOT_GITHUB_ACCESS_TOKEN_REPO_SCOPE }}"
+          add-paths: ".flox"
+          commit-message: "chore: Update Flox environment"
+          commiter: "FloxBot <bot@flox.dev>"
+          author: "FloxBot <bot@flox.dev>"
+          branch: "chore-update-flox-environment"
+          delete-branch: true
+          title: "chore: Update Flox environment"
+          body: "This PR was automatically created by [Update workflow](https://github.com/flox/floxwebsite/actions/workflows/update.yml)."
+          labels: "team-developer-support"

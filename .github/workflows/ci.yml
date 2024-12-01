@@ -1,0 +1,55 @@
+name: "CI"
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+  pull_request:
+
+concurrency:
+  group: "ci-${{ github.ref_name }}-${{ github.event_name }}-${{ github.event.number || (github.event.pull_request.head.sha || github.sha) }}"
+  cancel-in-progress: true
+
+env:
+  FLOX_DISABLE_METRICS: "true"
+
+jobs:
+
+  build:
+    name: "Build"
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 30
+
+    steps:
+      - name: "Checkout"
+        uses: "actions/checkout@v4"
+        with:
+          fetch-depth: 0
+
+      - name: "Install Flox"
+        uses: "flox/install-flox-action@main"
+
+      - name: "Restore npm cache"
+        uses: "actions/cache@v4"
+        with:
+          path: |
+            ~/.npm
+          key: "${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}"
+          restore-keys: |
+            ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}-
+
+      - name: "Install"
+        uses: "flox/activate-action@main"
+        with:
+          command: "npm ci"
+
+      - name: "Lint"
+        uses: "flox/activate-action@main"
+        with:
+          command: "npm run lint"
+
+      - name: "Build"
+        uses: "flox/activate-action@main"
+        with:
+          command: "npm run compile"
