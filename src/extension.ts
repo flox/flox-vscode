@@ -18,6 +18,7 @@ class Flox implements vscode.Disposable {
   	private output = vscode.window.createOutputChannel('flox');
   	private willActivate = new vscode.EventEmitter<void>();
 	private didActivate = new vscode.EventEmitter<flox.Vars>();
+	private didUpdate = new vscode.EventEmitter<void>();
 	private failed = new vscode.EventEmitter<unknown>();
 	private watchers = vscode.Disposable.from();
 
@@ -26,6 +27,7 @@ class Flox implements vscode.Disposable {
 	) {
     	this.willActivate.event(() => this.onWillActivate());
 		this.didActivate.event((e) => this.onDidActivate(e));
+		this.didUpdate.event(() => this.onDidUpdate());
 		this.failed.event((e) => this.onFailed(e));
 	}
 
@@ -40,8 +42,28 @@ class Flox implements vscode.Disposable {
 
   	async activate() {
 		await this.try(async () => {
-			await flox.activate();
-			this.willActivate.fire();
+			vscode.window.withProgress({
+				location: vscode.ProgressLocation.Notification,
+				title: "Activating Flox environment ... ",
+				cancellable: false,
+			}, async (progress, token) => {
+				progress.report({ increment: 0 });
+				setTimeout(() => {
+					progress.report({ increment: 10 });
+				}, 1000);
+				setTimeout(() => {
+					progress.report({ increment: 40, message: "... still activating ..." });
+				}, 3000);
+				setTimeout(() => {
+					progress.report({ increment: 70, message: "... still activating ..." });
+				}, 8000);
+				setTimeout(() => {
+					progress.report({ increment: 90, message: "... still activating ..." });
+				}, 15000);
+				await flox.activate();
+				progress.report({ increment: 100 });
+				this.willActivate.fire();
+			});
 		});
 	}
 
@@ -52,10 +74,16 @@ class Flox implements vscode.Disposable {
 
 	private async onDidActivate(vars: flox.Vars) {
 		this.updateEnvironment(vars);
-		//await this.updateCache()
-		//this.loaded.fire()
-		//if ([...data.keys()].every(isInternal)) return
-		//this.didUpdate.fire()
+		this.didUpdate.fire();
+	}
+
+	private async onDidUpdate() {
+		vscode.window.showInformationMessage('Flox environment activated.');
+		if (vscode.env.remoteName === undefined) {
+			await vscode.commands.executeCommand('workbench.action.restartExtensionHost');
+		} else {
+			await vscode.commands.executeCommand('workbench.action.reloadWindow');
+		}
 	}
 
   	private async onFailed(err: unknown) {
