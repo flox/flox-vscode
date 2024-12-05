@@ -57,7 +57,7 @@ jobs:
       - name: "Package"
         uses: "flox/activate-action@main"
         with:
-          command: "vsce package --out flox-main.vsix"
+          command: "npm run package -- --out flox-main.vsix"
 
       - name: "Upload vscode extention as artifact"
         uses: "actions/upload-artifact@v4"

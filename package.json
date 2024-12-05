@@ -25,7 +25,10 @@
     "Other"
   ],
   "main": "./out/extension.js",
-  "activationEvents": [],
+  "activationEvents": [
+    "*",
+    "onLanguage"
+  ],
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": false,
@@ -38,15 +41,27 @@
         "command": "flox.activate",
         "title": "Activate Flox environment"
       }
-    ]
+    ],
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "flox.activate",
+          "when": "editorLangId == shellscript"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
+    "package": "vsce package --allow-star-activation",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "@types/node": "20.x",
@@ -55,7 +70,7 @@
     "@typescript-eslint/parser": "^8.7.0",
     "@vscode/test-cli": "^0.0.10",
     "@vscode/test-electron": "^2.4.1",
-    "dotenv": "^16.4.5",
+    "@vscode/vsce": "^3.2.1",
     "eslint": "^9.13.0",
     "typescript": "^5.6.3"
   }

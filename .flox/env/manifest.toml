@@ -3,7 +3,6 @@ version = 1
 [install]
 vscode.pkg-path = "vscode"
 nodejs.pkg-path = "nodejs"
-vsce.pkg-path = "vsce"
 
 # helper tools
 gum.pkg-path = "gum"
