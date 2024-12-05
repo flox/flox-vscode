@@ -12,9 +12,6 @@
       "nodejs": {
         "pkg-path": "nodejs"
       },
-      "vsce": {
-        "pkg-path": "vsce"
-      },
       "vscode": {
         "pkg-path": "vscode"
       }
@@ -402,126 +399,6 @@
       "outputs": {
         "libv8": "/nix/store/czcxwki3zqih2pf355zk0vxbmrij2bzx-nodejs-20.18.0-libv8",
         "out": "/nix/store/z0ivg3dbal4sk5h0c7p1pfkxc7ff98ri-nodejs-20.18.0"
-      },
-      "system": "x86_64-linux",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "vsce",
-      "broken": false,
-      "derivation": "/nix/store/dj4kn9q40nqrk5jm8cywkf5lbzr1y5y5-vsce-3.1.0.drv",
-      "description": "Visual Studio Code Extension Manager",
-      "install_id": "vsce",
-      "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=23e89b7da85c3640bbc2173fe04f4bd114342367",
-      "name": "vsce-3.1.0",
-      "pname": "vsce",
-      "rev": "23e89b7da85c3640bbc2173fe04f4bd114342367",
-      "rev_count": 710087,
-      "rev_date": "2024-11-19T11:04:08Z",
-      "scrape_date": "2024-11-21T04:00:36Z",
-      "stabilities": [
-        "staging",
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "3.1.0",
-      "outputs_to_install": [
-        "out"
-      ],
-      "outputs": {
-        "out": "/nix/store/hbxkg1vqpcljjs1g6imvr7d07saij9ny-vsce-3.1.0"
-      },
-      "system": "aarch64-darwin",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "vsce",
-      "broken": false,
-      "derivation": "/nix/store/jw4lxg2qj74dhxg4hyyln3m2ifhj5wfa-vsce-3.1.0.drv",
-      "description": "Visual Studio Code Extension Manager",
-      "install_id": "vsce",
-      "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=23e89b7da85c3640bbc2173fe04f4bd114342367",
-      "name": "vsce-3.1.0",
-      "pname": "vsce",
-      "rev": "23e89b7da85c3640bbc2173fe04f4bd114342367",
-      "rev_count": 710087,
-      "rev_date": "2024-11-19T11:04:08Z",
-      "scrape_date": "2024-11-21T04:00:36Z",
-      "stabilities": [
-        "staging",
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "3.1.0",
-      "outputs_to_install": [
-        "out"
-      ],
-      "outputs": {
-        "out": "/nix/store/lbba3s49gbrdvr1hcm0iascs15lf9qi3-vsce-3.1.0"
-      },
-      "system": "aarch64-linux",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "vsce",
-      "broken": false,
-      "derivation": "/nix/store/0gpw5nyv42pzmid9mk348h6w01zmzj4p-vsce-3.1.0.drv",
-      "description": "Visual Studio Code Extension Manager",
-      "install_id": "vsce",
-      "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=23e89b7da85c3640bbc2173fe04f4bd114342367",
-      "name": "vsce-3.1.0",
-      "pname": "vsce",
-      "rev": "23e89b7da85c3640bbc2173fe04f4bd114342367",
-      "rev_count": 710087,
-      "rev_date": "2024-11-19T11:04:08Z",
-      "scrape_date": "2024-11-21T04:00:36Z",
-      "stabilities": [
-        "staging",
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "3.1.0",
-      "outputs_to_install": [
-        "out"
-      ],
-      "outputs": {
-        "out": "/nix/store/pjvrjqh76zws6lca6mqrhxqv9kmv4q1n-vsce-3.1.0"
-      },
-      "system": "x86_64-darwin",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "vsce",
-      "broken": false,
-      "derivation": "/nix/store/sfsfjd7rcwcxyva8s3p3dfz0svcx1mr9-vsce-3.1.0.drv",
-      "description": "Visual Studio Code Extension Manager",
-      "install_id": "vsce",
-      "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=23e89b7da85c3640bbc2173fe04f4bd114342367",
-      "name": "vsce-3.1.0",
-      "pname": "vsce",
-      "rev": "23e89b7da85c3640bbc2173fe04f4bd114342367",
-      "rev_count": 710087,
-      "rev_date": "2024-11-19T11:04:08Z",
-      "scrape_date": "2024-11-21T04:00:36Z",
-      "stabilities": [
-        "staging",
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "3.1.0",
-      "outputs_to_install": [
-        "out"
-      ],
-      "outputs": {
-        "out": "/nix/store/q4hrjrjc67c22v71zmz888ckjgi6cl1g-vsce-3.1.0"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
