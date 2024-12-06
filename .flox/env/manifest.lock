@@ -12,15 +12,12 @@
       "nodejs": {
         "pkg-path": "nodejs"
       },
-      "vsce": {
-        "pkg-path": "vsce"
-      },
       "vscode": {
         "pkg-path": "vscode"
       }
     },
     "hook": {
-      "on-activate": "\nexport FLOX_JAVASCRIPT_NODE_CACHE_DIR=\"$FLOX_ENV_CACHE/javascript-node\"\nmkdir -p \"$FLOX_JAVASCRIPT_NODE_CACHE_DIR\"\n\nexport FLOX_JAVASCRIPT_NODE_PACKAGES_HASH_FILE=\"$FLOX_JAVASCRIPT_NODE_CACHE_DIR/packages-hash\"\n\n\nfunction with_spinner() {\n  if [[ \"$FLOX_ENVS_TESTING\" == \"1\" ]]; then\n    bash -c \"$1\"\n  else\n    gum spin \\\n      --show-error \\\n      --spinner line \\\n      --spinner.foreground=\"#cccccc\" \\\n      --title \">>> $2 ...\" \\\n      --title.foreground=\"#cccccc\" \\\n        -- bash -c \"$1\"\n  fi\n}\n\nfunction install_packages() { \n  npm install\n}\nexport -f install_packages\n\n\n\nif [ -f \"package.json\" ] && [ -f \"package-lock.json\" ]; then\n  export FLOX_JAVASCRIPT_NODE_PACKAGES_HASH=\"false\"\n  if [ -f \"$FLOX_JAVASCRIPT_NODE_PACKAGES_HASH_FILE\" ] ; then\n    export FLOX_JAVASCRIPT_NODE_PACKAGES_HASH=$(cat package.json package-lock.json | sha256sum | cut -d\" \" -f 1)\n  fi\n  if [ \"$FLOX_JAVASCRIPT_NODE_PACKAGES_HASH\" != \"$(cat $FLOX_JAVASCRIPT_NODE_PACKAGES_HASH_FILE 2>/dev/null)\" ]; then\n    with_spinner install_packages \"Installing Javascript packages (with NPM)\"\n    echo -e \"{{ Foreground \\\"#ffffff\\\" \\\"✅ Javascript packages installed (with NPM).\\\" }}\\n\" \\\n      | gum format -t template\n    echo \"$FLOX_JAVASCRIPT_NODE_PACKAGES_HASH\" > \"$FLOX_JAVASCRIPT_NODE_PACKAGES_HASH_FILE\"\n  fi\nfi\n"
+      "on-activate": "\nexport FLOX_JAVASCRIPT_NODE_CACHE_DIR=\"$FLOX_ENV_CACHE/javascript-node\"\nmkdir -p \"$FLOX_JAVASCRIPT_NODE_CACHE_DIR\"\n\nexport FLOX_JAVASCRIPT_NODE_PACKAGES_HASH_FILE=\"$FLOX_JAVASCRIPT_NODE_CACHE_DIR/packages-hash\"\n\n\nfunction with_spinner() {\n  if [[ \"$FLOX_ENVS_TESTING\" == \"1\" ]]; then\n    bash -c \"$1\"\n  else\n    gum spin \\\n      --show-error \\\n      --spinner line \\\n      --spinner.foreground=\"#cccccc\" \\\n      --title \">>> $2 ...\" \\\n      --title.foreground=\"#cccccc\" \\\n        -- bash -c \"$1\"\n  fi\n}\n\nfunction install_packages() { \n  npm install\n}\nexport -f install_packages\n\n\n\nif [ -f \"package.json\" ] && [ -f \"package-lock.json\" ]; then\n  export FLOX_JAVASCRIPT_NODE_PACKAGES_HASH=\"false\"\n  if [ -f \"$FLOX_JAVASCRIPT_NODE_PACKAGES_HASH_FILE\" ] ; then\n    export FLOX_JAVASCRIPT_NODE_PACKAGES_HASH=$(cat package.json package-lock.json | sha256sum | cut -d\" \" -f 1)\n  fi\n  if [ \"$FLOX_JAVASCRIPT_NODE_PACKAGES_HASH\" != \"$(cat $FLOX_JAVASCRIPT_NODE_PACKAGES_HASH_FILE 2>/dev/null)\" ]; then\n    with_spinner install_packages \"Installing Javascript packages (with NPM)\"\n    echo -e \"{{ Foreground \\\"#ffffff\\\" \\\"✅ Javascript packages installed (with NPM).\\\" }}\\n\" \\\n      | gum format -t template\n    echo \"$FLOX_JAVASCRIPT_NODE_PACKAGES_HASH\" > \"$FLOX_JAVASCRIPT_NODE_PACKAGES_HASH_FILE\"\n  fi\nfi\n\nexport PATH=\"$PWD/node_modules/.bin:$PATH\"\n"
     },
     "profile": {},
     "options": {
@@ -390,122 +387,6 @@
       "outputs": {
         "libv8": "/nix/store/czcxwki3zqih2pf355zk0vxbmrij2bzx-nodejs-20.18.0-libv8",
         "out": "/nix/store/z0ivg3dbal4sk5h0c7p1pfkxc7ff98ri-nodejs-20.18.0"
-      },
-      "system": "x86_64-linux",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "vsce",
-      "broken": false,
-      "derivation": "/nix/store/dj4kn9q40nqrk5jm8cywkf5lbzr1y5y5-vsce-3.1.0.drv",
-      "description": "Visual Studio Code Extension Manager",
-      "install_id": "vsce",
-      "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=970e93b9f82e2a0f3675757eb0bfc73297cc6370",
-      "name": "vsce-3.1.0",
-      "pname": "vsce",
-      "rev": "970e93b9f82e2a0f3675757eb0bfc73297cc6370",
-      "rev_count": 713897,
-      "rev_date": "2024-11-28T23:45:21Z",
-      "scrape_date": "2024-12-01T03:54:50Z",
-      "stabilities": [
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "3.1.0",
-      "outputs_to_install": [
-        "out"
-      ],
-      "outputs": {
-        "out": "/nix/store/hbxkg1vqpcljjs1g6imvr7d07saij9ny-vsce-3.1.0"
-      },
-      "system": "aarch64-darwin",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "vsce",
-      "broken": false,
-      "derivation": "/nix/store/jw4lxg2qj74dhxg4hyyln3m2ifhj5wfa-vsce-3.1.0.drv",
-      "description": "Visual Studio Code Extension Manager",
-      "install_id": "vsce",
-      "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=970e93b9f82e2a0f3675757eb0bfc73297cc6370",
-      "name": "vsce-3.1.0",
-      "pname": "vsce",
-      "rev": "970e93b9f82e2a0f3675757eb0bfc73297cc6370",
-      "rev_count": 713897,
-      "rev_date": "2024-11-28T23:45:21Z",
-      "scrape_date": "2024-12-01T03:54:50Z",
-      "stabilities": [
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "3.1.0",
-      "outputs_to_install": [
-        "out"
-      ],
-      "outputs": {
-        "out": "/nix/store/lbba3s49gbrdvr1hcm0iascs15lf9qi3-vsce-3.1.0"
-      },
-      "system": "aarch64-linux",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "vsce",
-      "broken": false,
-      "derivation": "/nix/store/0gpw5nyv42pzmid9mk348h6w01zmzj4p-vsce-3.1.0.drv",
-      "description": "Visual Studio Code Extension Manager",
-      "install_id": "vsce",
-      "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=970e93b9f82e2a0f3675757eb0bfc73297cc6370",
-      "name": "vsce-3.1.0",
-      "pname": "vsce",
-      "rev": "970e93b9f82e2a0f3675757eb0bfc73297cc6370",
-      "rev_count": 713897,
-      "rev_date": "2024-11-28T23:45:21Z",
-      "scrape_date": "2024-12-01T03:54:50Z",
-      "stabilities": [
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "3.1.0",
-      "outputs_to_install": [
-        "out"
-      ],
-      "outputs": {
-        "out": "/nix/store/pjvrjqh76zws6lca6mqrhxqv9kmv4q1n-vsce-3.1.0"
-      },
-      "system": "x86_64-darwin",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "vsce",
-      "broken": false,
-      "derivation": "/nix/store/sfsfjd7rcwcxyva8s3p3dfz0svcx1mr9-vsce-3.1.0.drv",
-      "description": "Visual Studio Code Extension Manager",
-      "install_id": "vsce",
-      "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=970e93b9f82e2a0f3675757eb0bfc73297cc6370",
-      "name": "vsce-3.1.0",
-      "pname": "vsce",
-      "rev": "970e93b9f82e2a0f3675757eb0bfc73297cc6370",
-      "rev_count": 713897,
-      "rev_date": "2024-11-28T23:45:21Z",
-      "scrape_date": "2024-12-01T03:54:50Z",
-      "stabilities": [
-        "unstable"
-      ],
-      "unfree": false,
-      "version": "3.1.0",
-      "outputs_to_install": [
-        "out"
-      ],
-      "outputs": {
-        "out": "/nix/store/q4hrjrjc67c22v71zmz888ckjgi6cl1g-vsce-3.1.0"
       },
       "system": "x86_64-linux",
       "group": "toplevel",

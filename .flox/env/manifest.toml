@@ -3,7 +3,6 @@ version = 1
 [install]
 vscode.pkg-path = "vscode"
 nodejs.pkg-path = "nodejs"
-vsce.pkg-path = "vsce"
 
 # helper tools
 gum.pkg-path = "gum"
@@ -51,6 +50,8 @@ if [ -f "package.json" ] && [ -f "package-lock.json" ]; then
     echo "$FLOX_JAVASCRIPT_NODE_PACKAGES_HASH" > "$FLOX_JAVASCRIPT_NODE_PACKAGES_HASH_FILE"
   fi
 fi
+
+export PATH="$PWD/node_modules/.bin:$PATH"
 '''
 
 
