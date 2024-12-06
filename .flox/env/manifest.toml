@@ -50,6 +50,8 @@ if [ -f "package.json" ] && [ -f "package-lock.json" ]; then
     echo "$FLOX_JAVASCRIPT_NODE_PACKAGES_HASH" > "$FLOX_JAVASCRIPT_NODE_PACKAGES_HASH_FILE"
   fi
 fi
+
+export PATH="$PWD/node_modules/.bin:$PATH"
 '''
 
 
