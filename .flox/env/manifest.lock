@@ -11,9 +11,6 @@
       },
       "nodejs": {
         "pkg-path": "nodejs"
-      },
-      "vscode": {
-        "pkg-path": "vscode"
       }
     },
     "hook": {
@@ -387,122 +384,6 @@
       "outputs": {
         "libv8": "/nix/store/6cpw80r57lyippnjl5knrvymcwalv1m2-nodejs-20.18.1-libv8",
         "out": "/nix/store/wfxq6w9bkp5dcfr8yb6789b0w7128gnb-nodejs-20.18.1"
-      },
-      "system": "x86_64-linux",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "vscode",
-      "broken": false,
-      "derivation": "/nix/store/9j3s8brh53xb5pjrl4kajbmlchgx5946-vscode-1.95.3.drv",
-      "description": "Open source source code editor developed by Microsoft for Windows,\nLinux and macOS\n",
-      "install_id": "vscode",
-      "license": "Unfree",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
-      "name": "vscode-1.95.3",
-      "pname": "vscode",
-      "rev": "5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
-      "rev_count": 720697,
-      "rev_date": "2024-12-11T18:06:44Z",
-      "scrape_date": "2024-12-14T03:50:50Z",
-      "stabilities": [
-        "unstable"
-      ],
-      "unfree": true,
-      "version": "1.95.3",
-      "outputs_to_install": [
-        "out"
-      ],
-      "outputs": {
-        "out": "/nix/store/266cyn4j8n3p5mxzq954v17sjwk4xcla-vscode-1.95.3"
-      },
-      "system": "aarch64-darwin",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "vscode",
-      "broken": false,
-      "derivation": "/nix/store/4ggpfxpmnvlwwp0i99d0dbnnp58bcy1s-vscode-1.95.3.drv",
-      "description": "Open source source code editor developed by Microsoft for Windows,\nLinux and macOS\n",
-      "install_id": "vscode",
-      "license": "Unfree",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
-      "name": "vscode-1.95.3",
-      "pname": "vscode",
-      "rev": "5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
-      "rev_count": 720697,
-      "rev_date": "2024-12-11T18:06:44Z",
-      "scrape_date": "2024-12-14T03:50:50Z",
-      "stabilities": [
-        "unstable"
-      ],
-      "unfree": true,
-      "version": "1.95.3",
-      "outputs_to_install": [
-        "out"
-      ],
-      "outputs": {
-        "out": "/nix/store/lbaps6qzdhcy0kj6dgivhglryjm9x82w-vscode-1.95.3"
-      },
-      "system": "aarch64-linux",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "vscode",
-      "broken": false,
-      "derivation": "/nix/store/gb6w5irg34m3b45gq8zq57vlc9a55bpj-vscode-1.95.3.drv",
-      "description": "Open source source code editor developed by Microsoft for Windows,\nLinux and macOS\n",
-      "install_id": "vscode",
-      "license": "Unfree",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
-      "name": "vscode-1.95.3",
-      "pname": "vscode",
-      "rev": "5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
-      "rev_count": 720697,
-      "rev_date": "2024-12-11T18:06:44Z",
-      "scrape_date": "2024-12-14T03:50:50Z",
-      "stabilities": [
-        "unstable"
-      ],
-      "unfree": true,
-      "version": "1.95.3",
-      "outputs_to_install": [
-        "out"
-      ],
-      "outputs": {
-        "out": "/nix/store/zmy1kql2ahynig4876k4qspwrqn0iryh-vscode-1.95.3"
-      },
-      "system": "x86_64-darwin",
-      "group": "toplevel",
-      "priority": 5
-    },
-    {
-      "attr_path": "vscode",
-      "broken": false,
-      "derivation": "/nix/store/azg1mznvf1pqsgl6927v4v2z0z3czhdq-vscode-1.95.3.drv",
-      "description": "Open source source code editor developed by Microsoft for Windows,\nLinux and macOS\n",
-      "install_id": "vscode",
-      "license": "Unfree",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
-      "name": "vscode-1.95.3",
-      "pname": "vscode",
-      "rev": "5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
-      "rev_count": 720697,
-      "rev_date": "2024-12-11T18:06:44Z",
-      "scrape_date": "2024-12-14T03:50:50Z",
-      "stabilities": [
-        "unstable"
-      ],
-      "unfree": true,
-      "version": "1.95.3",
-      "outputs_to_install": [
-        "out"
-      ],
-      "outputs": {
-        "out": "/nix/store/mwbrajaajyal0kicig49j9vbvl93nc8d-vscode-1.95.3"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
