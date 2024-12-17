@@ -19,7 +19,7 @@
     "url": "https://github.com/flox/flox-vscode"
   },
   "engines": {
-    "vscode": "^1.95.0"
+    "vscode": "^1.96.0"
   },
   "categories": [
     "Other"
