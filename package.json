@@ -40,12 +40,20 @@
       {
         "command": "flox.activate",
         "title": "Activate Flox environment"
+      },
+      {
+        "command": "flox.deactivate",
+        "title": "Deactivate Flox environment"
       }
     ],
     "menus": {
       "commandPalette": [
         {
           "command": "flox.activate",
+          "when": "editorLangId == shellscript"
+        },
+        {
+          "command": "flox.deactivate",
           "when": "editorLangId == shellscript"
         }
       ]
