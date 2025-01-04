@@ -6,6 +6,7 @@ nodejs.pkg-path = "nodejs"
 # helper tools
 gum.pkg-path = "gum"
 coreutils.pkg-path = "coreutils"
+typescript-language-server.pkg-path = "typescript-language-server"
 
 [hook]
 on-activate = '''

@@ -36,25 +36,55 @@
     }
   },
   "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "flox",
+          "title": "Flox",
+          "icon": "assets/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "flox": [
+        {
+          "id": "floxVarsView",
+          "name": "Variables"
+        },
+        {
+          "id": "floxServicesView",
+          "name": "Services"
+        }
+      ]
+    },
     "commands": [
       {
-        "command": "flox.activate",
-        "title": "Activate Flox environment"
+        "command": "flox.init",
+        "title": "Flox: Init - Create an environment in the current directory"
       },
       {
-        "command": "flox.deactivate",
-        "title": "Deactivate Flox environment"
+        "command": "flox.version",
+        "title": "Flox: Show version"
+      },
+      {
+        "command": "flox.activate",
+        "title": "Flox: Activate environment"
       }
     ],
     "menus": {
       "commandPalette": [
         {
-          "command": "flox.activate",
-          "when": "editorLangId == shellscript"
+          "command": "flox.init",
+          "when": "flox.environmentExists == false"
         },
         {
-          "command": "flox.deactivate",
-          "when": "editorLangId == shellscript"
+          "command": "flox.version",
+          "group": "commandPalette"
+        },
+        {
+          "command": "flox.activate",
+          "when": "flox.environmentExists == true",
+          "group": "commandPalette"
         }
       ]
     }
@@ -62,7 +92,7 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "package": "vsce package --allow-star-activation",
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ && mkdir -p ./out/assets ./out/scripts && cp ./assets/* ./out/assets && cp ./scripts/* ./out/scripts",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",

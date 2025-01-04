@@ -11,6 +11,9 @@
       },
       "nodejs": {
         "pkg-path": "nodejs"
+      },
+      "typescript-language-server": {
+        "pkg-path": "typescript-language-server"
       }
     },
     "hook": {
@@ -384,6 +387,122 @@
       "outputs": {
         "libv8": "/nix/store/6cpw80r57lyippnjl5knrvymcwalv1m2-nodejs-20.18.1-libv8",
         "out": "/nix/store/wfxq6w9bkp5dcfr8yb6789b0w7128gnb-nodejs-20.18.1"
+      },
+      "system": "x86_64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "typescript-language-server",
+      "broken": false,
+      "derivation": "/nix/store/mhncckp7y1kz7nnxr62wzsws7hmqm25w-typescript-language-server-4.3.3.drv",
+      "description": "Language Server Protocol implementation for TypeScript using tsserver",
+      "install_id": "typescript-language-server",
+      "license": "[ Apache-2.0, MIT ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
+      "name": "typescript-language-server-4.3.3",
+      "pname": "typescript-language-server",
+      "rev": "5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
+      "rev_count": 720697,
+      "rev_date": "2024-12-11T18:06:44Z",
+      "scrape_date": "2024-12-14T03:50:50Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "4.3.3",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/2yqj9mbfj74n9r3chqnnwicrjhbml9wh-typescript-language-server-4.3.3"
+      },
+      "system": "aarch64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "typescript-language-server",
+      "broken": false,
+      "derivation": "/nix/store/aqb9c0m3gwq2kfb6fvqz208sdzfsxkki-typescript-language-server-4.3.3.drv",
+      "description": "Language Server Protocol implementation for TypeScript using tsserver",
+      "install_id": "typescript-language-server",
+      "license": "[ Apache-2.0, MIT ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
+      "name": "typescript-language-server-4.3.3",
+      "pname": "typescript-language-server",
+      "rev": "5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
+      "rev_count": 720697,
+      "rev_date": "2024-12-11T18:06:44Z",
+      "scrape_date": "2024-12-14T03:50:50Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "4.3.3",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/d8n8r8yyf04g0wdv5srgxy21isv5n4k4-typescript-language-server-4.3.3"
+      },
+      "system": "aarch64-linux",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "typescript-language-server",
+      "broken": false,
+      "derivation": "/nix/store/82i6izx1kfasvwl100pz4k24kj44xsih-typescript-language-server-4.3.3.drv",
+      "description": "Language Server Protocol implementation for TypeScript using tsserver",
+      "install_id": "typescript-language-server",
+      "license": "[ Apache-2.0, MIT ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
+      "name": "typescript-language-server-4.3.3",
+      "pname": "typescript-language-server",
+      "rev": "5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
+      "rev_count": 720697,
+      "rev_date": "2024-12-11T18:06:44Z",
+      "scrape_date": "2024-12-14T03:50:50Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "4.3.3",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/0p1rcc2h7y4xvrmc9vk6ghqnrp60vgg0-typescript-language-server-4.3.3"
+      },
+      "system": "x86_64-darwin",
+      "group": "toplevel",
+      "priority": 5
+    },
+    {
+      "attr_path": "typescript-language-server",
+      "broken": false,
+      "derivation": "/nix/store/s1lr6kf5m5mmz7ssn4a4mc7vcs4z8kp2-typescript-language-server-4.3.3.drv",
+      "description": "Language Server Protocol implementation for TypeScript using tsserver",
+      "install_id": "typescript-language-server",
+      "license": "[ Apache-2.0, MIT ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
+      "name": "typescript-language-server-4.3.3",
+      "pname": "typescript-language-server",
+      "rev": "5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
+      "rev_count": 720697,
+      "rev_date": "2024-12-11T18:06:44Z",
+      "scrape_date": "2024-12-14T03:50:50Z",
+      "stabilities": [
+        "unstable"
+      ],
+      "unfree": false,
+      "version": "4.3.3",
+      "outputs_to_install": [
+        "out"
+      ],
+      "outputs": {
+        "out": "/nix/store/xzlmn00zgm6pz1p6q2zpcywf0i7acxy9-typescript-language-server-4.3.3"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
