@@ -191,11 +191,15 @@ export async function activate(context: vscode.ExtensionContext) {
   const floxEnv = new FloxEnv(context);
   await floxEnv.init();
 
+  const floxInstallView = new FloxExampleView();
   const floxVarsView = new FloxExampleView();
   const floxServicesView = new FloxExampleView();
+  const floxHelpView = new FloxExampleView();
 
+  vscode.window.registerTreeDataProvider('floxInstallView', floxInstallView);
   vscode.window.registerTreeDataProvider('floxVarsView', floxVarsView);
   vscode.window.registerTreeDataProvider('floxServicesView', floxServicesView);
+  vscode.window.registerTreeDataProvider('floxHelpView', floxHelpView);
 
 
   floxEnv.registerCommand('flox.init', async () => {

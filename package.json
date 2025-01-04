@@ -48,12 +48,20 @@
     "views": {
       "flox": [
         {
+          "id": "floxInstallView",
+          "name": "Search & Install"
+        },
+        {
           "id": "floxVarsView",
           "name": "Variables"
         },
         {
           "id": "floxServicesView",
           "name": "Services"
+        },
+        {
+          "id": "floxHelpView",
+          "name": "Help & Documentation"
         }
       ]
     },
