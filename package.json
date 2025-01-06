@@ -62,7 +62,7 @@
       },
       {
         "view": "floxSearchView",
-        "contents": "We noticed your Flox environment is not active. Do you wish to activate it?.\n[Activate](command:flox.activate)",
+        "contents": "We noticed your Flox environment is not active. Do you wish to activate it?\n[Activate](command:flox.activate)",
         "when": "flox.envExists && !flox.envActive"
       }
     ],

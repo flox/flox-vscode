@@ -15,11 +15,11 @@ interface Msg {
 
 export default class Env implements vscode.Disposable {
 
-  public workspaceUri?: vscode.Uri;
-  public manifest?: any;
+  workspaceUri?: vscode.Uri;
+  manifest?: any;
 
-  private context: vscode.ExtensionContext;
-  private error = new vscode.EventEmitter<unknown>();
+  context: vscode.ExtensionContext;
+  error = new vscode.EventEmitter<unknown>();
 
   constructor(
     ctx: vscode.ExtensionContext,

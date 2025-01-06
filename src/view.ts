@@ -19,6 +19,11 @@ export class InstallView implements vscode.TreeDataProvider<InstalledPackage> {
     this.env = env;
   }
 
+  async refresh() {
+    await this.env.init();
+    this._onDidChangeTreeData.fire();
+  }
+
   registerProvider(viewName: string) {
     return vscode.window.registerTreeDataProvider(viewName, this);
   }
