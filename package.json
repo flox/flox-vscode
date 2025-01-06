@@ -46,6 +46,25 @@
       ]
     },
     "viewsWelcome": [
+      {
+        "view": "floxSearchView",
+        "contents": "Welcome to Flox!"
+      },
+      {
+        "view": "floxSearchView",
+        "contents": "We couldn't find any Flox environment.\n[Create environment](command:flox.init)",
+        "when": "!flox.envExists"
+      },
+      {
+        "view": "floxSearchView",
+        "contents": "Missing something? Find and install a package.\n[Search](command:flox.search)",
+        "when": "flox.envExists"
+      },
+      {
+        "view": "floxSearchView",
+        "contents": "We noticed your Flox environment is not active. Do you wish to activate it?.\n[Activate](command:flox.activate)",
+        "when": "flox.envExists && !flox.envActive"
+      }
     ],
     "views": {
       "flox": [
