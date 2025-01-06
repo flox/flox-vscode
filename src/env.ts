@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as toml from 'toml';
 import { promises as fs } from "fs";
 import { promisify } from 'util';
 import { spawn, execFile, ExecOptions } from 'child_process';
@@ -18,8 +17,6 @@ export default class Env implements vscode.Disposable {
 
   public workspaceUri?: vscode.Uri;
   public manifest?: any;
-  public manifestLock?: any;
-
 
   private context: vscode.ExtensionContext;
   private error = new vscode.EventEmitter<unknown>();
@@ -48,40 +45,29 @@ export default class Env implements vscode.Disposable {
       //   https://code.visualstudio.com/docs/editor/multi-root-workspaces
 
       // If the manifest file exists, then the we mark the
-      // `flox.environmentExists` context to true, if manifest file does not
-      // exist we mark `flox.environmentExists` context to false.
+      // `flox.envExists` context to true, if manifest file does not
+      // exist we mark `flox.envExists` context to false.
       const manifestFile = vscode.Uri.joinPath(this.workspaceUri, '.flox', 'env', 'manifest.toml');
       try {
         await vscode.workspace.fs.stat(manifestFile);
         console.log(`environment exists: ${manifestFile}`);
-        this.environmentExists = true;
       } catch (e) {
         console.log(e);
         console.log(`${manifestFile} file does not exist.`);
-        this.environmentExists = false;
+        this.envExists = false;
       }
 
-      if (this.environmentExists === true) {
-        try {
-          const data: string = await fs.readFile(manifestFile.fsPath, 'utf-8');
-          this.manifest = toml.parse(data);
-        } catch (e: any) {
-          if (e.line && e.column && e.message) {
-            console.error(`Parsing manifest.toml error on line ${e.line}, column ${e.column}: ${e.message}`);
-          } else {
-            console.error(`Parsing manifest.toml error: ${e}`);
-          }
-        }
-        const manifestLockFile = vscode.Uri.joinPath(this.workspaceUri, '.flox', 'env', 'manifest.lock');
-        try {
-          const data: string = await fs.readFile(manifestLockFile.fsPath, 'utf-8');
-          this.manifestLock = JSON.parse(data);
-        } catch (e: any) {
-          if (e.line && e.column && e.message) {
-            console.error(`Parsing manifest.lock error on line ${e.line}, column ${e.column}: ${e.message}`);
-          } else {
-            console.error(`Parsing manifest.lock error: ${e}`);
-          }
+      try {
+        const data: string = await fs.readFile(manifestFile.fsPath, 'utf-8');
+        let TOML = await import('smol-toml');
+        this.manifest = TOML.parse(data);
+        this.envExists = this.manifest;
+      } catch (e: any) {
+        this.envExists = false;
+        if (e.line && e.column && e.message) {
+          console.error(`Parsing manifest.toml error on line ${e.line}, column ${e.column}: ${e.message}`);
+        } else {
+          console.error(`Parsing manifest.toml error: ${e}`);
         }
       }
     }
@@ -89,13 +75,22 @@ export default class Env implements vscode.Disposable {
 
   dispose() { }
 
-  public get environmentExists() {
-    return this.context.workspaceState.get("environmentExists") ?? false;
+  public get envExists() {
+    return this.context.workspaceState.get("flox.envExists") ?? false;
   }
 
-  private set environmentExists(exists: boolean) {
-    vscode.commands.executeCommand('setContext', 'flox.environmentExists', exists);
-    this.context.workspaceState.update("environmentExists", exists);
+  private set envExists(manifest: any) {
+    const exists = manifest !== undefined || true;
+    const hasPkgs = manifest?.install !== undefined && Object.keys(manifest.install).length > 0;
+    const hasVars = manifest?.vars !== undefined && Object.keys(manifest.vars).length > 0;
+    const hasServices = manifest?.services !== undefined && Object.keys(manifest.services).length > 0;
+
+    this.context.workspaceState.update("flox.envExists", exists);
+
+    vscode.commands.executeCommand('setContext', 'flox.envExists', exists);
+    vscode.commands.executeCommand('setContext', 'flox.hasPkgs', hasPkgs);
+    vscode.commands.executeCommand('setContext', 'flox.hasVars', hasVars);
+    vscode.commands.executeCommand('setContext', 'flox.hasServices', hasServices);
   }
 
   private async onError(error: unknown) {
@@ -116,6 +111,10 @@ export default class Env implements vscode.Disposable {
     if (message !== undefined) {
       await vscode.window.showErrorMessage(`Flox Error: ${message}`);
     }
+  }
+
+  public registerView(viewName: string, view: any) {
+    this.context.subscriptions.push(view.registerProvider(viewName))
   }
 
   public registerCommand(commandName: string, command: (...args: any[]) => any) {

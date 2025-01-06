@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import Env from './env';
-import { InstallView } from './view';
+import { HelpView, InstallView } from './view';
 
 export async function activate(context: vscode.ExtensionContext) {
 
@@ -8,7 +8,11 @@ export async function activate(context: vscode.ExtensionContext) {
   await env.init();
 
   const installView = new InstallView(env);
-  vscode.window.registerTreeDataProvider('floxInstallView', installView);
+  const helpView = new HelpView();
+
+  env.registerView('floxInstallView', installView);
+  env.registerView('floxHelpView', helpView);
+
 
   env.registerCommand('flox.init', async () => {
     const result = await env.exec("flox", { argv: ["init", "--dir", env.workspaceUri?.fsPath || ''] });
@@ -33,7 +37,7 @@ export async function activate(context: vscode.ExtensionContext) {
       cancellable: true,
     }, async (progress, _) => {
       return new Promise<void>(async (resolve, reject) => {
-        if (env.environmentExists === false) {
+        if (env.envExists === false) {
           await env.displayError("Environment does not exist.");
           reject();
         }
