@@ -19,7 +19,7 @@
     "url": "https://github.com/flox/flox-vscode"
   },
   "engines": {
-    "vscode": "^1.96.0"
+    "vscode": "^1.86.0"
   },
   "categories": [
     "Other"
@@ -41,7 +41,7 @@
         {
           "id": "flox",
           "title": "Flox",
-          "icon": "assets/icon.svg"
+          "icon": "out/assets/icon.svg"
         }
       ]
     },
@@ -133,7 +133,7 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "package": "vsce package --allow-star-activation",
-    "compile": "tsc -p ./ && mkdir -p ./out/assets ./out/scripts && cp ./assets/* ./out/assets && cp ./scripts/* ./out/scripts",
+    "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
@@ -141,7 +141,7 @@
   },
   "devDependencies": {
     "@types/node": "22.x",
-    "@types/vscode": "^1.96.0",
+    "@types/vscode": "^1.86.0",
     "@typescript-eslint/eslint-plugin": "^8.19.0",
     "@typescript-eslint/parser": "^8.19.0",
     "@vscode/test-cli": "^0.0.10",

@@ -145,7 +145,7 @@ export default class Env implements vscode.Disposable {
   }
 
   public async reopen(progress: any, reject: any, resolve: any) {
-    const reopenScript = vscode.Uri.joinPath(this.context.extensionUri, 'scripts', 'reopen.sh');
+    const reopenScript = vscode.Uri.joinPath(this.context.extensionUri, 'out', 'scripts', 'reopen.sh');
     console.log('reopen.sh path: ', reopenScript.fsPath);
 
     let reopen = spawn(reopenScript.fsPath, {
