@@ -4,15 +4,16 @@ import { HelpView, InstallView } from './view';
 
 export async function activate(context: vscode.ExtensionContext) {
 
-  const env = new Env(context);
-  await env.init();
-
-  const installView = new InstallView(env);
+  const installView = new InstallView();
   const helpView = new HelpView();
 
+  const env = new Env(context);
   env.registerView('floxInstallView', installView);
   env.registerView('floxHelpView', helpView);
 
+  await env.reload();
+
+  installView.env = env;
 
   env.registerCommand('flox.init', async () => {
     const result = await env.exec("flox", { argv: ["init", "--dir", env.workspaceUri?.fsPath || ''] });
@@ -20,7 +21,7 @@ export async function activate(context: vscode.ExtensionContext) {
       env.displayMsg(`Flox environment created: ${result.stdout}`);
     }
     await env.exec("flox", { argv: ["activate", "--dir", env.workspaceUri?.fsPath || ''] });
-    await env.init();
+    await env.reload();
   });
 
   env.registerCommand('flox.version', async () => {
@@ -140,6 +141,7 @@ export async function activate(context: vscode.ExtensionContext) {
       return
     }
 
+    // TODO: call install command once we have it
     await vscode.window.withProgress({
       location: vscode.ProgressLocation.Notification,
       title: `Install '${selection.label}' package ... `,
@@ -160,13 +162,13 @@ export async function activate(context: vscode.ExtensionContext) {
         progress.report({ increment: 100 });
         if (resultInstall?.stderr && resultInstall.stderr.includes(`'${selection.label}' installed to environment`)) {
           env.displayMsg(`Package '${selection?.label}' installed successfully.`);
-          await installView.refresh();
           resolve();
         } else {
           env.displayError(`Something went wrong when installing '${selection?.label}': ${selection?.stderr}`);
           reject();
         }
       });
+
     });
 
   });

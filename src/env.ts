@@ -15,8 +15,10 @@ interface Msg {
 
 export default class Env implements vscode.Disposable {
 
+  manifestWatcher: vscode.FileSystemWatcher;
   workspaceUri?: vscode.Uri;
   manifest?: any;
+  views: any[];
 
   context: vscode.ExtensionContext;
   error = new vscode.EventEmitter<unknown>();
@@ -32,43 +34,73 @@ export default class Env implements vscode.Disposable {
     } else {
       this.workspaceUri = workspaceUri;
     }
+
+    // Creating file watcher to watch for events on devbox.json
+    this.manifestWatcher = vscode.workspace.createFileSystemWatcher("**/.flox/{env.json,env/manifest.toml,env/manifest.lock}", false, false, false);
+    this.manifestWatcher.onDidDelete(async _ => {
+      console.log('manifest file deleted');
+      await this.reload();
+    });
+    this.manifestWatcher.onDidCreate(async _ => {
+      console.log('manifest file created');
+      await this.reload();
+    });
+    this.manifestWatcher.onDidChange(async _ => {
+      console.log('manifest file changed');
+      await this.reload();
+    });
+    this.views = [];
   }
 
-  async init() {
-    // initialize Flox environment
-    if (this.workspaceUri) {
+  // initialize Flox environment
+  async reload() {
 
-      // We only work with single root workspaces or we will only
-      // activate an environment from the first workspace
-      //
-      // See more on multi-root workspaces: 
-      //   https://code.visualstudio.com/docs/editor/multi-root-workspaces
+    // if there is no workspaceUri, we don't have a workspace to work with
+    if (!this.workspaceUri) {
+      return
+    }
 
-      // If the manifest file exists, then the we mark the
-      // `flox.envExists` context to true, if manifest file does not
-      // exist we mark `flox.envExists` context to false.
-      const manifestFile = vscode.Uri.joinPath(this.workspaceUri, '.flox', 'env', 'manifest.toml');
-      try {
-        await vscode.workspace.fs.stat(manifestFile);
-        console.log(`environment exists: ${manifestFile}`);
-      } catch (e) {
-        console.log(e);
-        console.log(`${manifestFile} file does not exist.`);
-        this.envExists = false;
+    console.log('Reloading Flox environment...');
+
+    // We only work with single root workspaces or we will only
+    // activate an environment from the first workspace
+    //
+    // See more on multi-root workspaces: 
+    //   https://code.visualstudio.com/docs/editor/multi-root-workspaces
+
+    // If the manifest file exists, then the we mark the
+    // `flox.envExists` context to true, if manifest file does not
+    // exist we mark `flox.envExists` context to false.
+    const manifestFile = vscode.Uri.joinPath(this.workspaceUri, '.flox', 'env', 'manifest.toml');
+    try {
+      await vscode.workspace.fs.stat(manifestFile);
+      console.log(`environment exists: ${manifestFile}`);
+    } catch (e) {
+      console.log(e);
+      console.log(`${manifestFile} file does not exist.`);
+      this.envExists = false;
+      return
+    }
+
+    try {
+      const data: string = await fs.readFile(manifestFile.fsPath, 'utf-8');
+      let TOML = await import('smol-toml');
+      this.manifest = TOML.parse(data);
+      this.envExists = this.manifest;
+    } catch (e: any) {
+      this.envExists = false;
+      if (e.line && e.column && e.message) {
+        console.error(`Parsing manifest.toml error on line ${e.line}, column ${e.column}: ${e.message}`);
+      } else {
+        console.error(`Parsing manifest.toml error: ${e}`);
       }
+      return
+    }
 
-      try {
-        const data: string = await fs.readFile(manifestFile.fsPath, 'utf-8');
-        let TOML = await import('smol-toml');
-        this.manifest = TOML.parse(data);
-        this.envExists = this.manifest;
-      } catch (e: any) {
-        this.envExists = false;
-        if (e.line && e.column && e.message) {
-          console.error(`Parsing manifest.toml error on line ${e.line}, column ${e.column}: ${e.message}`);
-        } else {
-          console.error(`Parsing manifest.toml error: ${e}`);
-        }
+    // Refresh all UI components
+    for (const view of this.views) {
+      if (view?.refresh) {
+        await view.refresh();
       }
     }
   }
@@ -115,6 +147,8 @@ export default class Env implements vscode.Disposable {
 
   public registerView(viewName: string, view: any) {
     this.context.subscriptions.push(view.registerProvider(viewName))
+    view.env = this;
+    this.views.push(view);
   }
 
   public registerCommand(commandName: string, command: (...args: any[]) => any) {

@@ -10,17 +10,12 @@ class InstalledPackage extends vscode.TreeItem {
 
 export class InstallView implements vscode.TreeDataProvider<InstalledPackage> {
 
-  private env: Env;
+  env?: Env;
 
   private _onDidChangeTreeData: vscode.EventEmitter<InstalledPackage | undefined | null | void> = new vscode.EventEmitter<InstalledPackage | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<InstalledPackage | undefined | null | void> = this._onDidChangeTreeData.event;
 
-  constructor(env: Env) {
-    this.env = env;
-  }
-
   async refresh() {
-    await this.env.init();
     this._onDidChangeTreeData.fire();
   }
 
@@ -33,13 +28,13 @@ export class InstallView implements vscode.TreeDataProvider<InstalledPackage> {
   }
 
   getChildren(pkg?: InstalledPackage): Thenable<InstalledPackage[]> {
-    if (!this.env.envExists) {
+    if (!this.env?.envExists) {
       return Promise.resolve([]);
     }
 
     // Show packages
     if (!pkg) {
-      if (!this.env.manifest?.install) {
+      if (!this.env?.manifest?.install) {
         return Promise.resolve([]);
       }
       const pkgs = Object.keys(this.env.manifest.install)
@@ -52,6 +47,15 @@ export class InstallView implements vscode.TreeDataProvider<InstalledPackage> {
 }
 
 export class HelpView implements vscode.WebviewViewProvider {
+
+  env?: Env;
+
+  private _onDidChangeTreeData: vscode.EventEmitter<InstalledPackage | undefined | null | void> = new vscode.EventEmitter<InstalledPackage | undefined | null | void>();
+  readonly onDidChangeTreeData: vscode.Event<InstalledPackage | undefined | null | void> = this._onDidChangeTreeData.event;
+
+  async refresh() {
+    this._onDidChangeTreeData.fire();
+  }
 
   registerProvider(viewName: string) {
     return vscode.window.registerWebviewViewProvider(viewName, this);
