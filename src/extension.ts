@@ -13,8 +13,6 @@ export async function activate(context: vscode.ExtensionContext) {
 
   await env.reload();
 
-  installView.env = env;
-
   env.registerCommand('flox.init', async () => {
     const result = await env.exec("flox", { argv: ["init", "--dir", env.workspaceUri?.fsPath || ''] });
     if (result?.stdout) {

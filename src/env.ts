@@ -60,47 +60,70 @@ export default class Env implements vscode.Disposable {
       return
     }
 
-    console.log('Reloading Flox environment...');
-
     // We only work with single root workspaces or we will only
     // activate an environment from the first workspace
-    //
-    // See more on multi-root workspaces: 
-    //   https://code.visualstudio.com/docs/editor/multi-root-workspaces
-
-    // If the manifest file exists, then the we mark the
-    // `flox.envExists` context to true, if manifest file does not
-    // exist we mark `flox.envExists` context to false.
+    this.manifest = undefined;
     const manifestFile = vscode.Uri.joinPath(this.workspaceUri, '.flox', 'env', 'manifest.toml');
     try {
+      // check if manifest file exists
       await vscode.workspace.fs.stat(manifestFile);
       console.log(`environment exists: ${manifestFile}`);
     } catch (e) {
       console.log(e);
       console.log(`${manifestFile} file does not exist.`);
-      this.envExists = false;
-      return
     }
-
     try {
       const data: string = await fs.readFile(manifestFile.fsPath, 'utf-8');
       let TOML = await import('smol-toml');
       this.manifest = TOML.parse(data);
-      this.envExists = this.manifest;
     } catch (e: any) {
-      this.envExists = false;
       if (e.line && e.column && e.message) {
         console.error(`Parsing manifest.toml error on line ${e.line}, column ${e.column}: ${e.message}`);
       } else {
         console.error(`Parsing manifest.toml error: ${e}`);
       }
-      return
     }
 
-    // Refresh all UI components
-    for (const view of this.views) {
-      if (view?.refresh) {
-        await view.refresh();
+    var exists = false;
+    var hasPkgs = false;
+    var hasVars = false;
+    var hasServices = false;
+    if (this.manifest) {
+      exists = this.manifest !== undefined || true;
+      hasPkgs = this.manifest?.install !== undefined && Object.keys(this.manifest.install).length > 0;
+      hasVars = this.manifest?.vars !== undefined && Object.keys(this.manifest.vars).length > 0;
+      hasServices = this.manifest?.services !== undefined && Object.keys(this.manifest.services).length > 0;
+    }
+    vscode.commands.executeCommand('setContext', 'flox.envExists', exists);
+    vscode.commands.executeCommand('setContext', 'flox.hasPkgs', hasPkgs);
+    vscode.commands.executeCommand('setContext', 'flox.hasVars', hasVars);
+    vscode.commands.executeCommand('setContext', 'flox.hasServices', hasServices);
+
+    // Check if the environment is active
+    var envActive = false
+    if (process.env["_FLOX_ACTIVE_ENVIRONMENTS"]) {
+      try {
+        const result = JSON.parse(process.env["_FLOX_ACTIVE_ENVIRONMENTS"]);
+        const workspaceFloxPath = vscode.Uri.joinPath(this.workspaceUri, '.flox').fsPath
+
+        // Check that the last active environment is the same as the VSCode workspace
+        if (Array.isArray(result) && result.length > 0 && vscode.Uri.parse(result[0].path).fsPath === workspaceFloxPath) {
+          envActive = true
+          // TODO: inside result[0] there is also the information of remove
+          // environment
+        }
+      } catch (e: any) {
+        console.error(`Parsing FLOX_ACTIVE_ENVIRONMENTS variable error: ${e}`);
+      }
+    }
+    vscode.commands.executeCommand('setContext', 'flox.envActive', envActive);
+
+    // Refresh all UI components (we need to do this last)
+    if (this.manifest) {
+      for (const view of this.views) {
+        if (view?.refresh) {
+          await view.refresh();
+        }
       }
     }
   }
@@ -112,17 +135,6 @@ export default class Env implements vscode.Disposable {
   }
 
   private set envExists(manifest: any) {
-    const exists = manifest !== undefined || true;
-    const hasPkgs = manifest?.install !== undefined && Object.keys(manifest.install).length > 0;
-    const hasVars = manifest?.vars !== undefined && Object.keys(manifest.vars).length > 0;
-    const hasServices = manifest?.services !== undefined && Object.keys(manifest.services).length > 0;
-
-    this.context.workspaceState.update("flox.envExists", exists);
-
-    vscode.commands.executeCommand('setContext', 'flox.envExists', exists);
-    vscode.commands.executeCommand('setContext', 'flox.hasPkgs', hasPkgs);
-    vscode.commands.executeCommand('setContext', 'flox.hasVars', hasVars);
-    vscode.commands.executeCommand('setContext', 'flox.hasServices', hasServices);
   }
 
   private async onError(error: unknown) {
