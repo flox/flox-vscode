@@ -99,7 +99,11 @@ export default class Env implements vscode.Disposable {
       vscode.commands.executeCommand('setContext', 'flox.envExists', exists),
       vscode.commands.executeCommand('setContext', 'flox.hasPkgs', hasPkgs),
       vscode.commands.executeCommand('setContext', 'flox.hasVars', hasVars),
-      vscode.commands.executeCommand('setContext', 'flox.hasServices', hasServices)
+      vscode.commands.executeCommand('setContext', 'flox.hasServices', hasServices),
+      this.context.workspaceState.update('flox.envExists', exists),
+      this.context.workspaceState.update('flox.hasPkgs', hasPkgs),
+      this.context.workspaceState.update('flox.hasVars', hasVars),
+      this.context.workspaceState.update('flox.hasServices', hasServices)
     ]);
 
     // Check if the environment is active

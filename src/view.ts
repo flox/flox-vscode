@@ -28,7 +28,7 @@ export class InstallView implements vscode.TreeDataProvider<InstalledPackage> {
   }
 
   async getChildren(pkg?: InstalledPackage): Promise<InstalledPackage[]> {
-    const envExists = await vscode.commands.executeCommand('getContext', 'flox.envExists');
+    const envExists = this.env?.context.workspaceState.get('flox.envExists', false);
     if (envExists) {
       return [];
     }
