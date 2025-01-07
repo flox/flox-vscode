@@ -27,22 +27,23 @@ export class InstallView implements vscode.TreeDataProvider<InstalledPackage> {
     return pkg;
   }
 
-  getChildren(pkg?: InstalledPackage): Thenable<InstalledPackage[]> {
-    if (!this.env?.envExists) {
-      return Promise.resolve([]);
+  async getChildren(pkg?: InstalledPackage): Promise<InstalledPackage[]> {
+    const envExists = await vscode.commands.executeCommand('getContext', 'flox.envExists');
+    if (envExists) {
+      return [];
     }
 
     // Show packages
     if (!pkg) {
       if (!this.env?.manifest?.install) {
-        return Promise.resolve([]);
+        return [];
       }
       const pkgs = Object.keys(this.env.manifest.install)
-      return Promise.resolve(pkgs.map((x) => new InstalledPackage(x)));
+      return pkgs.map((x) => new InstalledPackage(x));
     }
 
     // TODO: Show package details
-    return Promise.resolve([]);
+    return [];
   }
 }
 

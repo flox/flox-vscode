@@ -94,10 +94,13 @@ export default class Env implements vscode.Disposable {
       hasVars = this.manifest?.vars !== undefined && Object.keys(this.manifest.vars).length > 0;
       hasServices = this.manifest?.services !== undefined && Object.keys(this.manifest.services).length > 0;
     }
-    vscode.commands.executeCommand('setContext', 'flox.envExists', exists);
-    vscode.commands.executeCommand('setContext', 'flox.hasPkgs', hasPkgs);
-    vscode.commands.executeCommand('setContext', 'flox.hasVars', hasVars);
-    vscode.commands.executeCommand('setContext', 'flox.hasServices', hasServices);
+
+    Promise.all([
+      vscode.commands.executeCommand('setContext', 'flox.envExists', exists),
+      vscode.commands.executeCommand('setContext', 'flox.hasPkgs', hasPkgs),
+      vscode.commands.executeCommand('setContext', 'flox.hasVars', hasVars),
+      vscode.commands.executeCommand('setContext', 'flox.hasServices', hasServices)
+    ]);
 
     // Check if the environment is active
     var envActive = false
@@ -129,13 +132,6 @@ export default class Env implements vscode.Disposable {
   }
 
   dispose() { }
-
-  public get envExists() {
-    return this.context.workspaceState.get("flox.envExists") ?? false;
-  }
-
-  private set envExists(manifest: any) {
-  }
 
   private async onError(error: unknown) {
     await this.displayError(error);

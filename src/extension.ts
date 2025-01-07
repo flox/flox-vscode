@@ -36,7 +36,8 @@ export async function activate(context: vscode.ExtensionContext) {
       cancellable: true,
     }, async (progress, _) => {
       return new Promise<void>(async (resolve, reject) => {
-        if (env.envExists === false) {
+        const envExists = await vscode.commands.executeCommand('getContext', 'flox.envExists');
+        if (!envExists) {
           await env.displayError("Environment does not exist.");
           reject();
         }
