@@ -2,18 +2,23 @@ import * as vscode from 'vscode';
 import Env from './env';
 
 
-class InstalledPackage extends vscode.TreeItem {
-  constructor(label: string) {
+export class Package extends vscode.TreeItem {
+  constructor(
+    public readonly label: string,
+  ) {
     super(label);
+    this.iconPath = new vscode.ThemeIcon('package');
   }
+
+  contextValue = 'pkg';
 }
 
-export class InstallView implements vscode.TreeDataProvider<InstalledPackage> {
+export class InstallView implements vscode.TreeDataProvider<Package> {
 
   env?: Env;
 
-  private _onDidChangeTreeData: vscode.EventEmitter<InstalledPackage | undefined | null | void> = new vscode.EventEmitter<InstalledPackage | undefined | null | void>();
-  readonly onDidChangeTreeData: vscode.Event<InstalledPackage | undefined | null | void> = this._onDidChangeTreeData.event;
+  private _onDidChangeTreeData: vscode.EventEmitter<Package | undefined | null | void> = new vscode.EventEmitter<Package | undefined | null | void>();
+  readonly onDidChangeTreeData: vscode.Event<Package | undefined | null | void> = this._onDidChangeTreeData.event;
 
   async refresh() {
     this._onDidChangeTreeData.fire();
@@ -23,13 +28,13 @@ export class InstallView implements vscode.TreeDataProvider<InstalledPackage> {
     return vscode.window.registerTreeDataProvider(viewName, this);
   }
 
-  getTreeItem(pkg: InstalledPackage): vscode.TreeItem {
+  getTreeItem(pkg: Package): vscode.TreeItem {
     return pkg;
   }
 
-  async getChildren(pkg?: InstalledPackage): Promise<InstalledPackage[]> {
+  async getChildren(pkg?: Package): Promise<Package[]> {
     const envExists = this.env?.context.workspaceState.get('flox.envExists', false);
-    if (envExists) {
+    if (!envExists) {
       return [];
     }
 
@@ -39,7 +44,7 @@ export class InstallView implements vscode.TreeDataProvider<InstalledPackage> {
         return [];
       }
       const pkgs = Object.keys(this.env.manifest.install)
-      return pkgs.map((x) => new InstalledPackage(x));
+      return pkgs.map((x) => new Package(x));
     }
 
     // TODO: Show package details
@@ -51,8 +56,8 @@ export class HelpView implements vscode.WebviewViewProvider {
 
   env?: Env;
 
-  private _onDidChangeTreeData: vscode.EventEmitter<InstalledPackage | undefined | null | void> = new vscode.EventEmitter<InstalledPackage | undefined | null | void>();
-  readonly onDidChangeTreeData: vscode.Event<InstalledPackage | undefined | null | void> = this._onDidChangeTreeData.event;
+  private _onDidChangeTreeData: vscode.EventEmitter<Package | undefined | null | void> = new vscode.EventEmitter<Package | undefined | null | void>();
+  readonly onDidChangeTreeData: vscode.Event<Package | undefined | null | void> = this._onDidChangeTreeData.event;
 
   async refresh() {
     this._onDidChangeTreeData.fire();

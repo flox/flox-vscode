@@ -97,19 +97,29 @@
     "commands": [
       {
         "command": "flox.init",
-        "title": "Flox: Init - Create an environment in the current directory"
+        "category": "Flox",
+        "title": "Create new environment"
       },
       {
         "command": "flox.version",
-        "title": "Flox: Show version"
+        "category": "Flox",
+        "title": "Show version"
       },
       {
         "command": "flox.activate",
-        "title": "Flox: Activate environment"
+        "category": "Flox",
+        "title": "Activate environment"
       },
       {
-        "command": "flox.search",
-        "title": "Flox: Search packages"
+        "command": "flox.install",
+        "category": "Flox",
+        "title": "Install a package"
+      },
+      {
+        "command": "flox.uninstall",
+        "category": "Flox",
+        "icon": "$(trash)",
+        "title": "Uninstall a package"
       }
     ],
     "menus": {
@@ -126,6 +136,13 @@
           "command": "flox.activate",
           "when": "flox.envExists == true",
           "group": "commandPalette"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "flox.uninstall",
+          "group": "inline",
+          "when": "view == floxInstallView && viewItem == pkg"
         }
       ]
     }

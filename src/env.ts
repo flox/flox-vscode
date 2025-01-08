@@ -164,9 +164,9 @@ export default class Env implements vscode.Disposable {
   }
 
   public registerCommand(commandName: string, command: (...args: any[]) => any) {
-    const tryCommand = async () => {
+    const tryCommand = async (...args: any[]) => {
       try {
-        return await command();
+        return await command(...args);
       } catch (error) {
         this.error.fire(error);
       }

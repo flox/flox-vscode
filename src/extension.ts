@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import Env from './env';
-import { HelpView, InstallView } from './view';
+import { HelpView, InstallView, Package } from './view';
 
 export async function activate(context: vscode.ExtensionContext) {
 
@@ -71,7 +71,7 @@ export async function activate(context: vscode.ExtensionContext) {
     });
   });
 
-  env.registerCommand('flox.search', async () => {
+  env.registerCommand('flox.install', async () => {
     let searchStr: string | undefined = await vscode.window.showInputBox({
       prompt: 'Search packages'
     });
@@ -101,18 +101,18 @@ export async function activate(context: vscode.ExtensionContext) {
         setTimeout(() => progress.report({ increment: 95 }), 15000);
         setTimeout(() => progress.report({ increment: 97 }), 20000);
 
-        const resultSearch = await env.exec("flox", { argv: ["search", "--json", searchStr] });
+        const result = await env.exec("flox", { argv: ["search", "--json", searchStr] });
         progress.report({ increment: 100 });
 
-        if (!resultSearch?.stdout) {
-          env.displayError(`Something went wrong when searching for '${searchStr}': ${resultSearch?.stderr}`);
+        if (!result?.stdout) {
+          env.displayError(`Something went wrong when searching for '${searchStr}': ${result?.stderr}`);
           reject();
           return
         }
 
         let parsedResult = [];
         try {
-          parsedResult = JSON.parse(resultSearch?.stdout || '[]');
+          parsedResult = JSON.parse(result?.stdout || '[]');
         } catch (error) {
           env.error.fire(error);
           reject();
@@ -157,18 +157,43 @@ export async function activate(context: vscode.ExtensionContext) {
         setTimeout(() => progress.report({ increment: 90 }), 38000);
         setTimeout(() => progress.report({ increment: 95 }), 50000);
         setTimeout(() => progress.report({ increment: 97 }), 60000);
-        const resultInstall = await env.exec("flox", { argv: ["install", selection.label || '', "--dir", env.workspaceUri?.fsPath || ''] });
+        const result = await env.exec("flox", { argv: ["install", selection.label || '', "--dir", env.workspaceUri?.fsPath || ''] });
         progress.report({ increment: 100 });
-        if (resultInstall?.stderr && resultInstall.stderr.includes(`'${selection.label}' installed to environment`)) {
+        if (result?.stderr && result.stderr.includes(`'${selection.label}' installed to environment`)) {
           env.displayMsg(`Package '${selection?.label}' installed successfully.`);
           resolve();
         } else {
-          env.displayError(`Something went wrong when installing '${selection?.label}': ${selection?.stderr}`);
+          env.displayError(`Something went wrong when installing '${selection?.label}': ${result?.stderr}`);
           reject();
         }
       });
-
     });
+  });
+
+  env.registerCommand('flox.uninstall', async (pkg: Package) => {
+
+    // Select a package to uninstall
+    if (!pkg) {
+      var pkgs: any[] = [];
+      if (env.manifest?.install) {
+        pkgs = Object.keys(env.manifest.install).map(x => new Package(x));
+      }
+      pkg = await vscode.window.showQuickPick(pkgs);
+
+      if (pkg === undefined || pkg?.label == undefined) {
+        env.displayMsg("No package selected to be uninstalled.");
+        return
+      }
+    }
+
+    // Uninstall the selected package
+    const result = await env.exec("flox", { argv: ["uninstall", pkg.label, "--dir", env.workspaceUri?.fsPath || ''] });
+    if (result?.stderr && result.stderr.includes(`'${pkg.label}' uninstalled from environment`)) {
+      env.displayMsg(`Package '${pkg.label}' uninstalled successfully.`);
+    } else {
+      env.displayError(`Something went wrong when uninstalling '${pkg.label}': ${result?.stderr}`);
+    }
 
   });
+
 }
