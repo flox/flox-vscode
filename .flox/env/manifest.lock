@@ -12,8 +12,8 @@
       "nodejs": {
         "pkg-path": "nodejs"
       },
-      "vscode": {
-        "pkg-path": "vscode"
+      "typescript-language-server": {
+        "pkg-path": "typescript-language-server"
       }
     },
     "hook": {
@@ -393,116 +393,116 @@
       "priority": 5
     },
     {
-      "attr_path": "vscode",
+      "attr_path": "typescript-language-server",
       "broken": false,
-      "derivation": "/nix/store/iy4li8kny4d45zd72dwbvkrdjpy8jy0h-vscode-1.96.2.drv",
-      "description": "Open source source code editor developed by Microsoft for Windows,\nLinux and macOS\n",
-      "install_id": "vscode",
-      "license": "Unfree",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=88195a94f390381c6afcdaa933c2f6ff93959cb4",
-      "name": "vscode-1.96.2",
-      "pname": "vscode",
-      "rev": "88195a94f390381c6afcdaa933c2f6ff93959cb4",
-      "rev_count": 729683,
-      "rev_date": "2024-12-29T11:18:24Z",
-      "scrape_date": "2024-12-31T03:56:31Z",
+      "derivation": "/nix/store/mhncckp7y1kz7nnxr62wzsws7hmqm25w-typescript-language-server-4.3.3.drv",
+      "description": "Language Server Protocol implementation for TypeScript using tsserver",
+      "install_id": "typescript-language-server",
+      "license": "[ Apache-2.0, MIT ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
+      "name": "typescript-language-server-4.3.3",
+      "pname": "typescript-language-server",
+      "rev": "5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
+      "rev_count": 720697,
+      "rev_date": "2024-12-11T18:06:44Z",
+      "scrape_date": "2024-12-14T03:50:50Z",
       "stabilities": [
         "unstable"
       ],
-      "unfree": true,
-      "version": "1.96.2",
+      "unfree": false,
+      "version": "4.3.3",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/m9igrahk1vxxwrmqa4g0x46l8i6bzixg-vscode-1.96.2"
+        "out": "/nix/store/2yqj9mbfj74n9r3chqnnwicrjhbml9wh-typescript-language-server-4.3.3"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
       "priority": 5
     },
     {
-      "attr_path": "vscode",
+      "attr_path": "typescript-language-server",
       "broken": false,
-      "derivation": "/nix/store/52gyni3lcsz6ancbbdyi9rhkrm0npr2y-vscode-1.96.2.drv",
-      "description": "Open source source code editor developed by Microsoft for Windows,\nLinux and macOS\n",
-      "install_id": "vscode",
-      "license": "Unfree",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=88195a94f390381c6afcdaa933c2f6ff93959cb4",
-      "name": "vscode-1.96.2",
-      "pname": "vscode",
-      "rev": "88195a94f390381c6afcdaa933c2f6ff93959cb4",
-      "rev_count": 729683,
-      "rev_date": "2024-12-29T11:18:24Z",
-      "scrape_date": "2024-12-31T03:56:31Z",
+      "derivation": "/nix/store/aqb9c0m3gwq2kfb6fvqz208sdzfsxkki-typescript-language-server-4.3.3.drv",
+      "description": "Language Server Protocol implementation for TypeScript using tsserver",
+      "install_id": "typescript-language-server",
+      "license": "[ Apache-2.0, MIT ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
+      "name": "typescript-language-server-4.3.3",
+      "pname": "typescript-language-server",
+      "rev": "5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
+      "rev_count": 720697,
+      "rev_date": "2024-12-11T18:06:44Z",
+      "scrape_date": "2024-12-14T03:50:50Z",
       "stabilities": [
         "unstable"
       ],
-      "unfree": true,
-      "version": "1.96.2",
+      "unfree": false,
+      "version": "4.3.3",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/a1f4wgvymwzi1kznspvrmi20kq6f40y3-vscode-1.96.2"
+        "out": "/nix/store/d8n8r8yyf04g0wdv5srgxy21isv5n4k4-typescript-language-server-4.3.3"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
       "priority": 5
     },
     {
-      "attr_path": "vscode",
+      "attr_path": "typescript-language-server",
       "broken": false,
-      "derivation": "/nix/store/avxyhhpz73ylvzjz6hjpg813wqsm6gfv-vscode-1.96.2.drv",
-      "description": "Open source source code editor developed by Microsoft for Windows,\nLinux and macOS\n",
-      "install_id": "vscode",
-      "license": "Unfree",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=88195a94f390381c6afcdaa933c2f6ff93959cb4",
-      "name": "vscode-1.96.2",
-      "pname": "vscode",
-      "rev": "88195a94f390381c6afcdaa933c2f6ff93959cb4",
-      "rev_count": 729683,
-      "rev_date": "2024-12-29T11:18:24Z",
-      "scrape_date": "2024-12-31T03:56:31Z",
+      "derivation": "/nix/store/82i6izx1kfasvwl100pz4k24kj44xsih-typescript-language-server-4.3.3.drv",
+      "description": "Language Server Protocol implementation for TypeScript using tsserver",
+      "install_id": "typescript-language-server",
+      "license": "[ Apache-2.0, MIT ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
+      "name": "typescript-language-server-4.3.3",
+      "pname": "typescript-language-server",
+      "rev": "5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
+      "rev_count": 720697,
+      "rev_date": "2024-12-11T18:06:44Z",
+      "scrape_date": "2024-12-14T03:50:50Z",
       "stabilities": [
         "unstable"
       ],
-      "unfree": true,
-      "version": "1.96.2",
+      "unfree": false,
+      "version": "4.3.3",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/4c08b4d2xr3qmq2dwwia9h90f01rpy6h-vscode-1.96.2"
+        "out": "/nix/store/0p1rcc2h7y4xvrmc9vk6ghqnrp60vgg0-typescript-language-server-4.3.3"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
       "priority": 5
     },
     {
-      "attr_path": "vscode",
+      "attr_path": "typescript-language-server",
       "broken": false,
-      "derivation": "/nix/store/9jzz0c4y54gxgcalvfflyzi5w59d7gqj-vscode-1.96.2.drv",
-      "description": "Open source source code editor developed by Microsoft for Windows,\nLinux and macOS\n",
-      "install_id": "vscode",
-      "license": "Unfree",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=88195a94f390381c6afcdaa933c2f6ff93959cb4",
-      "name": "vscode-1.96.2",
-      "pname": "vscode",
-      "rev": "88195a94f390381c6afcdaa933c2f6ff93959cb4",
-      "rev_count": 729683,
-      "rev_date": "2024-12-29T11:18:24Z",
-      "scrape_date": "2024-12-31T03:56:31Z",
+      "derivation": "/nix/store/s1lr6kf5m5mmz7ssn4a4mc7vcs4z8kp2-typescript-language-server-4.3.3.drv",
+      "description": "Language Server Protocol implementation for TypeScript using tsserver",
+      "install_id": "typescript-language-server",
+      "license": "[ Apache-2.0, MIT ]",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
+      "name": "typescript-language-server-4.3.3",
+      "pname": "typescript-language-server",
+      "rev": "5d67ea6b4b63378b9c13be21e2ec9d1afc921713",
+      "rev_count": 720697,
+      "rev_date": "2024-12-11T18:06:44Z",
+      "scrape_date": "2024-12-14T03:50:50Z",
       "stabilities": [
         "unstable"
       ],
-      "unfree": true,
-      "version": "1.96.2",
+      "unfree": false,
+      "version": "4.3.3",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/y6dsr8xc7fiagghrzz9nlqdl1dq0d9wc-vscode-1.96.2"
+        "out": "/nix/store/xzlmn00zgm6pz1p6q2zpcywf0i7acxy9-typescript-language-server-4.3.3"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
