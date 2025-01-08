@@ -30,8 +30,8 @@
 Flox you create environments that layer and replace dependencies just where it
 matters, making them portable across the full software lifecycle.
 
-`flox-vscode` is a VSCode editor extension that integrated Flox environments
-with VSCode editor.
+`flox-vscode` is a VSCode editor extension that integrates Flox environments
+with VSCode.
 
 <!-- TODO: List features (with screenshots) -->
 
