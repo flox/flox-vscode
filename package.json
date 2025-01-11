@@ -142,7 +142,7 @@
         {
           "command": "flox.uninstall",
           "group": "inline",
-          "when": "view == floxInstallView && viewItem == pkg"
+          "when": "view == floxInstallView && viewItem == package"
         }
       ]
     }
