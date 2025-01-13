@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 import Env from './env';
 import { HelpView, InstallView, Package } from './view';
-import * as path from 'path';
 
 export async function activate(context: vscode.ExtensionContext) {
 
@@ -198,15 +197,18 @@ export async function activate(context: vscode.ExtensionContext) {
   });
 
   env.registerCommand('flox.edit', async () => {
-    // This cwd is not recommended for extensions to use
-    const filePath = path.join(process.cwd(),'.flox','env','manifest.toml');
-    env.displayMsg('Opening: ' + filePath);
-    const openPath = vscode.Uri.file(filePath);
+    if (env.workspaceUri === undefined) {
+      return
+    }
+
+    const manifestUri = vscode.Uri.joinPath(env.workspaceUri, ".flox", "env", "manifest.toml");
+    env.displayMsg("Opening manifest.toml");
+
     try {
-      const doc = await vscode.workspace.openTextDocument(openPath);
+      const doc = await vscode.workspace.openTextDocument(manifestUri);
       await vscode.window.showTextDocument(doc);
     } catch (error) {
-      env.displayError('Error:' + error);
+      env.displayError(`Something went wrong when opening manifest.toml: ${error}`);
     }
   });
 
