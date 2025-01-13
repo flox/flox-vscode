@@ -1,6 +1,8 @@
 # Flox VSCode Extention
 
 ## Quick Start
+Ensure you have "Extension Test Runner" installed in your VSCode.
+It should be a recommended extension for a blank VSCode installation.
 
 ```console
 $ cd git clone git@github.com/flox/flox-vscode.git;

@@ -1,14 +1,17 @@
 import * as vscode from 'vscode';
 import Env from './env';
-import { HelpView, InstallView, Package } from './view';
+import { HelpView, VarsView, InstallView, Package } from './view';
 
 export async function activate(context: vscode.ExtensionContext) {
 
   const installView = new InstallView();
+  const varsView = new VarsView();
   const helpView = new HelpView();
 
   const env = new Env(context);
+
   env.registerView('floxInstallView', installView);
+  env.registerView('floxVarsView', varsView);
   env.registerView('floxHelpView', helpView);
 
   await env.reload();
@@ -194,6 +197,22 @@ export async function activate(context: vscode.ExtensionContext) {
       env.displayError(`Something went wrong when uninstalling '${pkg.label}': ${result?.stderr}`);
     }
 
+  });
+
+  env.registerCommand('flox.edit', async () => {
+    if (env.workspaceUri === undefined) {
+      return
+    }
+
+    const manifestUri = vscode.Uri.joinPath(env.workspaceUri, ".flox", "env", "manifest.toml");
+    env.displayMsg("Opening manifest.toml");
+
+    try {
+      const doc = await vscode.workspace.openTextDocument(manifestUri);
+      await vscode.window.showTextDocument(doc);
+    } catch (error) {
+      env.displayError(`Something went wrong when opening manifest.toml: ${error}`);
+    }
   });
 
 }
