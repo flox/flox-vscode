@@ -120,6 +120,11 @@
         "category": "Flox",
         "icon": "$(trash)",
         "title": "Uninstall a package"
+      },
+      {
+        "command": "flox.edit",
+        "category": "Flox",
+        "title": "Edit manifest.toml"
       }
     ],
     "menus": {
@@ -150,8 +155,8 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "package": "vsce package --allow-star-activation",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "compile": "tsc -p ./ && mkdir -p out/assets && cp assets/* out/assets",
+    "watch": "mkdir -p out/assets && cp assets/* out/assets && tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test"

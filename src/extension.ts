@@ -196,4 +196,20 @@ export async function activate(context: vscode.ExtensionContext) {
 
   });
 
+  env.registerCommand('flox.edit', async () => {
+    if (env.workspaceUri === undefined) {
+      return
+    }
+
+    const manifestUri = vscode.Uri.joinPath(env.workspaceUri, ".flox", "env", "manifest.toml");
+    env.displayMsg("Opening manifest.toml");
+
+    try {
+      const doc = await vscode.workspace.openTextDocument(manifestUri);
+      await vscode.window.showTextDocument(doc);
+    } catch (error) {
+      env.displayError(`Something went wrong when opening manifest.toml: ${error}`);
+    }
+  });
+
 }
