@@ -18,6 +18,7 @@ export default class Env implements vscode.Disposable {
   manifestWatcher: vscode.FileSystemWatcher;
   workspaceUri?: vscode.Uri;
   manifest?: any;
+  manifestLock?: any;
   views: any[];
 
   context: vscode.ExtensionContext;
@@ -52,6 +53,41 @@ export default class Env implements vscode.Disposable {
     this.views = [];
   }
 
+  async fileExists(file: vscode.Uri): Promise<boolean> {
+    try {
+      // check if manifest file exists
+      await vscode.workspace.fs.stat(file);
+      console.log(`environment exists: ${file}`);
+    } catch (e) {
+      console.log(e);
+      console.log(`${file} file does not exist.`);
+      return false
+    }
+    return true
+  }
+
+  async loadFile(file: vscode.Uri): Promise<any> {
+    if (await this.fileExists(file)) {
+      try {
+        const data: string = await fs.readFile(file.fsPath, 'utf-8');
+        if (file.fsPath.endsWith('.toml')) {
+          let TOML = await import('smol-toml');
+          return TOML.parse(data);
+        } else if (file.fsPath.endsWith('.lock')) {
+          return JSON.parse(data);
+        }
+      } catch (e: any) {
+        const filename = file.fsPath.split('/').reverse()[0];
+        if (e.line && e.column && e.message) {
+          console.error(`Parsing ${filename} error on line ${e.line}, column ${e.column}: ${e.message}`);
+        } else {
+          console.error(`Parsing ${filename} error: ${e}`);
+        }
+      }
+    }
+    return undefined;
+  }
+
   // initialize Flox environment
   async reload() {
 
@@ -62,27 +98,10 @@ export default class Env implements vscode.Disposable {
 
     // We only work with single root workspaces or we will only
     // activate an environment from the first workspace
-    this.manifest = undefined;
     const manifestFile = vscode.Uri.joinPath(this.workspaceUri, '.flox', 'env', 'manifest.toml');
-    try {
-      // check if manifest file exists
-      await vscode.workspace.fs.stat(manifestFile);
-      console.log(`environment exists: ${manifestFile}`);
-    } catch (e) {
-      console.log(e);
-      console.log(`${manifestFile} file does not exist.`);
-    }
-    try {
-      const data: string = await fs.readFile(manifestFile.fsPath, 'utf-8');
-      let TOML = await import('smol-toml');
-      this.manifest = TOML.parse(data);
-    } catch (e: any) {
-      if (e.line && e.column && e.message) {
-        console.error(`Parsing manifest.toml error on line ${e.line}, column ${e.column}: ${e.message}`);
-      } else {
-        console.error(`Parsing manifest.toml error: ${e}`);
-      }
-    }
+    const manifestLockFile = vscode.Uri.joinPath(this.workspaceUri, '.flox', 'env', 'manifest.lock');
+    this.manifest = await this.loadFile(manifestFile);
+    this.manifestLock = await this.loadFile(manifestLockFile);
 
     var exists = false;
     var hasPkgs = false;
