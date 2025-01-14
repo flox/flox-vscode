@@ -52,7 +52,7 @@ export class InstallView implements View, vscode.TreeDataProvider<PackageItem> {
 
     // Show packages
     if (!pkg && this.env?.packages && this.env?.system) {
-      const packages = this.env.packages.get(this.env.system)
+      const packages = this.env.packages.get(this.env.system);
       if (packages) {
         var result = [];
         for (const [_, pkg] of packages) {

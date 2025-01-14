@@ -114,7 +114,7 @@ export default class Env implements vscode.Disposable {
 
   // initialize Flox environment
   async reload() {
-    console.log("Environment reload")
+    console.log("Environment reload");
 
     // if there is no workspaceUri, we don't have a workspace to work with
     if (!this.workspaceUri) {
