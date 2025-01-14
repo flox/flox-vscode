@@ -1,17 +1,19 @@
 import * as vscode from 'vscode';
 import Env from './env';
-import { HelpView, VarsView, InstallView, PackageItem } from './view';
+import { HelpView, VarsView, InstallView, ServicesView, PackageItem, ServiceItem } from './view';
 
 export async function activate(context: vscode.ExtensionContext) {
 
   const installView = new InstallView();
   const varsView = new VarsView();
+  const servicesView = new ServicesView();
   const helpView = new HelpView();
 
   const env = new Env(context);
 
   env.registerView('floxInstallView', installView);
   env.registerView('floxVarsView', varsView);
+  env.registerView('floxServicesView', servicesView);
   env.registerView('floxHelpView', helpView);
 
   await env.reload();
@@ -173,30 +175,182 @@ export async function activate(context: vscode.ExtensionContext) {
     });
   });
 
-  env.registerCommand('flox.uninstall', async (pkg: PackageItem) => {
+  env.registerCommand('flox.uninstall', async (pkg: PackageItem | undefined) => {
+    if (env.workspaceUri === undefined) {
+      return;
+    }
 
     // Select a package to uninstall
     if (!pkg) {
-      var pkgs: any[] = [];
-      if (env.manifest?.install) {
-        pkgs = Object.keys(env.manifest.install).map(x => new PackageItem(x, ""));  // TODO Show version and description
+      var pkgs: vscode.QuickPickItem[] = [];
+      if (env?.packages && env?.system && env.packages.get(env.system)) {
+        for (const [_, p] of env.packages.get(env.system) || []) {
+          pkgs.push({
+            label: p.install_id,
+            description: `( ${p.version} )`,
+          });
+        }
       }
-      pkg = await vscode.window.showQuickPick(pkgs);
 
-      if (pkg === undefined || pkg?.label === undefined) {
+      if (pkgs.length === 0) {
+        env.displayMsg("No packages to uninstall.");
+        return;
+      }
+
+      const selected = await vscode.window.showQuickPick(pkgs);
+      if (selected === undefined || selected?.label === undefined) {
         env.displayMsg("No package selected to be uninstalled.");
+        return;
+      }
+
+      if (env?.packages && env?.system && env.packages.get(env.system)) {
+        const _pkg = env.packages.get(env.system)?.get(selected.label);
+        if (_pkg) {
+          pkg = new PackageItem(_pkg.install_id, `( ${_pkg.version} )`);
+        }
+      }
+
+      if (!pkg) {
         return;
       }
     }
 
+
     // Uninstall the selected package
-    const result = await env.exec("flox", { argv: ["uninstall", pkg.label, "--dir", env.workspaceUri?.fsPath || ''] });
+    const result = await env.exec("flox", { argv: ["uninstall", pkg.label, "--dir", env.workspaceUri.fsPath] });
     if (result?.stderr && result.stderr.includes(`'${pkg.label}' uninstalled from environment`)) {
       env.displayMsg(`Package '${pkg.label}' uninstalled successfully.`);
     } else {
       env.displayError(`Something went wrong when uninstalling '${pkg.label}': ${result?.stderr}`);
     }
 
+  });
+
+  env.registerCommand('flox.serviceStart', async (service: ServiceItem | undefined) => {
+    if (env.workspaceUri === undefined) {
+      return;
+    }
+
+    // Select a service to start
+    if (!service) {
+      var services: vscode.QuickPickItem[] = [];
+      if (env?.manifest?.manifest?.services) {
+        for (const s of env.manifest.manifest.services) {
+          services.push({
+            label: s.name,
+            description: s?.command,
+          });
+        }
+      }
+      if (services.length === 0) {
+        env.displayMsg("No services to start.");
+        return;
+      }
+
+      const selected = await vscode.window.showQuickPick(services);
+      if (selected === undefined || selected?.label === undefined) {
+        env.displayMsg("No service selected to be started.");
+        return;
+      }
+
+      service = new ServiceItem(selected.label, "", "");
+    }
+
+    try {
+      await env.exec("flox", { argv: ["activate", "--dir", env.workspaceUri.fsPath, "--", "flox", "services", "start", "--dir", env.workspaceUri.fsPath, service.label] });
+      // TODO: Show progress bad and wait until service is marked as Running
+    } catch (error) {
+      env.displayError(`Starting ${service.label} service error: ${error}`);
+    }
+
+    env.reload();
+  });
+
+  env.registerCommand('flox.serviceStop', async (service: ServiceItem | undefined) => {
+    if (env.workspaceUri === undefined) {
+      return;
+    }
+
+    // Select a service to start
+    if (!service) {
+      var services: vscode.QuickPickItem[] = [];
+      if (env?.servicesStatus) {
+        for (const [name, status] of env.servicesStatus) {
+          if (status?.status === "Running") {
+            services.push({
+              label: name,
+              description: status?.status || "Not started",
+            });
+          }
+        }
+      }
+      if (services.length === 0) {
+        env.displayMsg("No services to stop.");
+        return;
+      }
+
+      const selected = await vscode.window.showQuickPick(services);
+      if (selected === undefined || selected?.label === undefined) {
+        env.displayMsg("No service selected to be started.");
+        return;
+      }
+
+      service = new ServiceItem(selected.label, "", "");
+    }
+
+    try {
+      await env.exec("flox", { argv: ["services", "stop", "--dir", env.workspaceUri.fsPath, service.label] });
+      // TODO: Show progress bad and wait until service is marked as Running
+    } catch (error) {
+      env.displayError(`Starting ${service.label} service error: ${error}`);
+    }
+
+    env.reload();
+  });
+
+  env.registerCommand('flox.serviceRestart', async (service: ServiceItem | undefined) => {
+    if (env.workspaceUri === undefined) {
+      return;
+    }
+
+    // Select a service to start
+    if (!service) {
+      var services: vscode.QuickPickItem[] = [];
+      if (env?.manifest?.manifest?.services) {
+        for (const s of env.manifest.manifest.services) {
+          var status = "Not started";
+          if (env?.servicesStatus && env.servicesStatus.get(s.name)) {
+            const serviceStatus = env.servicesStatus.get(s.name);
+            status = serviceStatus?.status || "Not started";
+          }
+          services.push({
+            label: s.name,
+            description: `( ${status} ) ${s?.command}`,
+          });
+        }
+      }
+      if (services.length === 0) {
+        env.displayMsg("No services to restart.");
+        return;
+      }
+
+      const selected = await vscode.window.showQuickPick(services);
+      if (selected === undefined || selected?.label === undefined) {
+        env.displayMsg("No service selected to be started.");
+        return;
+      }
+
+      service = new ServiceItem(selected.label, "", "");
+    }
+
+    try {
+      await env.exec("flox", { argv: ["activate", "--dir", env.workspaceUri.fsPath, "--", "flox", "services", "restart", "--dir", env.workspaceUri.fsPath, service.label] });
+      // TODO: Show progress bad and wait until service is marked as Running
+    } catch (error) {
+      env.displayError(`Starting ${service.label} service error: ${error}`);
+    }
+
+    env.reload();
   });
 
   env.registerCommand('flox.edit', async () => {

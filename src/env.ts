@@ -3,7 +3,7 @@ import os from "os";
 import { promises as fs } from "fs";
 import { promisify } from 'util';
 import { spawn, execFile, ExecOptions } from 'child_process';
-import { View, System, Packages, Package } from './config';
+import { View, System, Packages, Package, Services } from './config';
 
 
 
@@ -22,6 +22,7 @@ export default class Env implements vscode.Disposable {
   workspaceUri?: vscode.Uri;
   manifest?: any;
   packages?: Packages;
+  servicesStatus?: Services;
   system?: System;
   views: View[];  // TODO: specify a type
 
@@ -194,6 +195,21 @@ export default class Env implements vscode.Disposable {
       }
     }
     vscode.commands.executeCommand('setContext', 'flox.envActive', envActive);
+
+    // Check for services status
+    if (hasServices === true) {
+      const result = await this.exec("flox", { argv: ["services", "status", "--json", "--dir", this.workspaceUri?.fsPath || ''] });
+      this.servicesStatus = new Map();
+      if (result?.stdout) {
+        for (const data of result.stdout.split('\n')) {
+          if (data.length === 0) {
+            continue;
+          }
+          const service = JSON.parse(data);
+          this.servicesStatus.set(service?.name, service);
+        }
+      }
+    }
 
     // Refresh all UI components (we need to do this last)
     if (this.manifest) {

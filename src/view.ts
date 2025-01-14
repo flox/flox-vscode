@@ -25,6 +25,21 @@ export class VariableItem extends vscode.TreeItem {
   contextValue = 'variable';
 }
 
+export class ServiceItem extends vscode.TreeItem {
+  constructor(
+    public readonly label: string,
+    public readonly description: string,
+    status: string,
+  ) {
+    super(label);
+    this.iconPath = new vscode.ThemeIcon('server-process');
+    if (status.toLowerCase() === "running") {
+      this.contextValue = `service-${status.toLowerCase()}`;
+    }
+  }
+  contextValue = 'service';
+}
+
 export class InstallView implements View, vscode.TreeDataProvider<PackageItem> {
 
   env?: Env;
@@ -91,13 +106,57 @@ export class VarsView implements View, vscode.TreeDataProvider<PackageItem> {
       return [];
     }
 
-    // Show variables
     if (!variable) {
       if (!this.env?.manifest?.manifest?.vars) {
         return [];
       }
       const vars = Object.keys(this.env.manifest.manifest.vars);
       return vars.map((name) => new VariableItem(name, this.env?.manifest?.manifest?.vars[name]));
+    }
+
+    return [];
+  }
+}
+
+export class ServicesView implements View, vscode.TreeDataProvider<PackageItem> {
+
+  env?: Env;
+
+  private _onDidChangeTreeData: vscode.EventEmitter<PackageItem | undefined | null | void> = new vscode.EventEmitter<PackageItem | undefined | null | void>();
+  readonly onDidChangeTreeData: vscode.Event<PackageItem | undefined | null | void> = this._onDidChangeTreeData.event;
+
+  async refresh() {
+    this._onDidChangeTreeData.fire();
+  }
+
+  registerProvider(viewName: string) {
+    return vscode.window.registerTreeDataProvider(viewName, this);
+  }
+
+  getTreeItem(service: ServiceItem): vscode.TreeItem {
+    return service;
+  }
+
+  async getChildren(service?: ServiceItem): Promise<PackageItem[]> {
+    const envExists = this.env?.context.workspaceState.get('flox.envExists', false);
+    if (!envExists) {
+      return [];
+    }
+
+    if (!service) {
+      if (!this.env?.manifest?.manifest?.services) {
+        return [];
+      }
+      const services = Object.keys(this.env.manifest.manifest.services);
+
+      return services.map((name) => {
+        var status = "Not started";
+        if (this.env?.servicesStatus && this.env.servicesStatus.get(name)) {
+          const serviceStatus = this.env.servicesStatus.get(name);
+          status = serviceStatus?.status || "Not started";
+        }
+        return new ServiceItem(name, `( ${status} )`, status);
+      });
     }
 
     return [];
