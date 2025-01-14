@@ -257,7 +257,8 @@ export async function activate(context: vscode.ExtensionContext) {
     }
 
     try {
-      await env.exec("flox", { argv: ["activate", "--dir", env.workspaceUri.fsPath, "--", "flox", "services", "start", "--dir", env.workspaceUri.fsPath, service.label] });
+      //await env.exec("flox", { argv: ["activate", "--dir", env.workspaceUri.fsPath, "--", "flox", "services", "start", "--dir", env.workspaceUri.fsPath, service.label] });
+      await env.exec("flox", { argv: ["services", "start", "--dir", env.workspaceUri.fsPath, service.label] });
       // TODO: Show progress bad and wait until service is marked as Running
     } catch (error) {
       env.displayError(`Starting ${service.label} service error: ${error}`);
@@ -344,7 +345,8 @@ export async function activate(context: vscode.ExtensionContext) {
     }
 
     try {
-      await env.exec("flox", { argv: ["activate", "--dir", env.workspaceUri.fsPath, "--", "flox", "services", "restart", "--dir", env.workspaceUri.fsPath, service.label] });
+      //await env.exec("flox", { argv: ["activate", "--dir", env.workspaceUri.fsPath, "--", "flox", "services", "restart", "--dir", env.workspaceUri.fsPath, service.label] });
+      await env.exec("flox", { argv: ["services", "restart", "--dir", env.workspaceUri.fsPath, service.label] });
       // TODO: Show progress bad and wait until service is marked as Running
     } catch (error) {
       env.displayError(`Starting ${service.label} service error: ${error}`);

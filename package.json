@@ -170,17 +170,17 @@
         {
           "command": "flox.serviceStart",
           "group": "inline",
-          "when": "view == floxServicesView && viewItem == service"
+          "when": "flox.envActive && view == floxServicesView && viewItem == service"
         },
         {
           "command": "flox.serviceStop",
           "group": "inline",
-          "when": "view == floxServicesView && viewItem == service-running"
+          "when": "flox.envActive && view == floxServicesView && viewItem == service-running"
         },
         {
           "command": "flox.serviceRestart",
           "group": "inline",
-          "when": "view == floxServicesView && viewItem == service-running"
+          "when": "flox.envActive && view == floxServicesView && viewItem == service-running"
         }
       ]
     }
