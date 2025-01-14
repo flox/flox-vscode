@@ -1,10 +1,12 @@
 import * as vscode from 'vscode';
 import Env from './env';
+import { View } from './config';
 
 
-export class Package extends vscode.TreeItem {
+export class PackageItem extends vscode.TreeItem {
   constructor(
     public readonly label: string,
+    public readonly description: string,
   ) {
     super(label);
     this.iconPath = new vscode.ThemeIcon('package');
@@ -12,7 +14,7 @@ export class Package extends vscode.TreeItem {
   contextValue = 'package';
 }
 
-export class Variable extends vscode.TreeItem {
+export class VariableItem extends vscode.TreeItem {
   constructor(
     public readonly label: string,
     public readonly description: string,
@@ -23,51 +25,53 @@ export class Variable extends vscode.TreeItem {
   contextValue = 'variable';
 }
 
-export class InstallView implements vscode.TreeDataProvider<Package> {
+export class InstallView implements View, vscode.TreeDataProvider<PackageItem> {
 
   env?: Env;
 
-  private _onDidChangeTreeData: vscode.EventEmitter<Package | undefined | null | void> = new vscode.EventEmitter<Package | undefined | null | void>();
-  readonly onDidChangeTreeData: vscode.Event<Package | undefined | null | void> = this._onDidChangeTreeData.event;
+  private _onDidChangeTreeData: vscode.EventEmitter<PackageItem | undefined | null | void> = new vscode.EventEmitter<PackageItem | undefined | null | void>();
+  readonly onDidChangeTreeData: vscode.Event<PackageItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
   async refresh() {
     this._onDidChangeTreeData.fire();
   }
 
-  registerProvider(viewName: string) {
+  registerProvider(viewName: string): vscode.Disposable {
     return vscode.window.registerTreeDataProvider(viewName, this);
   }
 
-  getTreeItem(pkg: Package): vscode.TreeItem {
+  getTreeItem(pkg: PackageItem): vscode.TreeItem {
     return pkg;
   }
 
-  async getChildren(pkg?: Package): Promise<Package[]> {
+  async getChildren(pkg?: PackageItem): Promise<PackageItem[]> {
     const envExists = this.env?.context.workspaceState.get('flox.envExists', false);
     if (!envExists) {
       return [];
     }
 
     // Show packages
-    if (!pkg) {
-      if (!this.env?.manifest?.install) {
-        return [];
+    if (!pkg && this.env?.packages && this.env?.system) {
+      const packages = this.env.packages.get(this.env.system);
+      if (packages) {
+        var result = [];
+        for (const [_, pkg] of packages) {
+          result.push(new PackageItem(pkg.install_id, `( ${pkg.version} )`));
+        }
+        return result;
       }
-      const packages = Object.keys(this.env.manifest.install)
-      return packages.map((x) => new Package(x));
     }
 
-    // TODO: Show package details
     return [];
   }
 }
 
-export class VarsView implements vscode.TreeDataProvider<Package> {
+export class VarsView implements View, vscode.TreeDataProvider<PackageItem> {
 
   env?: Env;
 
-  private _onDidChangeTreeData: vscode.EventEmitter<Package | undefined | null | void> = new vscode.EventEmitter<Package | undefined | null | void>();
-  readonly onDidChangeTreeData: vscode.Event<Package | undefined | null | void> = this._onDidChangeTreeData.event;
+  private _onDidChangeTreeData: vscode.EventEmitter<PackageItem | undefined | null | void> = new vscode.EventEmitter<PackageItem | undefined | null | void>();
+  readonly onDidChangeTreeData: vscode.Event<PackageItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
   async refresh() {
     this._onDidChangeTreeData.fire();
@@ -77,11 +81,11 @@ export class VarsView implements vscode.TreeDataProvider<Package> {
     return vscode.window.registerTreeDataProvider(viewName, this);
   }
 
-  getTreeItem(variable: Variable): vscode.TreeItem {
+  getTreeItem(variable: VariableItem): vscode.TreeItem {
     return variable;
   }
 
-  async getChildren(variable?: Variable): Promise<Package[]> {
+  async getChildren(variable?: VariableItem): Promise<PackageItem[]> {
     const envExists = this.env?.context.workspaceState.get('flox.envExists', false);
     if (!envExists) {
       return [];
@@ -89,23 +93,23 @@ export class VarsView implements vscode.TreeDataProvider<Package> {
 
     // Show variables
     if (!variable) {
-      if (!this.env?.manifest?.vars) {
+      if (!this.env?.manifest?.manifest?.vars) {
         return [];
       }
-      const vars = Object.keys(this.env.manifest.vars)
-      return vars.map((name) => new Variable(name, this.env?.manifest?.vars[name]));
+      const vars = Object.keys(this.env.manifest.manifest.vars);
+      return vars.map((name) => new VariableItem(name, this.env?.manifest?.manifest?.vars[name]));
     }
 
     return [];
   }
 }
 
-export class HelpView implements vscode.WebviewViewProvider {
+export class HelpView implements View, vscode.WebviewViewProvider {
 
   env?: Env;
 
-  private _onDidChangeTreeData: vscode.EventEmitter<Package | undefined | null | void> = new vscode.EventEmitter<Package | undefined | null | void>();
-  readonly onDidChangeTreeData: vscode.Event<Package | undefined | null | void> = this._onDidChangeTreeData.event;
+  private _onDidChangeTreeData: vscode.EventEmitter<PackageItem | undefined | null | void> = new vscode.EventEmitter<PackageItem | undefined | null | void>();
+  readonly onDidChangeTreeData: vscode.Event<PackageItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
   async refresh() {
     this._onDidChangeTreeData.fire();
@@ -135,5 +139,3 @@ export class HelpView implements vscode.WebviewViewProvider {
     `;
   }
 }
-
-

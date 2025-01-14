@@ -1,7 +1,10 @@
 import * as vscode from 'vscode';
+import os from "os";
 import { promises as fs } from "fs";
 import { promisify } from 'util';
 import { spawn, execFile, ExecOptions } from 'child_process';
+import { View, System, Packages, Package } from './config';
+
 
 
 interface CommandExecOptions {
@@ -18,7 +21,9 @@ export default class Env implements vscode.Disposable {
   manifestWatcher: vscode.FileSystemWatcher;
   workspaceUri?: vscode.Uri;
   manifest?: any;
-  views: any[];
+  packages?: Packages;
+  system?: System;
+  views: View[];  // TODO: specify a type
 
   context: vscode.ExtensionContext;
   error = new vscode.EventEmitter<unknown>();
@@ -50,37 +55,102 @@ export default class Env implements vscode.Disposable {
       await this.reload();
     });
     this.views = [];
+
+    // Detect system
+    const platform = os.platform();
+    const arch = os.arch();
+    switch (`${arch}-${platform}`) {
+      case "arm64-darwin":
+        this.system = System.AARCH64_DARWIN;
+        break;
+      case "arm64-linux":
+        this.system = System.AARCH64_LINUX;
+        break;
+      case "x64-linux":
+        this.system = System.X86_64_LINUX;
+        break;
+      case "x64-darwin":
+        this.system = System.X86_64_DARWIN;
+        break;
+      default:
+        this.displayError(`Unsupported system: ${arch}-${platform}`);
+    }
+  }
+
+  async fileExists(file: vscode.Uri): Promise<boolean> {
+    try {
+      // check if manifest file exists
+      await vscode.workspace.fs.stat(file);
+      console.log(`environment exists: ${file}`);
+    } catch (e) {
+      console.log(e);
+      console.log(`${file} file does not exist.`);
+      return false;
+    }
+    return true;
+  }
+
+  async loadFile(file: vscode.Uri): Promise<any> {
+    if (await this.fileExists(file)) {
+      try {
+        const data: string = await fs.readFile(file.fsPath, 'utf-8');
+        if (file.fsPath.endsWith('.toml')) {
+          let TOML = await import('smol-toml');
+          return TOML.parse(data);
+        } else if (file.fsPath.endsWith('.lock')) {
+          return JSON.parse(data);
+        }
+      } catch (e: any) {
+        const filename = file.fsPath.split('/').reverse()[0];
+        if (e.line && e.column && e.message) {
+          console.error(`Parsing ${filename} error on line ${e.line}, column ${e.column}: ${e.message}`);
+        } else {
+          console.error(`Parsing ${filename} error: ${e}`);
+        }
+      }
+    }
+    return undefined;
   }
 
   // initialize Flox environment
   async reload() {
+    console.log("Environment reload");
 
     // if there is no workspaceUri, we don't have a workspace to work with
     if (!this.workspaceUri) {
-      return
+      return;
     }
 
     // We only work with single root workspaces or we will only
     // activate an environment from the first workspace
-    this.manifest = undefined;
     const manifestFile = vscode.Uri.joinPath(this.workspaceUri, '.flox', 'env', 'manifest.toml');
-    try {
-      // check if manifest file exists
-      await vscode.workspace.fs.stat(manifestFile);
-      console.log(`environment exists: ${manifestFile}`);
-    } catch (e) {
-      console.log(e);
-      console.log(`${manifestFile} file does not exist.`);
+    const manifestLockFile = vscode.Uri.joinPath(this.workspaceUri, '.flox', 'env', 'manifest.lock');
+    if (await this.fileExists(manifestLockFile)) {
+      this.manifest = await this.loadFile(manifestLockFile);
+    } else if (await this.fileExists(manifestFile)) {
+      this.manifest = { manifest: await this.loadFile(manifestLockFile) };
     }
-    try {
-      const data: string = await fs.readFile(manifestFile.fsPath, 'utf-8');
-      let TOML = await import('smol-toml');
-      this.manifest = TOML.parse(data);
-    } catch (e: any) {
-      if (e.line && e.column && e.message) {
-        console.error(`Parsing manifest.toml error on line ${e.line}, column ${e.column}: ${e.message}`);
-      } else {
-        console.error(`Parsing manifest.toml error: ${e}`);
+    if (this.manifest?.packages) {
+      this.packages = new Map();
+      for (const system in System) {
+        const systemValue = System[system as keyof typeof System];
+        const pkgsForSystem: Map<string, Package> = new Map(
+          this.manifest.packages
+            .filter((p: any) => p.system === systemValue)
+            .map((p: any) => [
+              p.install_id,
+              {
+                install_id: p.install_id,
+                system: p.system,
+                version: p.version,
+                group: p.group,
+                license: p.license,
+                description: p.description,
+                attr_path: p.attr_path,
+              }
+            ])
+        );
+        this.packages.set(System[system as keyof typeof System], pkgsForSystem);
       }
     }
 
@@ -90,9 +160,9 @@ export default class Env implements vscode.Disposable {
     var hasServices = false;
     if (this.manifest) {
       exists = this.manifest !== undefined || true;
-      hasPkgs = this.manifest?.install !== undefined && Object.keys(this.manifest.install).length > 0;
-      hasVars = this.manifest?.vars !== undefined && Object.keys(this.manifest.vars).length > 0;
-      hasServices = this.manifest?.services !== undefined && Object.keys(this.manifest.services).length > 0;
+      hasPkgs = this.manifest?.manifest?.install !== undefined && Object.keys(this.manifest.manifest.install).length > 0;
+      hasVars = this.manifest?.manifest?.vars !== undefined && Object.keys(this.manifest.manifest.vars).length > 0;
+      hasServices = this.manifest?.manifest?.services !== undefined && Object.keys(this.manifest.manifest.services).length > 0;
     }
 
     Promise.all([
@@ -107,15 +177,15 @@ export default class Env implements vscode.Disposable {
     ]);
 
     // Check if the environment is active
-    var envActive = false
+    var envActive = false;
     if (process.env["_FLOX_ACTIVE_ENVIRONMENTS"]) {
       try {
         const result = JSON.parse(process.env["_FLOX_ACTIVE_ENVIRONMENTS"]);
-        const workspaceFloxPath = vscode.Uri.joinPath(this.workspaceUri, '.flox').fsPath
+        const workspaceFloxPath = vscode.Uri.joinPath(this.workspaceUri, '.flox').fsPath;
 
         // Check that the last active environment is the same as the VSCode workspace
         if (Array.isArray(result) && result.length > 0 && vscode.Uri.parse(result[0].path).fsPath === workspaceFloxPath) {
-          envActive = true
+          envActive = true;
           // TODO: inside result[0] there is also the information of remove
           // environment
         }
@@ -158,7 +228,7 @@ export default class Env implements vscode.Disposable {
   }
 
   public registerView(viewName: string, view: any) {
-    this.context.subscriptions.push(view.registerProvider(viewName))
+    this.context.subscriptions.push(view.registerProvider(viewName));
     view.env = this;
     this.views.push(view);
   }
@@ -190,7 +260,7 @@ export default class Env implements vscode.Disposable {
     }
   }
 
-  public async reopen(progress: any, reject: any, resolve: any) {
+  public async reopen(_: any, reject: any, resolve: any) {
     const reopenScript = vscode.Uri.joinPath(this.context.extensionUri, 'out', 'scripts', 'reopen.sh');
     console.log('reopen.sh path: ', reopenScript.fsPath);
 

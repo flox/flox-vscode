@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import Env from './env';
-import { HelpView, VarsView, InstallView, Package } from './view';
+import { HelpView, VarsView, InstallView, PackageItem } from './view';
 
 export async function activate(context: vscode.ExtensionContext) {
 
@@ -80,9 +80,9 @@ export async function activate(context: vscode.ExtensionContext) {
     });
     if (searchStr === undefined) {
       env.displayMsg("Search query is empty, try again.");
-      return
+      return;
     }
-    searchStr = searchStr.trim()
+    searchStr = searchStr.trim();
     if (searchStr.length <= 0) {
       env.displayMsg("Search query is empty, try again.");
     }
@@ -110,7 +110,7 @@ export async function activate(context: vscode.ExtensionContext) {
         if (!result?.stdout) {
           env.displayError(`Something went wrong when searching for '${searchStr}': ${result?.stderr}`);
           reject();
-          return
+          return;
         }
 
         let parsedResult = [];
@@ -119,12 +119,12 @@ export async function activate(context: vscode.ExtensionContext) {
         } catch (error) {
           env.error.fire(error);
           reject();
-          return
+          return;
         }
         if (parsedResult === undefined || parsedResult.length === 0) {
           env.displayMsg(`No results found for '${searchStr}'.`);
           reject();
-          return
+          return;
         }
 
         resolve(parsedResult);
@@ -138,9 +138,9 @@ export async function activate(context: vscode.ExtensionContext) {
       };
     }));
 
-    if (selection === undefined || selection?.label == undefined) {
+    if (selection === undefined || selection?.label === undefined) {
       env.displayMsg("No package selected to be installed.");
-      return
+      return;
     }
 
     // TODO: call install command once we have it
@@ -173,19 +173,19 @@ export async function activate(context: vscode.ExtensionContext) {
     });
   });
 
-  env.registerCommand('flox.uninstall', async (pkg: Package) => {
+  env.registerCommand('flox.uninstall', async (pkg: PackageItem) => {
 
     // Select a package to uninstall
     if (!pkg) {
       var pkgs: any[] = [];
       if (env.manifest?.install) {
-        pkgs = Object.keys(env.manifest.install).map(x => new Package(x));
+        pkgs = Object.keys(env.manifest.install).map(x => new PackageItem(x, ""));  // TODO Show version and description
       }
       pkg = await vscode.window.showQuickPick(pkgs);
 
-      if (pkg === undefined || pkg?.label == undefined) {
+      if (pkg === undefined || pkg?.label === undefined) {
         env.displayMsg("No package selected to be uninstalled.");
-        return
+        return;
       }
     }
 
@@ -201,7 +201,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   env.registerCommand('flox.edit', async () => {
     if (env.workspaceUri === undefined) {
-      return
+      return;
     }
 
     const manifestUri = vscode.Uri.joinPath(env.workspaceUri, ".flox", "env", "manifest.toml");
