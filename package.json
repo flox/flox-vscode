@@ -124,18 +124,21 @@
       {
         "command": "flox.serviceStart",
         "category": "Flox",
+        "when": "flox.envActive",
         "icon": "$(run)",
         "title": "Start a service"
       },
       {
         "command": "flox.serviceStop",
         "category": "Flox",
+        "when": "flox.envActive",
         "icon": "$(stop)",
         "title": "Stop a service"
       },
       {
         "command": "flox.serviceRestart",
         "category": "Flox",
+        "when": "flox.envActive",
         "icon": "$(refresh)",
         "title": "Restart a service"
       },
