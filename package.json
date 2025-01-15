@@ -47,21 +47,21 @@
     },
     "viewsWelcome": [
       {
-        "view": "floxSearchView",
+        "view": "floxInfoView",
         "contents": "Welcome to Flox!"
       },
       {
-        "view": "floxSearchView",
+        "view": "floxInfoView",
         "contents": "We couldn't find any Flox environment.\n[Create environment](command:flox.init)",
         "when": "!flox.envExists"
       },
       {
-        "view": "floxSearchView",
-        "contents": "Missing something? Find and install a package.\n[Search](command:flox.search)",
+        "view": "floxInfoView",
+        "contents": "Missing something? Find and install a package.\n[Install](command:flox.install)",
         "when": "flox.envExists"
       },
       {
-        "view": "floxSearchView",
+        "view": "floxInfoView",
         "contents": "We noticed your Flox environment is not active. Do you wish to activate it?\n[Activate](command:flox.activate)",
         "when": "flox.envExists && !flox.envActive"
       }
@@ -69,7 +69,7 @@
     "views": {
       "flox": [
         {
-          "id": "floxSearchView",
+          "id": "floxInfoView",
           "name": "Search & Install packages"
         },
         {
@@ -122,6 +122,27 @@
         "title": "Uninstall a package"
       },
       {
+        "command": "flox.serviceStart",
+        "category": "Flox",
+        "when": "flox.envActive",
+        "icon": "$(run)",
+        "title": "Start a service"
+      },
+      {
+        "command": "flox.serviceStop",
+        "category": "Flox",
+        "when": "flox.envActive",
+        "icon": "$(stop)",
+        "title": "Stop a service"
+      },
+      {
+        "command": "flox.serviceRestart",
+        "category": "Flox",
+        "when": "flox.envActive",
+        "icon": "$(refresh)",
+        "title": "Restart a service"
+      },
+      {
         "command": "flox.edit",
         "category": "Flox",
         "title": "Edit manifest.toml"
@@ -148,6 +169,21 @@
           "command": "flox.uninstall",
           "group": "inline",
           "when": "view == floxInstallView && viewItem == package"
+        },
+        {
+          "command": "flox.serviceStart",
+          "group": "inline",
+          "when": "flox.envActive && view == floxServicesView && viewItem == service"
+        },
+        {
+          "command": "flox.serviceStop",
+          "group": "inline",
+          "when": "flox.envActive && view == floxServicesView && viewItem == service-running"
+        },
+        {
+          "command": "flox.serviceRestart",
+          "group": "inline",
+          "when": "flox.envActive && view == floxServicesView && viewItem == service-running"
         }
       ]
     }

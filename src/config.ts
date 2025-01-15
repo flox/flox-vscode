@@ -19,6 +19,13 @@ export type Package = {
 
 export type Packages = Map<System, Map<string, Package>>
 
+export type Service = {
+  name: string,
+  status: string,
+  pid: number,
+}
+export type Services = Map<string, Service>
+
 export interface View {
   registerProvider(viewName: string): vscode.Disposable;
   refresh(): Promise<void>;
