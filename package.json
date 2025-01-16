@@ -86,11 +86,6 @@
           "id": "floxServicesView",
           "name": "Services",
           "when": "flox.envExists && flox.hasServices"
-        },
-        {
-          "id": "floxHelpView",
-          "type": "webview",
-          "name": "Help & Docs"
         }
       ]
     },
