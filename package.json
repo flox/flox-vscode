@@ -57,13 +57,23 @@
       },
       {
         "view": "floxInfoView",
-        "contents": "Missing something? Find and install a package.\n[Install](command:flox.install)",
+        "contents": "We noticed your Flox environment is not active. Do you wish to activate it?\n[Activate](command:flox.activate)",
+        "when": "flox.envExists && !flox.envActive"
+      },
+      {
+        "view": "floxInstallView",
+        "contents": "Find and install a package.\n[Install](command:flox.install)",
         "when": "flox.envExists"
       },
       {
-        "view": "floxInfoView",
-        "contents": "We noticed your Flox environment is not active. Do you wish to activate it?\n[Activate](command:flox.activate)",
-        "when": "flox.envExists && !flox.envActive"
+        "view": "floxVarsView",
+        "contents": "Add variable(s).\n[Edit manifest.toml](command:flox.edit)",
+        "when": "flox.envExists"
+      },
+      {
+        "view": "floxServicesView",
+        "contents": "Add services(s).\n[Edit manifest.toml](command:flox.edit)",
+        "when": "flox.envExists"
       }
     ],
     "views": {
@@ -75,17 +85,17 @@
         {
           "id": "floxInstallView",
           "name": "Installed Packages",
-          "when": "flox.envExists && flox.hasPkgs"
+          "when": "flox.envExists"
         },
         {
           "id": "floxVarsView",
           "name": "Variables",
-          "when": "flox.envExists && flox.hasVars"
+          "when": "flox.envExists"
         },
         {
           "id": "floxServicesView",
           "name": "Services",
-          "when": "flox.envExists && flox.hasServices"
+          "when": "flox.envExists"
         },
         {
           "id": "floxHelpView",
@@ -113,6 +123,7 @@
       {
         "command": "flox.install",
         "category": "Flox",
+        "icon": "$(add)",
         "title": "Install a package"
       },
       {
@@ -152,7 +163,7 @@
       "commandPalette": [
         {
           "command": "flox.init",
-          "when": "flox.envExists == false"
+          "when": "!flox.envExists"
         },
         {
           "command": "flox.version",
@@ -160,8 +171,45 @@
         },
         {
           "command": "flox.activate",
-          "when": "flox.envExists == true",
+          "when": "flox.envExists",
           "group": "commandPalette"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "flox.init",
+          "title": "Create new environment",
+          "when": "view == floxInfoView && !flox.envExists"
+        },
+        {
+          "command": "flox.install",
+          "title": "Install a package",
+          "when": "(view == floxInfoView || view == floxInstallView) && flox.envExists"
+        },
+        {
+          "command": "flox.install",
+          "group": "navigation",
+          "when": "view == floxInstallView && flox.envExists"
+        },
+        {
+          "command": "flox.uninstall",
+          "title": "Uninstall a package",
+          "when": "(view == floxInfoView || view == floxInstallView) && flox.envExists && flox.hasPkgs"
+        },
+        {
+          "command": "flox.uninstall",
+          "group": "navigation",
+          "when": "view == floxInstallView && flox.envExists && flox.hasPkgs"
+        },
+        {
+          "command": "flox.activate",
+          "title": "Activate environment",
+          "when": "view == floxInfoView && flox.envExists && !flox.envActive"
+        },
+        {
+          "command": "flox.edit",
+          "title": "Edit manifest.toml",
+          "when": "(view == floxInfoView || view == floxInstallView || view == floxVarsView || view == floxServicesView) && flox.envExists"
         }
       ],
       "view/item/context": [
