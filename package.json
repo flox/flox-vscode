@@ -48,7 +48,13 @@
     "viewsWelcome": [
       {
         "view": "floxInfoView",
-        "contents": "Welcome to Flox!"
+        "contents": "Welcome to Flox!",
+        "when": "!flox.envActive"
+      },
+      {
+        "view": "floxInfoView",
+        "contents": "Your environment is active!",
+        "when": "flox.envActive"
       },
       {
         "view": "floxInfoView",
@@ -57,13 +63,18 @@
       },
       {
         "view": "floxInfoView",
-        "contents": "We noticed your Flox environment is not active. Do you wish to activate it?\n[Activate](command:flox.activate)",
-        "when": "flox.envExists && !flox.envActive"
+        "contents": "Your Flox environment is not active.\n[Activate an environment](command:flox.activate)",
+        "when": "flox.envExists .envActive"
       },
       {
-        "view": "floxInstallView",
-        "contents": "Find and install a package.\n[Install](command:flox.install)",
+        "view": "floxInfoView",
+        "contents": "Find and install a package.\n[Install a package](command:flox.install)",
         "when": "flox.envExists"
+      },
+      {
+        "view": "floxInfoView",
+        "contents": "Don't be a stranger, [say hi](https://go.flox.dev/slack)!",
+        "when": "!flox.envActive"
       },
       {
         "view": "floxVarsView",
