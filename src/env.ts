@@ -313,6 +313,83 @@ export default class Env implements vscode.Disposable {
     }
   }
 
+  public async searchInput(query?: string): Promise<string | undefined> {
+    let searchStr: string | undefined = await vscode.window.showInputBox({
+      prompt: 'Search packages',
+      placeHolder: query,
+    });
+    if (searchStr === undefined) {
+      this.displayMsg("Search query is empty, try again.");
+      return;
+    }
+    searchStr = searchStr.trim();
+    if (searchStr.length <= 0) {
+      this.displayMsg("Search query is empty, try again.");
+    }
+
+    return searchStr;
+  }
+
+  public async search(query?: string): Promise<any[]> {
+    query = await this.searchInput(query);
+
+    if (!query) {
+      return [];
+    }
+
+    const searchResults = await vscode.window.withProgress({
+      location: vscode.ProgressLocation.Notification,
+      title: `Searching for '${query}' ... `,
+      cancellable: true,
+    }, async (progress, _) => {
+      return new Promise<any[]>(async (resolve, reject) => {
+        progress.report({ increment: 0 });
+        setTimeout(() => progress.report({ increment: 10 }), 1000);
+        setTimeout(() => progress.report({ increment: 40 }), 2000);
+        setTimeout(() => progress.report({ increment: 60 }), 4000);
+        setTimeout(() => progress.report({ increment: 70 }), 8000);
+        setTimeout(() => progress.report({ increment: 80 }), 9000);
+        setTimeout(() => progress.report({ increment: 85 }), 10000);
+        setTimeout(() => progress.report({ increment: 90 }), 12000);
+        setTimeout(() => progress.report({ increment: 95 }), 15000);
+        setTimeout(() => progress.report({ increment: 97 }), 20000);
+
+        const result = await this.exec("flox", { argv: ["search", "--json", query] }, (error) => {
+          return true;
+        });
+        progress.report({ increment: 100 });
+
+        if (!result?.stdout) {
+          this.displayError(`Something went wrong when searching for '${query}': ${result?.stderr}`);
+          reject([]);
+          return;
+        }
+
+        let parsedResult = [];
+        try {
+          parsedResult = JSON.parse(result?.stdout || '[]');
+        } catch (error) {
+          this.error.fire(error);
+          reject([]);
+          return;
+        }
+        if (parsedResult === undefined || parsedResult.length === 0) {
+          this.displayMsg(`No results found for '${query}'.`);
+          resolve([]);
+          return;
+        }
+
+        resolve(parsedResult);
+      });
+    });
+
+    if (searchResults.length === 0) {
+      return await this.search(query);
+    }
+
+    return searchResults;
+  }
+
   public async reopen(_: any, reject: any, resolve: any) {
     const reopenScript = vscode.Uri.joinPath(this.context.extensionUri, 'scripts', 'reopen.sh');
     console.log('reopen.sh path: ', reopenScript.fsPath);
