@@ -17,12 +17,18 @@ export async function activate(context: vscode.ExtensionContext) {
   await env.reload();
 
   env.registerCommand('flox.init', async () => {
-    const result = await env.exec("flox", { argv: ["init", "--dir", env.workspaceUri?.fsPath || ''] });
-    if (result?.stdout) {
-      env.displayMsg(`Flox environment created: ${result.stdout}`);
-    }
-    await env.exec("flox", { argv: ["activate", "--dir", env.workspaceUri?.fsPath || ''] });
-    await env.reload();
+    if (!env.workspaceUri) { return; }
+
+    const result = await env.exec("flox", { argv: ["init", "--dir", env.workspaceUri.fsPath,] });
+    setTimeout(async () => {
+      if (!env.workspaceUri) { return; }
+      if (result?.stdout) {
+        env.displayMsg(`Flox environment created: ${result.stdout}`);
+      }
+      await env.exec("flox", { argv: ["activate", "--dir", env.workspaceUri.fsPath, "--", "true"] });
+      await env.reload();
+
+    }, 1000); // We added the timeout of one second because flox is too fast :)
   });
 
   env.registerCommand('flox.version', async () => {
@@ -33,6 +39,8 @@ export async function activate(context: vscode.ExtensionContext) {
   });
 
   env.registerCommand('flox.activate', async () => {
+    if (!env.workspaceUri) { return; }
+
     await vscode.window.withProgress({
       location: vscode.ProgressLocation.Notification,
       title: "Activating Flox environment... ",
@@ -75,6 +83,8 @@ export async function activate(context: vscode.ExtensionContext) {
   });
 
   env.registerCommand('flox.install', async () => {
+    if (!env.workspaceUri) { return; }
+
     const searchResults = await env.search();
 
     let selection: any = await vscode.window.showQuickPick(searchResults.map((pkg: any) => {
@@ -122,9 +132,7 @@ export async function activate(context: vscode.ExtensionContext) {
   });
 
   env.registerCommand('flox.uninstall', async (pkg: PackageItem | undefined) => {
-    if (env.workspaceUri === undefined) {
-      return;
-    }
+    if (!env.workspaceUri) { return; }
 
     // Select a package to uninstall
     if (!pkg) {
@@ -173,9 +181,7 @@ export async function activate(context: vscode.ExtensionContext) {
   });
 
   env.registerCommand('flox.serviceStart', async (service: ServiceItem | undefined) => {
-    if (env.workspaceUri === undefined) {
-      return;
-    }
+    if (!env.workspaceUri) { return; }
 
     // Select a service to start
     if (!service) {
@@ -214,9 +220,7 @@ export async function activate(context: vscode.ExtensionContext) {
   });
 
   env.registerCommand('flox.serviceStop', async (service: ServiceItem | undefined) => {
-    if (env.workspaceUri === undefined) {
-      return;
-    }
+    if (!env.workspaceUri) { return; }
 
     // Select a service to start
     if (!service) {
@@ -256,9 +260,7 @@ export async function activate(context: vscode.ExtensionContext) {
   });
 
   env.registerCommand('flox.serviceRestart', async (service: ServiceItem | undefined) => {
-    if (env.workspaceUri === undefined) {
-      return;
-    }
+    if (!env.workspaceUri) { return; }
 
     // Select a service to start
     if (!service) {
@@ -302,9 +304,7 @@ export async function activate(context: vscode.ExtensionContext) {
   });
 
   env.registerCommand('flox.edit', async () => {
-    if (env.workspaceUri === undefined) {
-      return;
-    }
+    if (!env.workspaceUri) { return; }
 
     const manifestUri = vscode.Uri.joinPath(env.workspaceUri, ".flox", "env", "manifest.toml");
     env.displayMsg("Opening manifest.toml");
