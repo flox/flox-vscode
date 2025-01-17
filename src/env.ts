@@ -303,7 +303,7 @@ export default class Env implements vscode.Disposable {
     try {
       return await promisify(execFile)(command, options.argv, execOptions);
     } catch (error) {
-      var fireError = true
+      var fireError = true;
       if (handleError) {
         fireError = handleError(error);
       }
@@ -314,7 +314,7 @@ export default class Env implements vscode.Disposable {
   }
 
   public async reopen(_: any, reject: any, resolve: any) {
-    const reopenScript = vscode.Uri.joinPath(this.context.extensionUri, 'out', 'scripts', 'reopen.sh');
+    const reopenScript = vscode.Uri.joinPath(this.context.extensionUri, 'scripts', 'reopen.sh');
     console.log('reopen.sh path: ', reopenScript.fsPath);
 
     let reopen = spawn(reopenScript.fsPath, {

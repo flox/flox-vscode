@@ -41,7 +41,7 @@
         {
           "id": "flox",
           "title": "Flox",
-          "icon": "out/assets/icon.svg"
+          "icon": "assets/icon.svg"
         }
       ]
     },
@@ -240,11 +240,12 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "package": "vsce package --allow-star-activation",
-    "compile": "tsc -p ./ && mkdir -p out/assets && cp assets/* out/assets",
-    "watch": "mkdir -p out/assets && cp assets/* out/assets && tsc -watch -p ./",
+    "compile": "npm run clean && tsc -p ./ ",
+    "watch": "npm run clean && tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "clean": "rm -rf ./out"
   },
   "devDependencies": {
     "@types/node": "22.x",

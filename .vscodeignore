@@ -2,6 +2,7 @@
 .vscode-test/**
 src/**
 .gitignore
+.github
 .yarnrc
 .flox
 vsc-extension-quickstart.md
@@ -10,4 +11,6 @@ vsc-extension-quickstart.md
 **/*.map
 **/*.ts
 **/.vscode-test.*
-!scripts/**
+!scripts/reopen.sh
+!assets/icon.png
+!assets/icon.svg
