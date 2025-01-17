@@ -303,7 +303,7 @@ export default class Env implements vscode.Disposable {
     try {
       return await promisify(execFile)(command, options.argv, execOptions);
     } catch (error) {
-      var fireError = true
+      var fireError = true;
       if (handleError) {
         fireError = handleError(error);
       }

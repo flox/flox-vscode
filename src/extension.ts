@@ -134,7 +134,7 @@ export async function activate(context: vscode.ExtensionContext) {
     });
 
     if (parsedResult.length === 0) {
-      return
+      return;
     }
 
     let selection: any = await vscode.window.showQuickPick(parsedResult.map((pkg: any) => {
