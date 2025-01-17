@@ -87,12 +87,12 @@ export async function activate(context: vscode.ExtensionContext) {
       env.displayMsg("Search query is empty, try again.");
     }
 
-    const parsedResult: any = await vscode.window.withProgress({
+    const parsedResult: any[] = await vscode.window.withProgress({
       location: vscode.ProgressLocation.Notification,
       title: `Searching for '${searchStr}' ... `,
       cancellable: true,
     }, async (progress, _) => {
-      return new Promise<void>(async (resolve, reject) => {
+      return new Promise<any[]>(async (resolve, reject) => {
         progress.report({ increment: 0 });
         setTimeout(() => progress.report({ increment: 10 }), 1000);
         setTimeout(() => progress.report({ increment: 40 }), 2000);
@@ -104,7 +104,9 @@ export async function activate(context: vscode.ExtensionContext) {
         setTimeout(() => progress.report({ increment: 95 }), 15000);
         setTimeout(() => progress.report({ increment: 97 }), 20000);
 
-        const result = await env.exec("flox", { argv: ["search", "--json", searchStr] });
+        const result = await env.exec("flox", { argv: ["search", "--json", searchStr] }, (error) => {
+          return true;
+        });
         progress.report({ increment: 100 });
 
         if (!result?.stdout) {
@@ -123,7 +125,7 @@ export async function activate(context: vscode.ExtensionContext) {
         }
         if (parsedResult === undefined || parsedResult.length === 0) {
           env.displayMsg(`No results found for '${searchStr}'.`);
-          reject();
+          resolve([]);
           return;
         }
 
@@ -131,10 +133,14 @@ export async function activate(context: vscode.ExtensionContext) {
       });
     });
 
+    if (parsedResult.length === 0) {
+      return
+    }
+
     let selection: any = await vscode.window.showQuickPick(parsedResult.map((pkg: any) => {
       return {
-        label: pkg?.pname,
-        description: pkg?.description,
+        label: pkg.relPath.join('.'),
+        description: `(${pkg.version}) ${pkg.description}`,
       };
     }));
 
@@ -185,7 +191,7 @@ export async function activate(context: vscode.ExtensionContext) {
         for (const [_, p] of env.packages.get(env.system) || []) {
           pkgs.push({
             label: p.install_id,
-            description: `( ${p.version} )`,
+            description: `${p.attr_path} ( ${p.version} )`,
           });
         }
       }
@@ -204,7 +210,7 @@ export async function activate(context: vscode.ExtensionContext) {
       if (env?.packages && env?.system && env.packages.get(env.system)) {
         const _pkg = env.packages.get(env.system)?.get(selected.label);
         if (_pkg) {
-          pkg = new PackageItem(_pkg.install_id, `( ${_pkg.version} )`);
+          pkg = new PackageItem(_pkg.install_id, `${_pkg.attr_path} ( ${_pkg.version} )`);
         }
       }
 

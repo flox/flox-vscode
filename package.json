@@ -48,23 +48,18 @@
     "viewsWelcome": [
       {
         "view": "floxInfoView",
-        "contents": "Welcome to Flox!",
-        "when": "!flox.envActive"
+        "contents": "Welcome to Flox! We couldn't find any Flox environment.\n[Create environment](command:flox.init)",
+        "when": "!flox.envExists"
+      },
+      {
+        "view": "floxInfoView",
+        "contents": "Welcome to Flox! Your Flox environment is not active.\n[Activate an environment](command:flox.activate)",
+        "when": "flox.envExists && !flox.envActive"
       },
       {
         "view": "floxInfoView",
         "contents": "Your environment is active!",
         "when": "flox.envActive"
-      },
-      {
-        "view": "floxInfoView",
-        "contents": "We couldn't find any Flox environment.\n[Create environment](command:flox.init)",
-        "when": "!flox.envExists"
-      },
-      {
-        "view": "floxInfoView",
-        "contents": "Your Flox environment is not active.\n[Activate an environment](command:flox.activate)",
-        "when": "flox.envExists .envActive"
       },
       {
         "view": "floxInfoView",
