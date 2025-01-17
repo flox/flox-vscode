@@ -1,20 +1,18 @@
 import * as vscode from 'vscode';
 import Env from './env';
-import { HelpView, VarsView, InstallView, ServicesView, PackageItem, ServiceItem } from './view';
+import { VarsView, InstallView, ServicesView, PackageItem, ServiceItem } from './view';
 
 export async function activate(context: vscode.ExtensionContext) {
 
   const installView = new InstallView();
   const varsView = new VarsView();
   const servicesView = new ServicesView();
-  const helpView = new HelpView();
 
   const env = new Env(context);
 
   env.registerView('floxInstallView', installView);
   env.registerView('floxVarsView', varsView);
   env.registerView('floxServicesView', servicesView);
-  env.registerView('floxHelpView', helpView);
 
   await env.reload();
 

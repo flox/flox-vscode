@@ -198,7 +198,18 @@ export default class Env implements vscode.Disposable {
 
     // Check for services status
     if (hasServices === true) {
-      const result = await this.exec("flox", { argv: ["services", "status", "--json", "--dir", this.workspaceUri?.fsPath || ''] });
+      const result = await this.exec(
+        "flox",
+        { argv: ["services", "status", "--json", "--dir", this.workspaceUri?.fsPath || ''] },
+        (error) => {
+          // XXX: This is a hack to avoid showing an error message when the services are not started
+          //      Remove once this will be fixed in Flox cli
+          if (error?.message && error.message.includes("ERROR: Services not started or quit unexpectedly.")) {
+            return false;
+          }
+          return true;
+        },
+      );
       this.servicesStatus = new Map();
       if (result?.stdout) {
         for (const data of result.stdout.split('\n')) {
@@ -264,7 +275,7 @@ export default class Env implements vscode.Disposable {
       ));
   }
 
-  public async exec(command: string, options: CommandExecOptions) {
+  public async exec(command: string, options: CommandExecOptions, handleError?: (error: any) => boolean) {
     let execOptions: ExecOptions = {};
     if (options.cwd === null || options.cwd) {
       execOptions.cwd = this.workspaceUri?.fsPath;
@@ -272,7 +283,13 @@ export default class Env implements vscode.Disposable {
     try {
       return await promisify(execFile)(command, options.argv, execOptions);
     } catch (error) {
-      this.error.fire(error);
+      var fireError = true
+      if (handleError) {
+        fireError = handleError(error);
+      }
+      if (fireError === true) {
+        this.error.fire(error);
+      }
     }
   }
 
