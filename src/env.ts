@@ -19,6 +19,7 @@ interface Msg {
 export default class Env implements vscode.Disposable {
 
   manifestWatcher: vscode.FileSystemWatcher;
+  manifestLockWatcher: vscode.FileSystemWatcher;
   workspaceUri?: vscode.Uri;
   manifest?: any;
   packages?: Packages;
@@ -42,19 +43,35 @@ export default class Env implements vscode.Disposable {
     }
 
     // Creating file watcher to watch for events on devbox.json
-    this.manifestWatcher = vscode.workspace.createFileSystemWatcher("**/.flox/{env.json,env/manifest.toml,env/manifest.lock}", false, false, false);
+    this.manifestWatcher = vscode.workspace.createFileSystemWatcher("**/.flox/env/manifest.toml", false, false, false);
     this.manifestWatcher.onDidDelete(async _ => {
-      console.log('manifest file deleted');
+      // TODO: what to do if manifest.toml gets deleted?
+      console.log('manifest.toml file deleted');
       await this.reload();
     });
     this.manifestWatcher.onDidCreate(async _ => {
-      console.log('manifest file created');
+      console.log('manifest.toml file created');
       await this.reload();
     });
     this.manifestWatcher.onDidChange(async _ => {
-      console.log('manifest file changed');
+      console.log('manifest.toml file changed');
+      await this.exec("flox", { argv: ["activate", "--dir", this.workspaceUri?.fsPath || '', "--", "true"] });
+    });
+
+    this.manifestLockWatcher = vscode.workspace.createFileSystemWatcher("**/.flox/env/manifest.lock", false, false, false);
+    this.manifestLockWatcher.onDidDelete(async _ => {
+      console.log('manifest.lock file deleted');
       await this.reload();
     });
+    this.manifestLockWatcher.onDidCreate(async _ => {
+      console.log('manifest.lock file created');
+      await this.reload();
+    });
+    this.manifestLockWatcher.onDidChange(async _ => {
+      console.log('manifest.lock file changed');
+      await this.reload();
+    });
+
     this.views = [];
 
     // Detect system
@@ -232,7 +249,10 @@ export default class Env implements vscode.Disposable {
     }
   }
 
-  dispose() { }
+  dispose() {
+    this.manifestWatcher.dispose();
+    this.manifestLockWatcher.dispose();
+  }
 
   private async onError(error: unknown) {
     await this.displayError(error);
