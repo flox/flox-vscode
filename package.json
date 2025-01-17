@@ -158,6 +158,11 @@
         "command": "flox.edit",
         "category": "Flox",
         "title": "Edit manifest.toml"
+      },
+      {
+        "command": "flox.search",
+        "category": "Flox",
+        "title": "Search packages"
       }
     ],
     "menus": {

@@ -75,72 +75,13 @@ export async function activate(context: vscode.ExtensionContext) {
   });
 
   env.registerCommand('flox.install', async () => {
-    let searchStr: string | undefined = await vscode.window.showInputBox({
-      prompt: 'Search packages'
-    });
-    if (searchStr === undefined) {
-      env.displayMsg("Search query is empty, try again.");
-      return;
-    }
-    searchStr = searchStr.trim();
-    if (searchStr.length <= 0) {
-      env.displayMsg("Search query is empty, try again.");
-    }
+    const searchResults = await env.search();
 
-    const parsedResult: any[] = await vscode.window.withProgress({
-      location: vscode.ProgressLocation.Notification,
-      title: `Searching for '${searchStr}' ... `,
-      cancellable: true,
-    }, async (progress, _) => {
-      return new Promise<any[]>(async (resolve, reject) => {
-        progress.report({ increment: 0 });
-        setTimeout(() => progress.report({ increment: 10 }), 1000);
-        setTimeout(() => progress.report({ increment: 40 }), 2000);
-        setTimeout(() => progress.report({ increment: 60 }), 4000);
-        setTimeout(() => progress.report({ increment: 70 }), 8000);
-        setTimeout(() => progress.report({ increment: 80 }), 9000);
-        setTimeout(() => progress.report({ increment: 85 }), 10000);
-        setTimeout(() => progress.report({ increment: 90 }), 12000);
-        setTimeout(() => progress.report({ increment: 95 }), 15000);
-        setTimeout(() => progress.report({ increment: 97 }), 20000);
-
-        const result = await env.exec("flox", { argv: ["search", "--json", searchStr] }, (error) => {
-          return true;
-        });
-        progress.report({ increment: 100 });
-
-        if (!result?.stdout) {
-          env.displayError(`Something went wrong when searching for '${searchStr}': ${result?.stderr}`);
-          reject();
-          return;
-        }
-
-        let parsedResult = [];
-        try {
-          parsedResult = JSON.parse(result?.stdout || '[]');
-        } catch (error) {
-          env.error.fire(error);
-          reject();
-          return;
-        }
-        if (parsedResult === undefined || parsedResult.length === 0) {
-          env.displayMsg(`No results found for '${searchStr}'.`);
-          resolve([]);
-          return;
-        }
-
-        resolve(parsedResult);
-      });
-    });
-
-    if (parsedResult.length === 0) {
-      return;
-    }
-
-    let selection: any = await vscode.window.showQuickPick(parsedResult.map((pkg: any) => {
+    let selection: any = await vscode.window.showQuickPick(searchResults.map((pkg: any) => {
       return {
-        label: pkg.relPath.join('.'),
+        label: pkg?.relPath?.join('.'),
         description: `(${pkg.version}) ${pkg.description}`,
+        id: pkg?.relPath?.join('-'),
       };
     }));
 
@@ -166,7 +107,8 @@ export async function activate(context: vscode.ExtensionContext) {
         setTimeout(() => progress.report({ increment: 90 }), 38000);
         setTimeout(() => progress.report({ increment: 95 }), 50000);
         setTimeout(() => progress.report({ increment: 97 }), 60000);
-        const result = await env.exec("flox", { argv: ["install", selection.label || '', "--dir", env.workspaceUri?.fsPath || ''] });
+
+        const result = await env.exec("flox", { argv: ["install", "--dir", env.workspaceUri?.fsPath, "--id", selection.id, selection.label] });
         progress.report({ increment: 100 });
         if (result?.stderr && result.stderr.includes(`'${selection.label}' installed to environment`)) {
           env.displayMsg(`Package '${selection?.label}' installed successfully.`);
@@ -375,4 +317,24 @@ export async function activate(context: vscode.ExtensionContext) {
     }
   });
 
+  env.registerCommand('flox.search', async () => {
+    const searchResults = await env.search();
+
+    let selection: any = await vscode.window.showQuickPick(searchResults.map((pkg: any) => {
+      return {
+        label: pkg?.relPath?.join('.'),
+        description: `(${pkg.version}) ${pkg.description}`,
+      };
+    }));
+
+    if (selection === undefined || selection?.label === undefined) {
+      env.displayMsg("No package selected to be installed.");
+      return;
+    }
+
+    const command = `flox show ${selection.label}`;
+    const terminal = vscode.window.createTerminal({ name: command });
+    terminal.show(false);
+    terminal.sendText(command, true);
+  });
 }
