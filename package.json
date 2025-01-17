@@ -4,7 +4,7 @@
   "description": "Flox integration for VSCode editor ",
   "version": "1.0.0",
   "preview": true,
-  "icon": "out/assets/icon.png",
+  "icon": "assets/icon.png",
   "author": "Flox <hello@floxdev.com>",
   "maintainers": [
     {
@@ -41,7 +41,7 @@
         {
           "id": "flox",
           "title": "Flox",
-          "icon": "out/assets/icon.svg"
+          "icon": "assets/icon.svg"
         }
       ]
     },
@@ -240,11 +240,12 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "package": "vsce package --allow-star-activation",
-    "compile": "tsc -p ./ && mkdir -p out/assets && cp assets/icon.* out/assets && mkdir -p out/scripts && cp scripts/* out/scripts",
-    "watch": "mkdir -p out/assets && cp assets/icon.* out/assets && mkdir -p out/scripts && cp scripts/* out/scripts && tsc -watch -p ./",
+    "compile": "npm run clean && tsc -p ./ ",
+    "watch": "npm run clean && tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "clean": "rm -rf ./out"
   },
   "devDependencies": {
     "@types/node": "22.x",
