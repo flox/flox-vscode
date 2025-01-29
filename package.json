@@ -2,7 +2,7 @@
   "name": "flox",
   "displayName": "Flox",
   "description": "Flox integration for VSCode editor ",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "preview": true,
   "icon": "assets/icon.png",
   "author": "Flox <hello@floxdev.com>",
@@ -14,6 +14,7 @@
   ],
   "publisher": "flox",
   "license": "MIT",
+  "pricing": "Free",
   "repository": {
     "type": "git",
     "url": "https://github.com/flox/flox-vscode"
