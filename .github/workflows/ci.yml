@@ -28,8 +28,8 @@ jobs:
     strategy:
       matrix:
         os:
-          - ubuntu-latest
-          - macos-latest
+          - "ubuntu-latest"
+          - "macos-latest"
 
     outputs:
       vsixPath: ${{ steps.package.outputs.vsixPath }}
@@ -68,12 +68,12 @@ jobs:
           command: "npm run compile"
 
       - name: "Test on MacOS"
-        if: ${{ matrix.os == "macos-latest" }}
+        if: ${{ matrix.os == 'macos-latest" }}
         run: |
           npm run test
 
       - name: "Test on Linux"
-        if: ${{ matrix.os == "ubuntu-latest" }}
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
           xvfb-run -a npm test
 
