@@ -2,6 +2,8 @@
 
 set -eu -o pipefail
 
+editor=${1:-code}
+
 # Get the file descriptor from NODE_CHANNEL_FD
 fd="${NODE_CHANNEL_FD:-3}"
 
@@ -13,6 +15,6 @@ send() {
 send '{"action":"close"}'
 
 while IFS= read -u "$fd" -r line; do
-    flox activate -- bash -c "code -nw --verbose $PWD" 
+    flox activate -- bash -c "$editor -nw --verbose $PWD" 
     break
 done

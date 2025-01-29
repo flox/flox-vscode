@@ -7,6 +7,12 @@ import { View, System, Packages, Package, Services } from './config';
 
 
 
+const EDITORS: { [key: string]: string } = {
+  "vscodium": "codium",
+  "visual studio code": "code",
+  "cursor": "cursor",
+};
+
 interface CommandExecOptions {
   argv: Array<string>;
   cwd?: boolean;
@@ -391,10 +397,11 @@ export default class Env implements vscode.Disposable {
   }
 
   public async reopen(_: any, reject: any, resolve: any) {
+    const editor = EDITORS[vscode.env.appName.toLocaleLowerCase()] || 'code';
     const reopenScript = vscode.Uri.joinPath(this.context.extensionUri, 'scripts', 'reopen.sh');
     console.log('reopen.sh path: ', reopenScript.fsPath);
 
-    let reopen = spawn(reopenScript.fsPath, {
+    let reopen = spawn(reopenScript.fsPath, [editor], {
       cwd: this.workspaceUri?.fsPath,
       stdio: [0, 1, 2, 'ipc']
     });
