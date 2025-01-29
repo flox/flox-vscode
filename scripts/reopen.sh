@@ -15,6 +15,6 @@ send() {
 send '{"action":"close"}'
 
 while IFS= read -u "$fd" -r line; do
-    flox activate -- bash -c "$editor -nw --verbose $PWD" 
+    flox activate -- bash -c "$editor --new-window --wait --verbose $PWD" 
     break
 done
