@@ -68,7 +68,7 @@ jobs:
           command: "npm run compile"
 
       - name: "Test on MacOS"
-        if: ${{ matrix.os == 'macos-latest" }}
+        if: ${{ matrix.os == 'macos-latest' }}
         run: |
           npm run test
 
