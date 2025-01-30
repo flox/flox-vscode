@@ -6,6 +6,9 @@ on:
     branches:
       - "main"
   pull_request:
+  release:
+    types:
+      - published
 
 concurrency:
   group: "ci-${{ github.ref_name }}-${{ github.event_name }}-${{ github.event.number || (github.event.pull_request.head.sha || github.sha) }}"
@@ -17,9 +20,19 @@ env:
 jobs:
 
   build:
-    name: "Build"
-    runs-on: "ubuntu-latest"
+    name: "Build on ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
+
     timeout-minutes: 30
+
+    strategy:
+      matrix:
+        os:
+          - "ubuntu-latest"
+          - "macos-latest"
+
+    outputs:
+      vsixPath: ${{ steps.package.outputs.vsixPath }}
 
     steps:
       - name: "Checkout"
@@ -54,14 +67,73 @@ jobs:
         with:
           command: "npm run compile"
 
+      - name: "Test on MacOS"
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          npm run test
+
+      - name: "Test on Linux"
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          xvfb-run -a npm test
+
       - name: "Package"
+        id: "package"
         uses: "flox/activate-action@main"
         with:
-          command: "npm run package -- --out flox-main.vsix"
+          command: "npm run package -- --out flox-latest.vsix"
 
       - name: "Upload vscode extention as artifact"
         uses: "actions/upload-artifact@v4"
         with:
-          name: "flox-main.vsix"
-          path: "flox-main.vsix"
+          name: "flox-latest-${{ matrix.os }}.vsix"
+          path: "flox-latest.vsix"
           retention-days: 14
+
+  publish:
+    name: "Publish VSCode "
+
+    if: ${{ github.event_name == 'release' }}
+    needs:
+      - "build"
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+
+      - name: "Checkout"
+        uses: "actions/checkout@v4"
+        with:
+          fetch-depth: 0
+
+      - name: "Install Flox"
+        uses: "flox/install-flox-action@main"
+
+      - name: "Restore npm cache"
+        uses: "actions/cache@v4"
+        with:
+          path: |
+            ~/.npm
+          key: "${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}"
+          restore-keys: |
+            ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}-
+
+      - name: "Install"
+        uses: "flox/activate-action@main"
+        with:
+          command: "npm ci"
+
+      - name: "Download Build Artifact"
+        uses: actions/download-artifact@v4
+        with:
+          name: "flox-latest-ubuntu-latest.vsix"
+
+      - name: "Publish to Visual Studio Marketplace"
+        uses: "flox/activate-action@main"
+        with:
+          command: |
+            vsce publish \
+              --pat "${{ secrets.MANAGED_VSCODE_MARKETPLACE_TOKEN }}" \
+              --allow-star-activation \
+              --pre-release
