@@ -9,7 +9,11 @@ where it matters, making them portable across the full software lifecycle.
 `flox-vscode` is a VSCode extension that integrates Flox environments with
 VSCode.
 
-✨ Flox documentation can be found [here](https://flox.dev/docs).
+* 📖 Flox documentation can be found [here](https://flox.dev/docs).
+* 🚀 Get in touch: [Slack](https://go.flox.dev/slack), [Discourse](https://discourse.flox.dev)
+* 🤝 Found a bug? Missing a specific feature? Feel free to [file a new issue][new-issue].
+
+[new-issue]: https://github.com/flox/flox-vscode/issues/new/choose
 
 <p align="center">
   <img src="./assets/demo.gif" width="100%" />
