@@ -3,7 +3,6 @@
   "displayName": "Flox",
   "description": "Flox integration for VSCode editor ",
   "version": "0.0.1",
-  "preview": true,
   "icon": "assets/icon.png",
   "author": "Flox <hello@floxdev.com>",
   "maintainers": [
