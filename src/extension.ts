@@ -88,10 +88,14 @@ export async function activate(context: vscode.ExtensionContext) {
     const searchResults = await env.search();
 
     let selection: any = await vscode.window.showQuickPick(searchResults.map((pkg: any) => {
+      var version = ''
+      if (pkg?.name && pkg?.pname && pkg.name != pkg.pname) {
+        version = '(' + pkg.name.replace(`${pkg.pname}-`, '') + ') ';
+      }
       return {
-        label: pkg?.relPath?.join('.'),
-        description: `(${pkg.version}) ${pkg.description}`,
-        id: pkg?.relPath?.join('-'),
+        label: pkg?.attr_path,
+        description: `${version}${pkg?.description || ''}`,
+        id: pkg?.attr_path,
       };
     }));
 
@@ -321,14 +325,19 @@ export async function activate(context: vscode.ExtensionContext) {
     const searchResults = await env.search();
 
     let selection: any = await vscode.window.showQuickPick(searchResults.map((pkg: any) => {
+      var version = ''
+      if (pkg?.name && pkg?.pname && pkg.name != pkg.pname) {
+        version = '(' + pkg.name.replace(`${pkg.pname}-`, '') + ') ';
+      }
       return {
-        label: pkg?.relPath?.join('.'),
-        description: `(${pkg.version}) ${pkg.description}`,
+        label: pkg?.attr_path,
+        description: `${version}${pkg?.description || ''}`,
+        id: pkg?.attr_path,
       };
     }));
 
     if (selection === undefined || selection?.label === undefined) {
-      env.displayMsg("No package selected to be installed.");
+      env.displayMsg("No package selected.");
       return;
     }
 
