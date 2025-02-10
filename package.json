@@ -18,6 +18,9 @@
     "type": "git",
     "url": "https://github.com/flox/flox-vscode"
   },
+  "engines": {
+    "vscode": "^1.86.0"
+  },
   "categories": [
     "Other"
   ],
@@ -251,7 +254,7 @@
   },
   "devDependencies": {
     "@types/node": "22.x",
-    "@types/vscode": "^1.97.0",
+    "@types/vscode": "*",
     "@typescript-eslint/eslint-plugin": "^8.23.0",
     "@typescript-eslint/parser": "^8.23.0",
     "@vscode/test-cli": "^0.0.10",
