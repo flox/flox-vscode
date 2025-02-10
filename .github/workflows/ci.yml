@@ -134,6 +134,6 @@ jobs:
         with:
           command: |
             vsce publish \
-              --pat "${{ secrets.MANAGED_VSCODE_MARKETPLACE_TOKEN }}" \
+              --pat "${{ secrets.MANAGED_FLOX_VSCODE_AZURE_DEVOPS_TOKEN_MANAGE_MARKETPLACE }}" \
               --allow-star-activation \
               --pre-release
