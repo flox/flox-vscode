@@ -1,4 +1,8 @@
-# Bring Flox to VSCode
+# Flox: Your devenvironment, everywhere.
+
+<p align="center">
+  <img src="./assets/demo.gif" width="100%" />
+</p>
 
 <img src="./assets/icon.png" align="right" width="128" height="128">
 
@@ -15,9 +19,15 @@ VSCode.
 
 [new-issue]: https://github.com/flox/flox-vscode/issues/new/choose
 
-<p align="center">
-  <img src="./assets/demo.gif" width="100%" />
-</p>
+
+## FAQ
+
+### Why do you need to restart VSCode when activating Flox environment?
+
+This is needed to ensure Flox environment is loaded first and software from
+Flox environment will be already in the `$PATH` for other VSCode extensions to
+use it.
+
 
 ## ⭐️ Contribute
 
