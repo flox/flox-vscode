@@ -2,7 +2,7 @@
   "name": "flox",
   "displayName": "Flox",
   "description": "Flox integration for VSCode editor ",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "icon": "assets/icon.png",
   "author": "Flox <hello@floxdev.com>",
   "maintainers": [
