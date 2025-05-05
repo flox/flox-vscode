@@ -36,13 +36,13 @@
       "description": "GNU Core Utilities",
       "install_id": "coreutils",
       "license": "GPL-3.0-or-later",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=7a2622e2c0dbad5c4493cb268aba12896e28b008",
       "name": "coreutils-9.6",
       "pname": "coreutils",
-      "rev": "b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
-      "rev_count": 785698,
-      "rev_date": "2025-04-17T23:31:41Z",
-      "scrape_date": "2025-04-19T04:22:38.730283Z",
+      "rev": "7a2622e2c0dbad5c4493cb268aba12896e28b008",
+      "rev_count": 793418,
+      "rev_date": "2025-05-03T00:41:22Z",
+      "scrape_date": "2025-05-04T04:19:37.282351Z",
       "stabilities": [
         "unstable"
       ],
@@ -66,13 +66,13 @@
       "description": "GNU Core Utilities",
       "install_id": "coreutils",
       "license": "GPL-3.0-or-later",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=7a2622e2c0dbad5c4493cb268aba12896e28b008",
       "name": "coreutils-9.6",
       "pname": "coreutils",
-      "rev": "b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
-      "rev_count": 785698,
-      "rev_date": "2025-04-17T23:31:41Z",
-      "scrape_date": "2025-04-19T04:45:12.981835Z",
+      "rev": "7a2622e2c0dbad5c4493cb268aba12896e28b008",
+      "rev_count": 793418,
+      "rev_date": "2025-05-03T00:41:22Z",
+      "scrape_date": "2025-05-04T04:37:43.996535Z",
       "stabilities": [
         "unstable"
       ],
@@ -97,13 +97,13 @@
       "description": "GNU Core Utilities",
       "install_id": "coreutils",
       "license": "GPL-3.0-or-later",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=7a2622e2c0dbad5c4493cb268aba12896e28b008",
       "name": "coreutils-9.6",
       "pname": "coreutils",
-      "rev": "b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
-      "rev_count": 785698,
-      "rev_date": "2025-04-17T23:31:41Z",
-      "scrape_date": "2025-04-19T05:05:10.214552Z",
+      "rev": "7a2622e2c0dbad5c4493cb268aba12896e28b008",
+      "rev_count": 793418,
+      "rev_date": "2025-05-03T00:41:22Z",
+      "scrape_date": "2025-05-04T04:55:03.912248Z",
       "stabilities": [
         "unstable"
       ],
@@ -127,13 +127,13 @@
       "description": "GNU Core Utilities",
       "install_id": "coreutils",
       "license": "GPL-3.0-or-later",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=7a2622e2c0dbad5c4493cb268aba12896e28b008",
       "name": "coreutils-9.6",
       "pname": "coreutils",
-      "rev": "b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
-      "rev_count": 785698,
-      "rev_date": "2025-04-17T23:31:41Z",
-      "scrape_date": "2025-04-19T05:27:41.333407Z",
+      "rev": "7a2622e2c0dbad5c4493cb268aba12896e28b008",
+      "rev_count": 793418,
+      "rev_date": "2025-05-03T00:41:22Z",
+      "scrape_date": "2025-05-04T05:18:06.254075Z",
       "stabilities": [
         "unstable"
       ],
@@ -158,13 +158,13 @@
       "description": "Tasty Bubble Gum for your shell",
       "install_id": "gum",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=7a2622e2c0dbad5c4493cb268aba12896e28b008",
       "name": "gum-0.16.0",
       "pname": "gum",
-      "rev": "b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
-      "rev_count": 785698,
-      "rev_date": "2025-04-17T23:31:41Z",
-      "scrape_date": "2025-04-19T04:22:39.426226Z",
+      "rev": "7a2622e2c0dbad5c4493cb268aba12896e28b008",
+      "rev_count": 793418,
+      "rev_date": "2025-05-03T00:41:22Z",
+      "scrape_date": "2025-05-04T04:19:37.966302Z",
       "stabilities": [
         "unstable"
       ],
@@ -187,13 +187,13 @@
       "description": "Tasty Bubble Gum for your shell",
       "install_id": "gum",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=7a2622e2c0dbad5c4493cb268aba12896e28b008",
       "name": "gum-0.16.0",
       "pname": "gum",
-      "rev": "b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
-      "rev_count": 785698,
-      "rev_date": "2025-04-17T23:31:41Z",
-      "scrape_date": "2025-04-19T04:45:14.469427Z",
+      "rev": "7a2622e2c0dbad5c4493cb268aba12896e28b008",
+      "rev_count": 793418,
+      "rev_date": "2025-05-03T00:41:22Z",
+      "scrape_date": "2025-05-04T04:37:45.506935Z",
       "stabilities": [
         "unstable"
       ],
@@ -216,13 +216,13 @@
       "description": "Tasty Bubble Gum for your shell",
       "install_id": "gum",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=7a2622e2c0dbad5c4493cb268aba12896e28b008",
       "name": "gum-0.16.0",
       "pname": "gum",
-      "rev": "b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
-      "rev_count": 785698,
-      "rev_date": "2025-04-17T23:31:41Z",
-      "scrape_date": "2025-04-19T05:05:10.921374Z",
+      "rev": "7a2622e2c0dbad5c4493cb268aba12896e28b008",
+      "rev_count": 793418,
+      "rev_date": "2025-05-03T00:41:22Z",
+      "scrape_date": "2025-05-04T04:55:04.629923Z",
       "stabilities": [
         "unstable"
       ],
@@ -245,13 +245,13 @@
       "description": "Tasty Bubble Gum for your shell",
       "install_id": "gum",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=7a2622e2c0dbad5c4493cb268aba12896e28b008",
       "name": "gum-0.16.0",
       "pname": "gum",
-      "rev": "b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
-      "rev_count": 785698,
-      "rev_date": "2025-04-17T23:31:41Z",
-      "scrape_date": "2025-04-19T05:27:42.946597Z",
+      "rev": "7a2622e2c0dbad5c4493cb268aba12896e28b008",
+      "rev_count": 793418,
+      "rev_date": "2025-05-03T00:41:22Z",
+      "scrape_date": "2025-05-04T05:18:07.908073Z",
       "stabilities": [
         "unstable"
       ],
@@ -274,13 +274,13 @@
       "description": "Event-driven I/O framework for the V8 JavaScript engine",
       "install_id": "nodejs",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=7a2622e2c0dbad5c4493cb268aba12896e28b008",
       "name": "nodejs-22.14.0",
       "pname": "nodejs",
-      "rev": "b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
-      "rev_count": 785698,
-      "rev_date": "2025-04-17T23:31:41Z",
-      "scrape_date": "2025-04-19T04:22:41.651622Z",
+      "rev": "7a2622e2c0dbad5c4493cb268aba12896e28b008",
+      "rev_count": 793418,
+      "rev_date": "2025-05-03T00:41:22Z",
+      "scrape_date": "2025-05-04T04:19:40.201768Z",
       "stabilities": [
         "unstable"
       ],
@@ -305,13 +305,13 @@
       "description": "Event-driven I/O framework for the V8 JavaScript engine",
       "install_id": "nodejs",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=7a2622e2c0dbad5c4493cb268aba12896e28b008",
       "name": "nodejs-22.14.0",
       "pname": "nodejs",
-      "rev": "b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
-      "rev_count": 785698,
-      "rev_date": "2025-04-17T23:31:41Z",
-      "scrape_date": "2025-04-19T04:45:23.141955Z",
+      "rev": "7a2622e2c0dbad5c4493cb268aba12896e28b008",
+      "rev_count": 793418,
+      "rev_date": "2025-05-03T00:41:22Z",
+      "scrape_date": "2025-05-04T04:37:54.683478Z",
       "stabilities": [
         "unstable"
       ],
@@ -336,13 +336,13 @@
       "description": "Event-driven I/O framework for the V8 JavaScript engine",
       "install_id": "nodejs",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=7a2622e2c0dbad5c4493cb268aba12896e28b008",
       "name": "nodejs-22.14.0",
       "pname": "nodejs",
-      "rev": "b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
-      "rev_count": 785698,
-      "rev_date": "2025-04-17T23:31:41Z",
-      "scrape_date": "2025-04-19T05:05:13.148053Z",
+      "rev": "7a2622e2c0dbad5c4493cb268aba12896e28b008",
+      "rev_count": 793418,
+      "rev_date": "2025-05-03T00:41:22Z",
+      "scrape_date": "2025-05-04T04:55:06.902898Z",
       "stabilities": [
         "unstable"
       ],
@@ -367,13 +367,13 @@
       "description": "Event-driven I/O framework for the V8 JavaScript engine",
       "install_id": "nodejs",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=7a2622e2c0dbad5c4493cb268aba12896e28b008",
       "name": "nodejs-22.14.0",
       "pname": "nodejs",
-      "rev": "b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
-      "rev_count": 785698,
-      "rev_date": "2025-04-17T23:31:41Z",
-      "scrape_date": "2025-04-19T05:27:53.292029Z",
+      "rev": "7a2622e2c0dbad5c4493cb268aba12896e28b008",
+      "rev_count": 793418,
+      "rev_date": "2025-05-03T00:41:22Z",
+      "scrape_date": "2025-05-04T05:18:18.528405Z",
       "stabilities": [
         "unstable"
       ],
@@ -394,17 +394,17 @@
     {
       "attr_path": "typescript-language-server",
       "broken": false,
-      "derivation": "/nix/store/knjij0y9d22c5syniizf788c1j49i8x4-typescript-language-server-4.3.3.drv",
+      "derivation": "/nix/store/vbfr4mai5q3qs13r15n5nkq45ing8ism-typescript-language-server-4.3.3.drv",
       "description": "Language Server Protocol implementation for TypeScript using tsserver",
       "install_id": "typescript-language-server",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=7a2622e2c0dbad5c4493cb268aba12896e28b008",
       "name": "typescript-language-server-4.3.3",
       "pname": "typescript-language-server",
-      "rev": "b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
-      "rev_count": 785698,
-      "rev_date": "2025-04-17T23:31:41Z",
-      "scrape_date": "2025-04-19T04:23:29.819460Z",
+      "rev": "7a2622e2c0dbad5c4493cb268aba12896e28b008",
+      "rev_count": 793418,
+      "rev_date": "2025-05-03T00:41:22Z",
+      "scrape_date": "2025-05-04T04:20:28.793051Z",
       "stabilities": [
         "unstable"
       ],
@@ -414,7 +414,7 @@
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/6r1zggkzg8vz6ix4z0rdi61n5nsq9y3c-typescript-language-server-4.3.3"
+        "out": "/nix/store/84prvgixfgi6fkyyslwb79ip1vrhibdx-typescript-language-server-4.3.3"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -423,17 +423,17 @@
     {
       "attr_path": "typescript-language-server",
       "broken": false,
-      "derivation": "/nix/store/14prwpglaz1birwqrj077ac1wj98ha3x-typescript-language-server-4.3.3.drv",
+      "derivation": "/nix/store/iwgqfjs5zzmlbi6npvn4qx41vmx2m43p-typescript-language-server-4.3.3.drv",
       "description": "Language Server Protocol implementation for TypeScript using tsserver",
       "install_id": "typescript-language-server",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=7a2622e2c0dbad5c4493cb268aba12896e28b008",
       "name": "typescript-language-server-4.3.3",
       "pname": "typescript-language-server",
-      "rev": "b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
-      "rev_count": 785698,
-      "rev_date": "2025-04-17T23:31:41Z",
-      "scrape_date": "2025-04-19T04:46:32.832090Z",
+      "rev": "7a2622e2c0dbad5c4493cb268aba12896e28b008",
+      "rev_count": 793418,
+      "rev_date": "2025-05-03T00:41:22Z",
+      "scrape_date": "2025-05-04T04:39:09.007993Z",
       "stabilities": [
         "unstable"
       ],
@@ -443,7 +443,7 @@
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/w4x2pg5ral6kqxbgk2hjq81fffxvajpf-typescript-language-server-4.3.3"
+        "out": "/nix/store/5h118fvd78gx5xw6kdw95hyzk05c23rs-typescript-language-server-4.3.3"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -452,17 +452,17 @@
     {
       "attr_path": "typescript-language-server",
       "broken": false,
-      "derivation": "/nix/store/4nqgn7s3vnybrlg8zw0mlgl8ik2gjn2i-typescript-language-server-4.3.3.drv",
+      "derivation": "/nix/store/jxm3jvlb6nxmabbbc4baz27dzz6slppa-typescript-language-server-4.3.3.drv",
       "description": "Language Server Protocol implementation for TypeScript using tsserver",
       "install_id": "typescript-language-server",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=7a2622e2c0dbad5c4493cb268aba12896e28b008",
       "name": "typescript-language-server-4.3.3",
       "pname": "typescript-language-server",
-      "rev": "b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
-      "rev_count": 785698,
-      "rev_date": "2025-04-17T23:31:41Z",
-      "scrape_date": "2025-04-19T05:06:00.874461Z",
+      "rev": "7a2622e2c0dbad5c4493cb268aba12896e28b008",
+      "rev_count": 793418,
+      "rev_date": "2025-05-03T00:41:22Z",
+      "scrape_date": "2025-05-04T04:55:55.689185Z",
       "stabilities": [
         "unstable"
       ],
@@ -472,7 +472,7 @@
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/3r1i8dx7vw511gwfz6mfhbm3vki7hys1-typescript-language-server-4.3.3"
+        "out": "/nix/store/7qz9ga3drnk4alccq8m640rzsxb0174i-typescript-language-server-4.3.3"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -481,17 +481,17 @@
     {
       "attr_path": "typescript-language-server",
       "broken": false,
-      "derivation": "/nix/store/i5nmxc4p7hms6npjk5gzi8jg07rgk0qc-typescript-language-server-4.3.3.drv",
+      "derivation": "/nix/store/gm105n12z1n28ll86qs4zh1fgvz4sw7x-typescript-language-server-4.3.3.drv",
       "description": "Language Server Protocol implementation for TypeScript using tsserver",
       "install_id": "typescript-language-server",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=7a2622e2c0dbad5c4493cb268aba12896e28b008",
       "name": "typescript-language-server-4.3.3",
       "pname": "typescript-language-server",
-      "rev": "b024ced1aac25639f8ca8fdfc2f8c4fbd66c48ef",
-      "rev_count": 785698,
-      "rev_date": "2025-04-17T23:31:41Z",
-      "scrape_date": "2025-04-19T05:29:07.818522Z",
+      "rev": "7a2622e2c0dbad5c4493cb268aba12896e28b008",
+      "rev_count": 793418,
+      "rev_date": "2025-05-03T00:41:22Z",
+      "scrape_date": "2025-05-04T05:19:35.481227Z",
       "stabilities": [
         "unstable"
       ],
@@ -501,7 +501,7 @@
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/lgfxcxxacgkmqbv8f42mr2kjv58h0fb2-typescript-language-server-4.3.3"
+        "out": "/nix/store/ng7iwxdswvh7lhvfd88njdrr7m75rlby-typescript-language-server-4.3.3"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
