@@ -137,3 +137,11 @@ jobs:
               --pat "${{ secrets.MANAGED_FLOX_VSCODE_AZURE_DEVOPS_TOKEN_MANAGE_MARKETPLACE }}" \
               --allow-star-activation \
               --pre-release
+
+      - name: "Publish to Open-VSX.org"
+        uses: "flox/activate-action@main"
+        with:
+          command: |
+            ovsx publish \
+              --pat "${{ secrets.MANAGED_FLOX_VSCODE_OPEN_VSX_TOKEN_MARKETPLACE }}" \
+              --pre-release
