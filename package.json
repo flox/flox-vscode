@@ -242,6 +242,9 @@
       ]
     }
   },
+  "vsce": {
+    "allowStarActivation": true
+  },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "package": "vsce package --allow-star-activation",
@@ -261,6 +264,7 @@
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.5.0",
     "eslint": "^9.29.0",
+    "ovsx": "^0.10.4",
     "typescript": "^5.8.3"
   },
   "dependencies": {
