@@ -235,7 +235,7 @@ export default class Env implements vscode.Disposable {
       );
       this.servicesStatus = new Map();
       if (result?.stdout) {
-        for (const data of result.stdout.split('\n')) {
+        for (const data of (typeof result.stdout === 'string' ? result.stdout : result.stdout.toString()).split('\n')) {
           if (data.length === 0) {
             continue;
           }
@@ -373,9 +373,12 @@ export default class Env implements vscode.Disposable {
 
         let parsedResult = [];
         try {
-          parsedResult = JSON.parse(result?.stdout || '[]');
-        } catch (error) {
-          this.error.fire(error);
+          const raw = typeof result?.stdout === 'string'
+            ? result!.stdout
+            : result?.stdout?.toString('utf8') ?? '[]';
+          parsedResult = JSON.parse(raw);
+        } catch (e) {
+          this.error.fire(e);
           reject([]);
           return;
         }
