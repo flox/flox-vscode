@@ -84,7 +84,7 @@ jobs:
           command: "npm run package -- --out flox-latest.vsix"
 
       - name: "Upload vscode extention as artifact"
-        uses: "actions/upload-artifact@v4"
+        uses: "actions/upload-artifact@v5"
         with:
           name: "flox-latest-${{ matrix.os }}.vsix"
           path: "flox-latest.vsix"
@@ -125,7 +125,7 @@ jobs:
           command: "npm ci"
 
       - name: "Download Build Artifact"
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           name: "flox-latest-ubuntu-latest.vsix"
 
