@@ -4,6 +4,7 @@ import { promises as fs } from "fs";
 import { promisify } from 'util';
 import { spawn, execFile, ExecOptions } from 'child_process';
 import { View, System, Packages, Package, Services } from './config';
+import { parseServicesStatus } from './serviceStatus';
 
 
 
@@ -233,16 +234,7 @@ export default class Env implements vscode.Disposable {
           return true;
         },
       );
-      this.servicesStatus = new Map();
-      if (result?.stdout) {
-        for (const data of (typeof result.stdout === 'string' ? result.stdout : result.stdout.toString()).split('\n')) {
-          if (data.length === 0) {
-            continue;
-          }
-          const service = JSON.parse(data);
-          this.servicesStatus.set(service?.name, service);
-        }
-      }
+      this.servicesStatus = parseServicesStatus(result?.stdout);
     }
 
     // Refresh all UI components (we need to do this last)
