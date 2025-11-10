@@ -5,6 +5,7 @@ import { promisify } from 'util';
 import { spawn, execFile, ExecOptions } from 'child_process';
 import { View, System, Packages, Package, Services } from './config';
 import { parseServicesStatus } from './serviceStatus';
+import { isWorkspaceActive } from './envActive';
 
 
 
@@ -17,10 +18,6 @@ const EDITORS: { [key: string]: string } = {
 interface CommandExecOptions {
   argv: Array<string>;
   cwd?: boolean;
-}
-
-interface Msg {
-  action: string
 }
 
 export default class Env implements vscode.Disposable {
@@ -202,21 +199,10 @@ export default class Env implements vscode.Disposable {
     ]);
 
     // Check if the environment is active
-    var envActive = false;
-    if (process.env["_FLOX_ACTIVE_ENVIRONMENTS"]) {
-      try {
-        const result = JSON.parse(process.env["_FLOX_ACTIVE_ENVIRONMENTS"]);
-        const workspaceFloxPath = vscode.Uri.joinPath(this.workspaceUri, '.flox').fsPath;
-
-        // Check that the last active environment is the same as the VSCode workspace
-        if (Array.isArray(result) && result.length > 0 && vscode.Uri.parse(result[0].path).fsPath === workspaceFloxPath) {
-          envActive = true;
-          // TODO: inside result[0] there is also the information of remove
-          // environment
-        }
-      } catch (e: any) {
-        console.error(`Parsing FLOX_ACTIVE_ENVIRONMENTS variable error: ${e}`);
-      }
+    let envActive = false;
+    if (this.workspaceUri) {
+      const workspaceFloxPath = vscode.Uri.joinPath(this.workspaceUri, '.flox').fsPath;
+      envActive = isWorkspaceActive(this.workspaceUri.fsPath, workspaceFloxPath);
     }
     vscode.commands.executeCommand('setContext', 'flox.envActive', envActive);
 
@@ -392,45 +378,48 @@ export default class Env implements vscode.Disposable {
   }
 
   public async reopen(_: any, reject: any, resolve: any) {
+    if (!this.workspaceUri) {
+      reject();
+      return;
+    }
+
     const editor = EDITORS[vscode.env.appName.toLocaleLowerCase()] || 'code';
-    const reopenScript = vscode.Uri.joinPath(this.context.extensionUri, 'scripts', 'reopen.sh');
-    console.log('reopen.sh path: ', reopenScript.fsPath);
+    const workspacePath = this.workspaceUri.fsPath;
+    const floxArgs = [
+      "activate",
+      "--dir",
+      workspacePath,
+      "--",
+      editor,
+      "--new-window",
+      "--wait",
+      workspacePath,
+    ];
 
-    let reopen = spawn(reopenScript.fsPath, [editor], {
-      cwd: this.workspaceUri?.fsPath,
-      stdio: [0, 1, 2, 'ipc']
-    });
+    try {
+      await new Promise<void>((spawnResolve, spawnReject) => {
+        const child = spawn("flox", floxArgs, {
+          cwd: workspacePath,
+          detached: true,
+          stdio: "ignore",
+        });
 
-    // reopen.sh closes before sending "close" message
-    reopen.on('close', (code: number) => {
-      console.log("reopen.sh process closed with exit code:", code);
-      if (code !== 0) {
-        this.error.fire("Failed to activate Flox environment.");
-        reject();
-      }
-    });
+        child.once('error', (error) => {
+          spawnReject(error);
+        });
 
-    reopen.stdout?.on('data', (data) => {
-      console.log('stdout:', data.toString().length, 'chars');
-    });
-    reopen.stderr?.on('data', (data) => {
-      console.log('stderr:', data.toString().length, 'chars');
-    });
+        child.once('spawn', () => {
+          child.unref();
+          spawnResolve();
+        });
+      });
 
-    // reopen.sh listens for messages (to close vscode window)
-    reopen.on('message', (msg: Msg) => {
-      if (msg.action === "close") {
-        resolve();
-        vscode.commands.executeCommand("workbench.action.closeWindow");
-        // Trigger script by sending workspacePath
-        reopen.send({ workspacePath: this.workspaceUri?.fsPath });
-      } else {
-        console.log(msg);
-        this.error.fire("Failed to activate Flox environment.");
-        reject();
-      }
-    });
-
-
+      resolve();
+      await vscode.commands.executeCommand("workbench.action.closeWindow");
+    } catch (error) {
+      console.error("Failed to relaunch VS Code through Flox:", error);
+      this.error.fire("Failed to relaunch VS Code through Flox. Check the Flox output for details.");
+      reject();
+    }
   }
 }

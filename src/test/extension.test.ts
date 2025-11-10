@@ -4,6 +4,7 @@ import * as assert from 'assert';
 // as well as import your extension to test it
 import * as vscode from 'vscode';
 import { parseServicesStatus } from '../serviceStatus';
+import { isWorkspaceActive } from '../envActive';
 // import * as myExtension from '../../extension';
 
 suite('Extension Test Suite', () => {
@@ -42,6 +43,39 @@ noise
       assert.strictEqual(services.size, 2);
       assert.strictEqual(services.get('svc1')?.status, 'Running');
       assert.strictEqual(services.get('svc2')?.pid, null);
+    });
+  });
+
+  suite('Workspace activation detection', () => {
+    const workspacePath = '/workspace/project';
+    const floxDir = '/workspace/project/.flox';
+
+    test('uses _FLOX_ACTIVE_ENVIRONMENTS when available', () => {
+      const env = {
+        _FLOX_ACTIVE_ENVIRONMENTS: JSON.stringify([{ path: floxDir }]),
+      } as NodeJS.ProcessEnv;
+      assert.strictEqual(isWorkspaceActive(workspacePath, floxDir, env), true);
+    });
+
+    test('falls back to FLOX_ENV_PROJECT when active list missing', () => {
+      const env = {
+        FLOX_ENV_PROJECT: workspacePath,
+      } as NodeJS.ProcessEnv;
+      assert.strictEqual(isWorkspaceActive(workspacePath, floxDir, env), true);
+    });
+
+    test('detects activation via FLOX_ENV directory', () => {
+      const env = {
+        FLOX_ENV: `${floxDir}/run/x86_64-linux`,
+      } as NodeJS.ProcessEnv;
+      assert.strictEqual(isWorkspaceActive(workspacePath, floxDir, env), true);
+    });
+
+    test('returns false when no indicators match workspace', () => {
+      const env = {
+        _FLOX_ACTIVE_ENVIRONMENTS: JSON.stringify([{ path: '/other/.flox' }]),
+      } as NodeJS.ProcessEnv;
+      assert.strictEqual(isWorkspaceActive(workspacePath, floxDir, env), false);
     });
   });
 });
