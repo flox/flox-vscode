@@ -53,8 +53,13 @@
       },
       {
         "view": "floxInfoView",
-        "contents": "To activate your Flox environment, VScode will [need to restart](https://github.com/flox/flox-vscode/blob/main/README.md#faq).\n[Activate & Restart](command:flox.activate)",
+        "contents": "[Activate](command:flox.activate)",
         "when": "flox.envExists && !flox.envActive"
+      },
+      {
+        "view": "floxInfoView",
+        "contents": "[Deactivate](command:flox.deactivate)",
+        "when": "flox.envExists && flox.envActive"
       },
       {
         "view": "floxInfoView",
@@ -120,6 +125,11 @@
         "command": "flox.activate",
         "category": "Flox",
         "title": "Activate environment"
+      },
+      {
+        "command": "flox.deactivate",
+        "category": "Flox",
+        "title": "Deactivate environment"
       },
       {
         "command": "flox.install",
