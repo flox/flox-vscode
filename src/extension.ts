@@ -181,7 +181,6 @@ export async function activate(context: vscode.ExtensionContext) {
     } else {
       env.displayError(`Something went wrong when uninstalling '${pkg.label}': ${result?.stderr}`);
     }
-
   });
 
   env.registerCommand('flox.serviceStart', async (service: ServiceItem | undefined) => {
