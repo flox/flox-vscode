@@ -236,7 +236,16 @@ export default class Env implements vscode.Disposable {
       this.servicesStatus = new Map();
       if (result?.stdout) {
         const servicesJson = typeof result.stdout === 'string' ? result.stdout : result.stdout.toString();
-        if (servicesJson.length > 0 && servicesJson !== '' && servicesJson !== '[]') {
+        if (servicesJson.startsWith('(')) {
+          // This handles an older version of flox services status json output
+          for (const data of servicesJson.split('\n')) {
+            if (data.length === 0) {
+              continue;
+            }
+            const service = JSON.parse(data);
+            this.servicesStatus.set(service?.name, service);
+          }
+        } else if (servicesJson.length > 0 && servicesJson !== '' && servicesJson !== '[]') {
           const services = JSON.parse(servicesJson);
           for (const service of services) {
             this.servicesStatus.set(service?.name, service);
