@@ -24,6 +24,9 @@
   "categories": [
     "Other"
   ],
+  "extensionKind": [
+    "workspace"
+  ],
   "main": "./out/extension.js",
   "activationEvents": [
     "*",
