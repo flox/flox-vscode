@@ -235,12 +235,12 @@ export default class Env implements vscode.Disposable {
       );
       this.servicesStatus = new Map();
       if (result?.stdout) {
-        for (const data of (typeof result.stdout === 'string' ? result.stdout : result.stdout.toString()).split('\n')) {
-          if (data.length === 0) {
-            continue;
+        const servicesJson = typeof result.stdout === 'string' ? result.stdout : result.stdout.toString();
+        if (servicesJson.length > 0 && servicesJson !== '' && servicesJson !== '[]') {
+          const services = JSON.parse(servicesJson);
+          for (const service of services) {
+            this.servicesStatus.set(service?.name, service);
           }
-          const service = JSON.parse(data);
-          this.servicesStatus.set(service?.name, service);
         }
       }
     }
