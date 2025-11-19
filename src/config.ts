@@ -22,7 +22,9 @@ export type Packages = Map<System, Map<string, Package>>
 export type Service = {
   name: string,
   status: string,
-  pid: number,
+  pid: number | null,
+  exit_code?: number | null,
+  [key: string]: unknown,
 }
 export type Services = Map<string, Service>
 
@@ -30,4 +32,3 @@ export interface View {
   registerProvider(viewName: string): vscode.Disposable;
   refresh(): Promise<void>;
 }
-
