@@ -271,12 +271,12 @@
   "devDependencies": {
     "@types/node": "24.x",
     "@types/vscode": "*",
-    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/eslint-plugin": "^8.46.3",
     "@typescript-eslint/parser": "^8.32.1",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "^3.6.2",
-    "eslint": "^9.39.0",
+    "@vscode/vsce": "^3.7.0",
+    "eslint": "^9.39.1",
     "ovsx": "^0.10.6",
     "typescript": "^5.9.3"
   },
