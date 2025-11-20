@@ -234,7 +234,6 @@ export default class Env implements vscode.Disposable {
         },
       );
       this.servicesStatus = new Map();
-
       if (result?.stdout) {
         const servicesJson = typeof result.stdout === 'string' ? result.stdout : result.stdout.toString();
         if (servicesJson.startsWith('(')) {
@@ -253,21 +252,22 @@ export default class Env implements vscode.Disposable {
           }
         }
       }
+    }
 
-      // Refresh all UI components (we need to do this last)
-      if (this.manifest) {
-        for (const view of this.views) {
-          if (view?.refresh) {
-            await view.refresh();
-          }
+    // Refresh all UI components (we need to do this last)
+    if (this.manifest) {
+      for (const view of this.views) {
+        if (view?.refresh) {
+          await view.refresh();
         }
       }
     }
+  }
 
-    dispose() {
-      this.manifestWatcher.dispose();
-      this.manifestLockWatcher.dispose();
-    }
+  dispose() {
+    this.manifestWatcher.dispose();
+    this.manifestLockWatcher.dispose();
+  }
 
   private async onError(error: unknown) {
     await this.displayError(error);
