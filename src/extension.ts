@@ -47,7 +47,7 @@ export async function activate(context: vscode.ExtensionContext) {
     await vscode.window.withProgress({
       location: vscode.ProgressLocation.Notification,
       title: "Activating Flox environment... ",
-      cancellable: false,
+      cancellable: true,
     }, async (progress, _) => {
       return new Promise<void>(async (resolve, reject) => {
         const envExists = env.context.workspaceState.get('flox.envExists', false);
@@ -72,8 +72,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
         progress.report({ message: 'Starting flox activate process', increment: 60 });
 
-        // Spawn the flox activate -- sleep infinity process
-        floxActivateProcess = spawn('flox', ['activate', '--dir', env.workspaceUri?.fsPath || '', '--', 'sleep', 'while true; do sleep 2147483647; done'], {
+        // Spawn the flox activate -- sleep infinity process, this ensures an activation is started in the background
+        floxActivateProcess = spawn('flox', [
+          'activate',
+          '--',
+          'sh',
+          '-c',
+          'while true; do sleep 10000; done'
+        ], {
           cwd: env.workspaceUri?.fsPath || '',
           detached: false, // Keep as child process so it dies with the parent
         });
@@ -160,7 +166,7 @@ export async function activate(context: vscode.ExtensionContext) {
     await vscode.window.withProgress({
       location: vscode.ProgressLocation.Notification,
       title: `Install '${selection.label}' package ... `,
-      cancellable: false,
+      cancellable: true,
     }, async (progress, _) => {
       return new Promise<void>(async (resolve, reject) => {
         progress.report({ increment: 0 });
