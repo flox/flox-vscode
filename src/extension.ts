@@ -75,6 +75,8 @@ export async function activate(context: vscode.ExtensionContext) {
         // Spawn the flox activate -- sleep infinity process, this ensures an activation is started in the background
         floxActivateProcess = spawn('flox', [
           'activate',
+          "--dir", 
+          env.workspaceUri?.fsPath || "",
           '--',
           'sh',
           '-c',
