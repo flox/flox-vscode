@@ -66,13 +66,14 @@ export async function activate(context: vscode.ExtensionContext) {
           return;
         }
 
+        // Ensure that activation works and doesn't hang in a blocking context
         progress.report({ message: 'Installing packages', increment: 20 });
         await env.exec("flox", { argv: ["activate", "--dir", env.workspaceUri?.fsPath || '', '--', 'true'] });
 
         progress.report({ message: 'Starting flox activate process', increment: 60 });
 
         // Spawn the flox activate -- sleep infinity process
-        floxActivateProcess = spawn('flox', ['activate', '--dir', env.workspaceUri?.fsPath || '', '--', 'sleep', 'infinity'], {
+        floxActivateProcess = spawn('flox', ['activate', '--dir', env.workspaceUri?.fsPath || '', '--', 'sleep', 'while true; do sleep 2147483647; done'], {
           cwd: env.workspaceUri?.fsPath || '',
           detached: false, // Keep as child process so it dies with the parent
         });
@@ -159,7 +160,7 @@ export async function activate(context: vscode.ExtensionContext) {
     await vscode.window.withProgress({
       location: vscode.ProgressLocation.Notification,
       title: `Install '${selection.label}' package ... `,
-      cancellable: true,
+      cancellable: false,
     }, async (progress, _) => {
       return new Promise<void>(async (resolve, reject) => {
         progress.report({ increment: 0 });

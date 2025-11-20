@@ -234,31 +234,40 @@ export default class Env implements vscode.Disposable {
         },
       );
       this.servicesStatus = new Map();
+
       if (result?.stdout) {
         const servicesJson = typeof result.stdout === 'string' ? result.stdout : result.stdout.toString();
-        if (servicesJson.length > 0 && servicesJson !== '' && servicesJson !== '[]') {
+        if (servicesJson.startsWith('(')) {
+          // This handles an older version of flox services status json output
+          for (const data of servicesJson.split('\n')) {
+            if (data.length === 0) {
+              continue;
+            }
+            const service = JSON.parse(data);
+            this.servicesStatus.set(service?.name, service);
+          }
+        } else if (servicesJson.length > 0 && servicesJson !== '' && servicesJson !== '[]') {
           const services = JSON.parse(servicesJson);
           for (const service of services) {
             this.servicesStatus.set(service?.name, service);
           }
         }
       }
-    }
 
-    // Refresh all UI components (we need to do this last)
-    if (this.manifest) {
-      for (const view of this.views) {
-        if (view?.refresh) {
-          await view.refresh();
+      // Refresh all UI components (we need to do this last)
+      if (this.manifest) {
+        for (const view of this.views) {
+          if (view?.refresh) {
+            await view.refresh();
+          }
         }
       }
     }
-  }
 
-  dispose() {
-    this.manifestWatcher.dispose();
-    this.manifestLockWatcher.dispose();
-  }
+    dispose() {
+      this.manifestWatcher.dispose();
+      this.manifestLockWatcher.dispose();
+    }
 
   private async onError(error: unknown) {
     await this.displayError(error);
