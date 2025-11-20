@@ -1,9 +1,6 @@
 import * as vscode from 'vscode';
-import { spawn, ChildProcess } from 'child_process';
 import Env from './env';
 import { VarsView, InstallView, ServicesView, PackageItem, ServiceItem } from './view';
-
-let floxActivateProcess: ChildProcess | undefined;
 
 export async function activate(context: vscode.ExtensionContext) {
 
@@ -58,8 +55,8 @@ export async function activate(context: vscode.ExtensionContext) {
         }
 
         // Check if a process already exists
-        if (floxActivateProcess && floxActivateProcess.pid) {
-          console.log(`Flox activate process already running with PID: ${floxActivateProcess.pid}`);
+        if (env.floxActivateProcess) {
+          console.log(`Flox activate process already running with PID: ${env.floxActivateProcess.pid}`);
           await vscode.commands.executeCommand('setContext', 'flox.envActive', true);
           await env.displayMsg("Flox environment is already activated.");
           resolve();
@@ -72,48 +69,11 @@ export async function activate(context: vscode.ExtensionContext) {
 
         progress.report({ message: 'Starting flox activate process', increment: 60 });
 
-        // Spawn the flox activate -- sleep infinity process, this ensures an activation is started in the background
-        floxActivateProcess = spawn('flox', [
-          'activate',
-          "--dir", 
-          env.workspaceUri?.fsPath || "",
-          '--',
-          'sh',
-          '-c',
-          'while true; do sleep 10000; done'
-        ], {
-          cwd: env.workspaceUri?.fsPath || '',
-          detached: false, // Keep as child process so it dies with the parent
-        });
-
-        if (floxActivateProcess.pid) {
-          // Store the PID in workspace state
-          await env.context.workspaceState.update('flox.activatePid', floxActivateProcess.pid);
-          await vscode.commands.executeCommand('setContext', 'flox.envActive', true);
-          console.log(`Flox activate process started with PID: ${floxActivateProcess.pid}`);
-
-          // Handle process exit
-          floxActivateProcess.on('exit', (code, signal) => {
-            console.log(`Flox activate process exited with code ${code} and signal ${signal}`);
-            floxActivateProcess = undefined;
-            env.context.workspaceState.update('flox.activatePid', undefined);
-            vscode.commands.executeCommand('setContext', 'flox.envActive', false);
-          });
-
-          // Handle errors
-          floxActivateProcess.on('error', (error) => {
-            console.error('Flox activate process error:', error);
-            env.displayError(`Failed to start flox activate: ${error.message}`);
-            floxActivateProcess = undefined;
-            env.context.workspaceState.update('flox.activatePid', undefined);
-            vscode.commands.executeCommand('setContext', 'flox.envActive', false);
-          });
-
+        let didActivate = await env.spawnActivateProcess();
+        if(didActivate) {
           progress.report({ message: 'Environment activated', increment: 100 });
-          await env.displayMsg("Flox environment activated successfully.");
           resolve();
         } else {
-          await env.displayError("Failed to start flox activate process.");
           reject();
         }
       });
@@ -121,25 +81,7 @@ export async function activate(context: vscode.ExtensionContext) {
   });
 
   env.registerCommand('flox.deactivate', async () => {
-    if (!floxActivateProcess || !floxActivateProcess.pid) {
-      await env.displayMsg("Flox environment is not currently activated.");
-      return;
-    }
-
-    try {
-      const pid = floxActivateProcess.pid;
-      console.log(`Killing flox activate process with PID: ${pid}`);
-      process.kill(pid);
-
-      floxActivateProcess = undefined;
-      await env.context.workspaceState.update('flox.activatePid', undefined);
-      await vscode.commands.executeCommand('setContext', 'flox.envActive', false);
-
-      await env.displayMsg("Flox environment deactivated successfully.");
-    } catch (error) {
-      console.error('Failed to kill flox activate process:', error);
-      await env.displayError(`Failed to deactivate Flox environment: ${error}`);
-    }
+    env.killActivateProcess();
   });
 
   env.registerCommand('flox.install', async () => {
