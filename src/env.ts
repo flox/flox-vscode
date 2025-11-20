@@ -305,6 +305,13 @@ export default class Env implements vscode.Disposable {
       execOptions.cwd = this.workspaceUri?.fsPath;
     }
     try {
+      if (this.isEnvActive) {
+        return await promisify(execFile)('flox',
+          ['activate', "--dir", this.workspaceUri?.fsPath || "", '--']
+            .concat([command])
+            .concat(options.argv),
+          execOptions);
+      }
       return await promisify(execFile)(command, options.argv, execOptions);
     } catch (error) {
       var fireError = true;
