@@ -1,9 +1,6 @@
 import * as vscode from 'vscode';
-import { spawn, ChildProcess } from 'child_process';
 import Env from './env';
 import { VarsView, InstallView, ServicesView, PackageItem, ServiceItem } from './view';
-
-let floxActivateProcess: ChildProcess | undefined;
 
 export async function activate(context: vscode.ExtensionContext) {
 
@@ -58,8 +55,8 @@ export async function activate(context: vscode.ExtensionContext) {
         }
 
         // Check if a process already exists
-        if (floxActivateProcess && floxActivateProcess.pid) {
-          console.log(`Flox activate process already running with PID: ${floxActivateProcess.pid}`);
+        if (env.floxActivateProcess) {
+          console.log(`Flox activate process already running with PID: ${env.floxActivateProcess.pid}`);
           await vscode.commands.executeCommand('setContext', 'flox.envActive', true);
           env.displayMsg("Flox environment is already activated.");
           resolve();
@@ -96,7 +93,6 @@ export async function activate(context: vscode.ExtensionContext) {
   });
 
   env.registerCommand('flox.deactivate', async () => {
-
     await env.killActivateProcess();
   });
 
