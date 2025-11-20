@@ -5,8 +5,6 @@ import { promisify } from 'util';
 import { spawn, execFile, ExecOptions, ChildProcess } from 'child_process';
 import { View, System, Packages, Package, Services } from './config';
 
-
-
 const EDITORS: { [key: string]: string } = {
   "vscodium": "codium",
   "visual studio code": "code",
@@ -36,6 +34,7 @@ export default class Env implements vscode.Disposable {
   context: vscode.ExtensionContext;
   error = new vscode.EventEmitter<unknown>();
   floxActivateProcess: ChildProcess | undefined;
+  isEnvActive: boolean = false;
 
   constructor(
     ctx: vscode.ExtensionContext,
@@ -202,23 +201,7 @@ export default class Env implements vscode.Disposable {
     ]);
 
     // Check if the environment is active
-    var envActive = false;
-    if (process.env["_FLOX_ACTIVE_ENVIRONMENTS"]) {
-      try {
-        const result = JSON.parse(process.env["_FLOX_ACTIVE_ENVIRONMENTS"]);
-        const workspaceFloxPath = vscode.Uri.joinPath(this.workspaceUri, '.flox').fsPath;
-
-        // Check that the last active environment is the same as the VSCode workspace
-        if (Array.isArray(result) && result.length > 0 && vscode.Uri.parse(result[0].path).fsPath === workspaceFloxPath) {
-          envActive = true;
-          // TODO: inside result[0] there is also the information of remove
-          // environment
-        }
-      } catch (e: any) {
-        console.error(`Parsing FLOX_ACTIVE_ENVIRONMENTS variable error: ${e}`);
-      }
-    }
-    vscode.commands.executeCommand('setContext', 'flox.envActive', envActive);
+    vscode.commands.executeCommand('setContext', 'flox.envActive', this.isEnvActive);
 
     // Check for services status
     if (hasServices === true) {
@@ -319,6 +302,13 @@ export default class Env implements vscode.Disposable {
       execOptions.cwd = this.workspaceUri?.fsPath;
     }
     try {
+      if (this.isEnvActive) {
+        return await promisify(execFile)('flox',
+          ['activate', "--dir", this.workspaceUri?.fsPath || "", '--']
+            .concat([command])
+            .concat(options.argv),
+          execOptions);
+      }
       return await promisify(execFile)(command, options.argv, execOptions);
     } catch (error) {
       var fireError = true;
@@ -370,6 +360,7 @@ export default class Env implements vscode.Disposable {
       this.floxActivateProcess.on('message', (msg: Msg) => {
         if (msg.action === 'ready') {
           spawnComplete = true;
+          this.isEnvActive = true;
           resolve();
         } else {
           console.log(msg);
