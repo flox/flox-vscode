@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import os from "os";
 import { promises as fs } from "fs";
 import { promisify } from 'util';
-import { spawn, execFile, ExecOptions } from 'child_process';
+import { spawn, execFile, ExecOptions, ChildProcess } from 'child_process';
 import { View, System, Packages, Package, Services } from './config';
 
 
@@ -35,6 +35,7 @@ export default class Env implements vscode.Disposable {
 
   context: vscode.ExtensionContext;
   error = new vscode.EventEmitter<unknown>();
+  floxActivateProcess: ChildProcess | undefined;
 
   constructor(
     ctx: vscode.ExtensionContext,
@@ -324,6 +325,96 @@ export default class Env implements vscode.Disposable {
       }
       if (fireError === true) {
         this.error.fire(error);
+      }
+    }
+  }
+
+  async spawnActivateProcess(resolve: (value: void) => void, reject: (reason?: any) => void) {
+    // Spawn the flox activate -- sleep infinity process, this ensures an activation is started in the background
+
+    let spawnComplete = false;
+    const activateScript = vscode.Uri.joinPath(this.context.extensionUri, 'scripts', 'activate.sh');
+    console.log('activate.sh path: ', activateScript.fsPath);
+
+    this.floxActivateProcess = spawn('flox', ['activate', '--dir', this.workspaceUri?.fsPath || '', '--', activateScript.fsPath], {
+      cwd: this.workspaceUri?.fsPath || '',
+      stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
+      detached: false, // Keep as child process so it dies with the parent
+    });
+
+    if (this.floxActivateProcess.pid) {
+      // Store the PID in workspace state
+      await this.context.workspaceState.update('flox.activatePid', this.floxActivateProcess.pid);
+      console.log(`Flox activate process started with PID: ${this.floxActivateProcess.pid}`);
+
+      // Handle process exit
+      this.floxActivateProcess.on('exit', (code, signal) => {
+        console.log(`Flox activate process exited with code ${code} and signal ${signal}`);
+        this.floxActivateProcess = undefined;
+        this.context.workspaceState.update('flox.activatePid', undefined);
+        if (!spawnComplete) {
+          reject();
+        }
+      });
+
+      this.floxActivateProcess.stdout?.on('data', (data) => {
+        console.log('stdout:', data.toString().length, 'chars');
+      });
+      this.floxActivateProcess.stderr?.on('data', (data) => {
+        console.log('stderr:', data.toString().length, 'chars');
+      });
+
+
+      this.floxActivateProcess.on('message', (msg: Msg) => {
+        if (msg.action === 'ready') {
+          spawnComplete = true;
+          resolve();
+        } else {
+          console.log(msg);
+          this.error.fire("Failed to activate Flox environment.");
+          reject();
+        }
+      });
+      // Handle errors
+      this.floxActivateProcess.on('error', (error) => {
+        console.error('Flox activate process error:', error);
+        this.displayError(`Failed to start flox activate: ${error.message}`);
+        this.floxActivateProcess = undefined;
+        this.context.workspaceState.update('flox.activatePid', undefined);
+        reject();
+      });
+
+    } else {
+      this.displayError("Failed to start flox activate process.");
+      reject();
+    }
+  }
+
+  async killActivateProcess(silent: boolean = false) {
+    if (!this.floxActivateProcess || !this.floxActivateProcess.pid) {
+      if (!silent) {
+        this.displayMsg("Flox environment is not currently activated.");
+      }
+      return;
+    }
+
+
+    try {
+      const pid = this.floxActivateProcess.pid;
+      console.log(`Killing flox activate process with PID: ${pid}`);
+      process.kill(pid);
+
+      this.floxActivateProcess = undefined;
+      await this.context.workspaceState.update('flox.activatePid', undefined);
+      await vscode.commands.executeCommand('setContext', 'flox.envActive', false);
+
+      if (!silent) {
+        this.displayMsg("Flox environment deactivated successfully.");
+      }
+    } catch (error) {
+      console.error('Failed to kill flox activate process:', error);
+      if (!silent) {
+        this.displayError(`Failed to deactivate Flox environment: ${error}`);
       }
     }
   }
