@@ -102,8 +102,8 @@ export async function activate(context: vscode.ExtensionContext) {
     const searchResults = await env.search();
 
     let selection: any = await vscode.window.showQuickPick(searchResults.map((pkg: any) => {
-      var version = ''
-      if (pkg?.name && pkg?.pname && pkg.name != pkg.pname) {
+      var version = '';
+      if (pkg?.name && pkg?.pname && pkg.name !== pkg.pname) {
         version = '(' + pkg.name.replace(`${pkg.pname}-`, '') + ') ';
       }
       return {
@@ -225,15 +225,21 @@ export async function activate(context: vscode.ExtensionContext) {
       service = new ServiceItem(selected.label, "", "");
     }
 
-    try {
-      //await env.exec("flox", { argv: ["activate", "--dir", env.workspaceUri.fsPath, "--", "flox", "services", "start", "--dir", env.workspaceUri.fsPath, service.label] });
-      await env.exec("flox", { argv: ["services", "start", "--dir", env.workspaceUri.fsPath, service.label] });
-      // TODO: Show progress bad and wait until service is marked as Running
-    } catch (error) {
-      env.displayError(`Starting ${service.label} service error: ${error}`);
-    }
-
-    env.reload();
+    await vscode.window.withProgress({
+      location: vscode.ProgressLocation.Notification,
+      title: `Starting service '${service.label}'...`,
+      cancellable: false,
+    }, async (progress) => {
+      try {
+        progress.report({ increment: 0 });
+        await env.exec("flox", { argv: ["services", "start", "--dir", env.workspaceUri!.fsPath, service!.label] });
+        progress.report({ increment: 100 });
+        await env.reload();
+        env.displayMsg(`Service '${service!.label}' started successfully.`);
+      } catch (error) {
+        env.displayError(`Starting ${service!.label} service error: ${error}`);
+      }
+    });
   });
 
   env.registerCommand('flox.serviceStop', async (service: ServiceItem | undefined) => {
@@ -259,21 +265,28 @@ export async function activate(context: vscode.ExtensionContext) {
 
       const selected = await vscode.window.showQuickPick(services);
       if (selected === undefined || selected?.label === undefined) {
-        env.displayMsg("No service selected to be started.");
+        env.displayMsg("No service selected to be stopped.");
         return;
       }
 
       service = new ServiceItem(selected.label, "", "");
     }
 
-    try {
-      await env.exec("flox", { argv: ["services", "stop", "--dir", env.workspaceUri.fsPath, service.label] });
-      // TODO: Show progress bad and wait until service is marked as Running
-    } catch (error) {
-      env.displayError(`Starting ${service.label} service error: ${error}`);
-    }
-
-    env.reload();
+    await vscode.window.withProgress({
+      location: vscode.ProgressLocation.Notification,
+      title: `Stopping service '${service.label}'...`,
+      cancellable: false,
+    }, async (progress) => {
+      try {
+        progress.report({ increment: 0 });
+        await env.exec("flox", { argv: ["services", "stop", "--dir", env.workspaceUri!.fsPath, service!.label] });
+        progress.report({ increment: 100 });
+        await env.reload();
+        env.displayMsg(`Service '${service!.label}' stopped successfully.`);
+      } catch (error) {
+        env.displayError(`Stopping ${service!.label} service error: ${error}`);
+      }
+    });
   });
 
   env.registerCommand('flox.serviceRestart', async (service: ServiceItem | undefined) => {
@@ -302,22 +315,28 @@ export async function activate(context: vscode.ExtensionContext) {
 
       const selected = await vscode.window.showQuickPick(services);
       if (selected === undefined || selected?.label === undefined) {
-        env.displayMsg("No service selected to be started.");
+        env.displayMsg("No service selected to be restarted.");
         return;
       }
 
       service = new ServiceItem(selected.label, "", "");
     }
 
-    try {
-      //await env.exec("flox", { argv: ["activate", "--dir", env.workspaceUri.fsPath, "--", "flox", "services", "restart", "--dir", env.workspaceUri.fsPath, service.label] });
-      await env.exec("flox", { argv: ["services", "restart", "--dir", env.workspaceUri.fsPath, service.label] });
-      // TODO: Show progress bad and wait until service is marked as Running
-    } catch (error) {
-      env.displayError(`Starting ${service.label} service error: ${error}`);
-    }
-
-    env.reload();
+    await vscode.window.withProgress({
+      location: vscode.ProgressLocation.Notification,
+      title: `Restarting service '${service.label}'...`,
+      cancellable: false,
+    }, async (progress) => {
+      try {
+        progress.report({ increment: 0 });
+        await env.exec("flox", { argv: ["services", "restart", "--dir", env.workspaceUri!.fsPath, service!.label] });
+        progress.report({ increment: 100 });
+        await env.reload();
+        env.displayMsg(`Service '${service!.label}' restarted successfully.`);
+      } catch (error) {
+        env.displayError(`Restarting ${service!.label} service error: ${error}`);
+      }
+    });
   });
 
   env.registerCommand('flox.edit', async () => {
@@ -338,8 +357,8 @@ export async function activate(context: vscode.ExtensionContext) {
     const searchResults = await env.search();
 
     let selection: any = await vscode.window.showQuickPick(searchResults.map((pkg: any) => {
-      var version = ''
-      if (pkg?.name && pkg?.pname && pkg.name != pkg.pname) {
+      var version = '';
+      if (pkg?.name && pkg?.pname && pkg.name !== pkg.pname) {
         version = '(' + pkg.name.replace(`${pkg.pname}-`, '') + ') ';
       }
       return {
