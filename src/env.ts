@@ -268,6 +268,8 @@ export default class Env implements vscode.Disposable {
   dispose() {
     this.manifestWatcher.dispose();
     this.manifestLockWatcher.dispose();
+    // Kill the activate process to prevent orphaned sleep processes
+    this.killActivateProcess(true);
   }
 
   private async onError(error: unknown) {
@@ -398,24 +400,33 @@ export default class Env implements vscode.Disposable {
       return;
     }
 
+    const pid = this.floxActivateProcess.pid;
 
     try {
-      const pid = this.floxActivateProcess.pid;
       console.log(`Killing flox activate process with PID: ${pid}`);
-      process.kill(pid);
-
-      this.floxActivateProcess = undefined;
-      await this.context.workspaceState.update('flox.activatePid', undefined);
-      await vscode.commands.executeCommand('setContext', 'flox.envActive', false);
-
-      if (!silent) {
-        this.displayMsg("Flox environment deactivated successfully.");
+      // With detached: false, we kill the process directly, not the process group.
+      process.kill(pid, 'SIGKILL');
+    } catch (e: any) {
+      // If the process is already gone, just ignore the error (ESRCH).
+      // This can happen in a race condition where the process exits
+      // and its 'exit' event has not yet been processed.
+      if (e.code !== 'ESRCH') {
+        // For any other error, log it and display it to the user.
+        console.error('Failed to kill flox activate process:', e);
+        if (!silent) {
+          this.displayError(`Failed to deactivate Flox environment: ${e}`);
+        }
+        return; // Stop further processing on unexpected errors.
       }
-    } catch (error) {
-      console.error('Failed to kill flox activate process:', error);
-      if (!silent) {
-        this.displayError(`Failed to deactivate Flox environment: ${error}`);
-      }
+      console.log(`Process ${pid} was already gone (ESRCH), continuing cleanup.`);
+    }
+
+    this.floxActivateProcess = undefined;
+    await this.context.workspaceState.update('flox.activatePid', undefined);
+    await vscode.commands.executeCommand('setContext', 'flox.envActive', false);
+
+    if (!silent) {
+      this.displayMsg("Flox environment deactivated successfully.");
     }
   }
 
