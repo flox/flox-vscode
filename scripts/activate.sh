@@ -2,16 +2,18 @@
 
 set -eu -o pipefail
 
-fd="${NODE_CHANNEL_FD:-2}"
+fd="${NODE_CHANNEL_FD:-3}"
 
 # Send ready message to stdout as JSON
 send() {
     echo "$1" >&"$fd"
 }
 
+# Send the ready message to the parent process.
 send '{"action":"ready"}'
 
-
-while true; do
-  sleep 2147483647
-done
+# Block indefinitely by reading from stdin.
+# When the parent VS Code process (which holds the other end of the pipe)
+# terminates for any reason, this pipe will break. The 'read' command
+# will then receive an EOF and exit, causing the script to terminate naturally.
+read -r
