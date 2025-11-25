@@ -17,7 +17,8 @@ interface CommandExecOptions {
 }
 
 interface Msg {
-  action: string
+  action: string;
+  env?: { [key: string]: string };
 }
 
 export default class Env implements vscode.Disposable {
@@ -35,6 +36,8 @@ export default class Env implements vscode.Disposable {
   error = new vscode.EventEmitter<unknown>();
   floxActivateProcess: ChildProcess | undefined;
   isEnvActive: boolean = false;
+  originalEnvVars: { [key: string]: string } = {};
+  activatedEnvVars: { [key: string]: string } = {};
 
   constructor(
     ctx: vscode.ExtensionContext,
@@ -321,6 +324,44 @@ export default class Env implements vscode.Disposable {
     }
   }
 
+  async applyEnvironmentVariables(activatedEnv: { [key: string]: string }) {
+    // Store the current process environment as original (before any flox activation)
+    if (Object.keys(this.originalEnvVars).length === 0) {
+      this.originalEnvVars = { ...process.env } as { [key: string]: string };
+    }
+
+    // Store the activated environment variables
+    this.activatedEnvVars = activatedEnv;
+
+    // Apply to terminal environment variable collection
+    const envCollection = this.context.environmentVariableCollection;
+    envCollection.clear();
+
+    // Calculate the diff between original and activated environments
+    for (const [key, value] of Object.entries(activatedEnv)) {
+      const originalValue = this.originalEnvVars[key];
+
+      if (originalValue !== value) {
+        // This variable was added or changed by flox
+        envCollection.replace(key, value);
+      }
+    }
+
+    envCollection.description = 'Flox Environment';
+    console.log('Applied environment variables to terminal collection');
+  }
+
+  async clearEnvironmentVariables() {
+    // Clear the environment variable collection to restore original environment
+    const envCollection = this.context.environmentVariableCollection;
+    envCollection.clear();
+
+    // Clear stored variables
+    this.activatedEnvVars = {};
+
+    console.log('Cleared environment variables from terminal collection');
+  }
+
   async spawnActivateProcess(resolve: (value: void) => void, reject: (reason?: any) => void) {
     // Spawn the flox activate -- sleep infinity process, this ensures an activation is started in the background
 
@@ -357,10 +398,20 @@ export default class Env implements vscode.Disposable {
       });
 
 
-      this.floxActivateProcess.on('message', (msg: Msg) => {
-        if (msg.action === 'ready') {
+      this.floxActivateProcess.on('message', async (msg: Msg) => {
+        if (msg.action === 'ready' && msg.env) {
           spawnComplete = true;
           this.isEnvActive = true;
+
+          // Apply environment variables to terminals
+          this.applyEnvironmentVariables(msg.env);
+
+          resolve();
+        } else if (msg.action === 'ready') {
+          // Fallback if no env vars were sent
+          spawnComplete = true;
+          this.isEnvActive = true;
+          console.warn('No environment variables received from activate script');
           resolve();
         } else {
           console.log(msg);
@@ -397,6 +448,9 @@ export default class Env implements vscode.Disposable {
       console.log(`Killing flox activate process with PID: ${pid}`);
       // With detached: false, we kill the process directly, not the process group.
       process.kill(pid, 'SIGKILL');
+
+      // Clear environment variables from terminals
+      await this.clearEnvironmentVariables();
     } catch (e: any) {
       // If the process is already gone, just ignore the error (ESRCH).
       // This can happen in a race condition where the process exits
@@ -413,6 +467,7 @@ export default class Env implements vscode.Disposable {
     }
 
     this.floxActivateProcess = undefined;
+    this.isEnvActive = false;
     await this.context.workspaceState.update('flox.activatePid', undefined);
     await vscode.commands.executeCommand('setContext', 'flox.envActive', false);
 
