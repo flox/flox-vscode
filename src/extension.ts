@@ -1,6 +1,9 @@
 import * as vscode from 'vscode';
+import { spawn, ChildProcess } from 'child_process';
 import Env from './env';
 import { VarsView, InstallView, ServicesView, PackageItem, ServiceItem } from './view';
+
+let floxActivateProcess: ChildProcess | undefined;
 
 export async function activate(context: vscode.ExtensionContext) {
 
@@ -45,41 +48,56 @@ export async function activate(context: vscode.ExtensionContext) {
       location: vscode.ProgressLocation.Notification,
       title: "Activating Flox environment... ",
       cancellable: true,
-    }, async (progress, _) => {
+    }, async (progress, token) => {
       return new Promise<void>(async (resolve, reject) => {
         const envExists = env.context.workspaceState.get('flox.envExists', false);
         if (!envExists) {
-          await env.displayError("Environment does not exist.");
+          env.displayError("Environment does not exist.");
           reject();
+          return;
         }
 
-        if (process.platform === 'darwin') {
-          progress.report({ message: 'Adjusting VSCode SHELL...', increment: 10 });
-          vscode.workspace.getConfiguration().update(
-            'terminal.integrated.profiles.osx',
-            {
-              "floxShellProfile": {
-                "path": process.env["SHELL"] ?? "/bin/zsh",
-              }
-            },
-            vscode.ConfigurationTarget.Workspace
-          );
-          vscode.workspace.getConfiguration().update(
-            'terminal.integrated.defaultProfile.osx',
-            'floxShellProfile',
-            vscode.ConfigurationTarget.Workspace
-          );
+        // Check if a process already exists
+        if (floxActivateProcess && floxActivateProcess.pid) {
+          console.log(`Flox activate process already running with PID: ${floxActivateProcess.pid}`);
+          await vscode.commands.executeCommand('setContext', 'flox.envActive', true);
+          env.displayMsg("Flox environment is already activated.");
+          resolve();
+          return;
         }
 
+        // Handle cancellation
+        token.onCancellationRequested(() => {
+          console.log('Flox activation cancelled by user');
+          env.killActivateProcess(true); // Silent mode - don't show messages
+          reject(new Error('Activation cancelled by user'));
+        });
+
+        // Ensure that activation works and doesn't hang in a blocking context
         progress.report({ message: 'Installing packages', increment: 20 });
         await env.exec("flox", { argv: ["activate", "--dir", env.workspaceUri?.fsPath || '', '--', 'true'] });
 
-        progress.report({ message: 'Reloading the window', increment: 80 });
-        await env.reopen(progress, reject, resolve);
+        progress.report({ message: 'Starting flox activate process', increment: 60 });
 
-        resolve();
+        await env.spawnActivateProcess(async () => {
+          progress.report({ message: 'Environment activated', increment: 100 });
+          resolve();
+          await vscode.commands.executeCommand('setContext', 'flox.envActive', true);
+          env.displayMsg("Flox environment activated successfully.");
+        },
+        async () => {
+          env.displayError("Failed to start flox activate process.");
+          await vscode.commands.executeCommand('setContext', 'flox.envActive', false);
+          env.killActivateProcess(true); // Silent mode - don't show messages
+          reject();
+        });
       });
     });
+  });
+
+  env.registerCommand('flox.deactivate', async () => {
+
+    await env.killActivateProcess();
   });
 
   env.registerCommand('flox.install', async () => {
@@ -181,7 +199,6 @@ export async function activate(context: vscode.ExtensionContext) {
     } else {
       env.displayError(`Something went wrong when uninstalling '${pkg.label}': ${result?.stderr}`);
     }
-
   });
 
   env.registerCommand('flox.serviceStart', async (service: ServiceItem | undefined) => {
