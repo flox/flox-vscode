@@ -337,7 +337,7 @@ export default class Env implements vscode.Disposable {
     const envCollection = this.context.environmentVariableCollection;
     envCollection.clear();
 
-    
+    // Calculate the diff between original and activated environments
     for (const [key, value] of Object.entries(activatedEnv)) {
       const originalValue = this.originalEnvVars[key];
 
