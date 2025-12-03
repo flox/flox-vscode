@@ -305,13 +305,6 @@ export default class Env implements vscode.Disposable {
       execOptions.cwd = this.workspaceUri?.fsPath;
     }
     try {
-      if (this.isEnvActive) {
-        return await promisify(execFile)('flox',
-          ['activate', "--dir", this.workspaceUri?.fsPath || "", '--']
-            .concat([command])
-            .concat(options.argv),
-          execOptions);
-      }
       return await promisify(execFile)(command, options.argv, execOptions);
     } catch (error) {
       var fireError = true;
@@ -337,13 +330,14 @@ export default class Env implements vscode.Disposable {
     const envCollection = this.context.environmentVariableCollection;
     envCollection.clear();
 
-    // Calculate the diff between original and activated environments
+    
     for (const [key, value] of Object.entries(activatedEnv)) {
       const originalValue = this.originalEnvVars[key];
 
       if (originalValue !== value) {
         // This variable was added or changed by flox
         envCollection.replace(key, value);
+        process.env[key] = value;
       }
     }
 
