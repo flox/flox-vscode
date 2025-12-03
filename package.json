@@ -48,7 +48,7 @@
         }
       ]
     },
-    "viewsWelcome": [
+    "viewsWelcome": [ 
       {
         "view": "floxInfoView",
         "contents": "Welcome to Flox! We couldn't find any Flox environment.\n[Create environment](command:flox.init)",
