@@ -556,47 +556,4 @@ export default class Env implements vscode.Disposable {
 
     return searchResults;
   }
-
-  public async reopen(_: any, reject: any, resolve: any) {
-    const editor = EDITORS[vscode.env.appName.toLocaleLowerCase()] || 'code';
-    const reopenScript = vscode.Uri.joinPath(this.context.extensionUri, 'scripts', 'reopen.sh');
-    console.log('reopen.sh path: ', reopenScript.fsPath);
-
-    let reopen = spawn(reopenScript.fsPath, [editor], {
-      cwd: this.workspaceUri?.fsPath,
-      stdio: [0, 1, 2, 'ipc']
-    });
-
-    // reopen.sh closes before sending "close" message
-    reopen.on('close', (code: number) => {
-      console.log("reopen.sh process closed with exit code:", code);
-      if (code !== 0) {
-        this.error.fire("Failed to activate Flox environment.");
-        reject();
-      }
-    });
-
-    reopen.stdout?.on('data', (data) => {
-      console.log('stdout:', data.toString().length, 'chars');
-    });
-    reopen.stderr?.on('data', (data) => {
-      console.log('stderr:', data.toString().length, 'chars');
-    });
-
-    // reopen.sh listens for messages (to close vscode window)
-    reopen.on('message', (msg: Msg) => {
-      if (msg.action === "close") {
-        resolve();
-        vscode.commands.executeCommand("workbench.action.closeWindow");
-        // Trigger script by sending workspacePath
-        reopen.send({ workspacePath: this.workspaceUri?.fsPath });
-      } else {
-        console.log(msg);
-        this.error.fire("Failed to activate Flox environment.");
-        reject();
-      }
-    });
-
-
-  }
 }
