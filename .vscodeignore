@@ -12,7 +12,7 @@ vsc-extension-quickstart.md
 **/*.ts
 **/.vscode-test.*
 scripts/**
-!scripts/reopen.sh
+!scripts/activate.sh
 assets/**
 !assets/icon.png
 !assets/icon.svg

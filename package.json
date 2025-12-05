@@ -24,6 +24,9 @@
   "categories": [
     "Other"
   ],
+  "extensionKind": [
+    "workspace"
+  ],
   "main": "./out/extension.js",
   "activationEvents": [
     "*",
@@ -45,7 +48,7 @@
         }
       ]
     },
-    "viewsWelcome": [
+    "viewsWelcome": [ 
       {
         "view": "floxInfoView",
         "contents": "Welcome to Flox! We couldn't find any Flox environment.\n[Create environment](command:flox.init)",
@@ -53,8 +56,13 @@
       },
       {
         "view": "floxInfoView",
-        "contents": "To activate your Flox environment, VScode will [need to restart](https://github.com/flox/flox-vscode/blob/main/README.md#faq).\n[Activate & Restart](command:flox.activate)",
+        "contents": "[Activate & Restart](command:flox.activate)",
         "when": "flox.envExists && !flox.envActive"
+      },
+      {
+        "view": "floxInfoView",
+        "contents": "[Deactivate & Restart](command:flox.deactivate)",
+        "when": "flox.envExists && flox.envActive"
       },
       {
         "view": "floxInfoView",
@@ -120,6 +128,11 @@
         "command": "flox.activate",
         "category": "Flox",
         "title": "Activate environment"
+      },
+      {
+        "command": "flox.deactivate",
+        "category": "Flox",
+        "title": "Deactivate environment"
       },
       {
         "command": "flox.install",

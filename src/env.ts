@@ -2,10 +2,8 @@ import * as vscode from 'vscode';
 import os from "os";
 import { promises as fs } from "fs";
 import { promisify } from 'util';
-import { spawn, execFile, ExecOptions } from 'child_process';
+import { spawn, execFile, ExecOptions, ChildProcess } from 'child_process';
 import { View, System, Packages, Package, Services } from './config';
-
-
 
 const EDITORS: { [key: string]: string } = {
   "vscodium": "codium",
@@ -19,7 +17,8 @@ interface CommandExecOptions {
 }
 
 interface Msg {
-  action: string
+  action: string;
+  env?: { [key: string]: string };
 }
 
 export default class Env implements vscode.Disposable {
@@ -35,6 +34,10 @@ export default class Env implements vscode.Disposable {
 
   context: vscode.ExtensionContext;
   error = new vscode.EventEmitter<unknown>();
+  floxActivateProcess: ChildProcess | undefined;
+  isEnvActive: boolean = false;
+  originalEnvVars: { [key: string]: string } = {};
+  activatedEnvVars: { [key: string]: string } = {};
 
   constructor(
     ctx: vscode.ExtensionContext,
@@ -201,23 +204,7 @@ export default class Env implements vscode.Disposable {
     ]);
 
     // Check if the environment is active
-    var envActive = false;
-    if (process.env["_FLOX_ACTIVE_ENVIRONMENTS"]) {
-      try {
-        const result = JSON.parse(process.env["_FLOX_ACTIVE_ENVIRONMENTS"]);
-        const workspaceFloxPath = vscode.Uri.joinPath(this.workspaceUri, '.flox').fsPath;
-
-        // Check that the last active environment is the same as the VSCode workspace
-        if (Array.isArray(result) && result.length > 0 && vscode.Uri.parse(result[0].path).fsPath === workspaceFloxPath) {
-          envActive = true;
-          // TODO: inside result[0] there is also the information of remove
-          // environment
-        }
-      } catch (e: any) {
-        console.error(`Parsing FLOX_ACTIVE_ENVIRONMENTS variable error: ${e}`);
-      }
-    }
-    vscode.commands.executeCommand('setContext', 'flox.envActive', envActive);
+    vscode.commands.executeCommand('setContext', 'flox.envActive', this.isEnvActive);
 
     // Check for services status
     if (hasServices === true) {
@@ -235,12 +222,21 @@ export default class Env implements vscode.Disposable {
       );
       this.servicesStatus = new Map();
       if (result?.stdout) {
-        for (const data of (typeof result.stdout === 'string' ? result.stdout : result.stdout.toString()).split('\n')) {
-          if (data.length === 0) {
-            continue;
+        const servicesJson = typeof result.stdout === 'string' ? result.stdout : result.stdout.toString();
+        if (servicesJson.startsWith('(')) {
+          // This handles an older version of flox services status json output
+          for (const data of servicesJson.split('\n')) {
+            if (data.length === 0) {
+              continue;
+            }
+            const service = JSON.parse(data);
+            this.servicesStatus.set(service?.name, service);
           }
-          const service = JSON.parse(data);
-          this.servicesStatus.set(service?.name, service);
+        } else if (servicesJson.length > 0 && servicesJson !== '' && servicesJson !== '[]') {
+          const services = JSON.parse(servicesJson);
+          for (const service of services) {
+            this.servicesStatus.set(service?.name, service);
+          }
         }
       }
     }
@@ -258,6 +254,8 @@ export default class Env implements vscode.Disposable {
   dispose() {
     this.manifestWatcher.dispose();
     this.manifestLockWatcher.dispose();
+    // Kill the activate process to prevent orphaned sleep processes
+    this.killActivateProcess(true);
   }
 
   private async onError(error: unknown) {
@@ -307,6 +305,13 @@ export default class Env implements vscode.Disposable {
       execOptions.cwd = this.workspaceUri?.fsPath;
     }
     try {
+      if (this.isEnvActive) {
+        return await promisify(execFile)('flox',
+          ['activate', "--dir", this.workspaceUri?.fsPath || "", '--']
+            .concat([command])
+            .concat(options.argv),
+          execOptions);
+      }
       return await promisify(execFile)(command, options.argv, execOptions);
     } catch (error) {
       var fireError = true;
@@ -316,6 +321,159 @@ export default class Env implements vscode.Disposable {
       if (fireError === true) {
         this.error.fire(error);
       }
+    }
+  }
+
+  async applyEnvironmentVariables(activatedEnv: { [key: string]: string }) {
+    // Store the current process environment as original (before any flox activation)
+    if (Object.keys(this.originalEnvVars).length === 0) {
+      this.originalEnvVars = { ...process.env } as { [key: string]: string };
+    }
+
+    // Store the activated environment variables
+    this.activatedEnvVars = activatedEnv;
+
+    // Apply to terminal environment variable collection
+    const envCollection = this.context.environmentVariableCollection;
+    envCollection.clear();
+
+    // Calculate the diff between original and activated environments
+    for (const [key, value] of Object.entries(activatedEnv)) {
+      const originalValue = this.originalEnvVars[key];
+
+      if (originalValue !== value) {
+        // This variable was added or changed by flox
+        envCollection.replace(key, value);
+        process.env[key] = value;
+      }
+    }
+
+    envCollection.description = 'Flox Environment';
+    console.log('Applied environment variables to terminal collection');
+  }
+
+  async clearEnvironmentVariables() {
+    // Clear the environment variable collection to restore original environment
+    const envCollection = this.context.environmentVariableCollection;
+    envCollection.clear();
+
+    // Clear stored variables
+    this.activatedEnvVars = {};
+
+    console.log('Cleared environment variables from terminal collection');
+  }
+
+  async spawnActivateProcess(resolve: (value: void) => void, reject: (reason?: any) => void) {
+    // Spawn the flox activate -- sleep infinity process, this ensures an activation is started in the background
+
+    let spawnComplete = false;
+    const activateScript = vscode.Uri.joinPath(this.context.extensionUri, 'scripts', 'activate.sh');
+    console.log('activate.sh path: ', activateScript.fsPath);
+
+    this.floxActivateProcess = spawn('flox', ['activate', '--dir', this.workspaceUri?.fsPath || '', '--', activateScript.fsPath], {
+      cwd: this.workspaceUri?.fsPath || '',
+      stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
+      detached: false, // Keep as child process so it dies with the parent
+    });
+
+    if (this.floxActivateProcess.pid) {
+      // Store the PID in workspace state
+      await this.context.workspaceState.update('flox.activatePid', this.floxActivateProcess.pid);
+      console.log(`Flox activate process started with PID: ${this.floxActivateProcess.pid}`);
+
+      // Handle process exit
+      this.floxActivateProcess.on('exit', (code, signal) => {
+        console.log(`Flox activate process exited with code ${code} and signal ${signal}`);
+        this.floxActivateProcess = undefined;
+        this.context.workspaceState.update('flox.activatePid', undefined);
+        if (!spawnComplete) {
+          reject();
+        }
+      });
+
+      this.floxActivateProcess.stdout?.on('data', (data) => {
+        console.log('stdout:', data.toString().length, 'chars');
+      });
+      this.floxActivateProcess.stderr?.on('data', (data) => {
+        console.log('stderr:', data.toString().length, 'chars');
+      });
+
+
+      this.floxActivateProcess.on('message', async (msg: Msg) => {
+        if (msg.action === 'ready' && msg.env) {
+          spawnComplete = true;
+          this.isEnvActive = true;
+
+          // Apply environment variables to terminals
+          this.applyEnvironmentVariables(msg.env);
+
+          resolve();
+        } else if (msg.action === 'ready') {
+          // Fallback if no env vars were sent
+          spawnComplete = true;
+          this.isEnvActive = true;
+          console.warn('No environment variables received from activate script');
+          resolve();
+        } else {
+          console.log(msg);
+          this.error.fire("Failed to activate Flox environment.");
+          reject();
+        }
+      });
+      // Handle errors
+      this.floxActivateProcess.on('error', (error) => {
+        console.error('Flox activate process error:', error);
+        this.displayError(`Failed to start flox activate: ${error.message}`);
+        this.floxActivateProcess = undefined;
+        this.context.workspaceState.update('flox.activatePid', undefined);
+        reject();
+      });
+
+    } else {
+      this.displayError("Failed to start flox activate process.");
+      reject();
+    }
+  }
+
+  async killActivateProcess(silent: boolean = false) {
+    if (!this.floxActivateProcess || !this.floxActivateProcess.pid) {
+      if (!silent) {
+        this.displayMsg("Flox environment is not currently activated.");
+      }
+      return;
+    }
+
+    const pid = this.floxActivateProcess.pid;
+
+    try {
+      console.log(`Killing flox activate process with PID: ${pid}`);
+      // With detached: false, we kill the process directly, not the process group.
+      process.kill(pid, 'SIGKILL');
+
+      // Clear environment variables from terminals
+      await this.clearEnvironmentVariables();
+    } catch (e: any) {
+      // If the process is already gone, just ignore the error (ESRCH).
+      // This can happen in a race condition where the process exits
+      // and its 'exit' event has not yet been processed.
+      if (e.code !== 'ESRCH') {
+        // For any other error, log it and display it to the user.
+        console.error('Failed to kill flox activate process:', e);
+        if (!silent) {
+          this.displayError(`Failed to deactivate Flox environment: ${e}`);
+        }
+        return; // Stop further processing on unexpected errors.
+      }
+      console.log(`Process ${pid} was already gone (ESRCH), continuing cleanup.`);
+    }
+
+    this.floxActivateProcess = undefined;
+    this.isEnvActive = false;
+    await this.context.workspaceState.update('flox.activatePid', undefined);
+    await vscode.commands.executeCommand('setContext', 'flox.envActive', false);
+
+    if (!silent) {
+      this.displayMsg("Flox environment deactivated successfully.");
     }
   }
 
@@ -397,48 +555,5 @@ export default class Env implements vscode.Disposable {
     }
 
     return searchResults;
-  }
-
-  public async reopen(_: any, reject: any, resolve: any) {
-    const editor = EDITORS[vscode.env.appName.toLocaleLowerCase()] || 'code';
-    const reopenScript = vscode.Uri.joinPath(this.context.extensionUri, 'scripts', 'reopen.sh');
-    console.log('reopen.sh path: ', reopenScript.fsPath);
-
-    let reopen = spawn(reopenScript.fsPath, [editor], {
-      cwd: this.workspaceUri?.fsPath,
-      stdio: [0, 1, 2, 'ipc']
-    });
-
-    // reopen.sh closes before sending "close" message
-    reopen.on('close', (code: number) => {
-      console.log("reopen.sh process closed with exit code:", code);
-      if (code !== 0) {
-        this.error.fire("Failed to activate Flox environment.");
-        reject();
-      }
-    });
-
-    reopen.stdout?.on('data', (data) => {
-      console.log('stdout:', data.toString().length, 'chars');
-    });
-    reopen.stderr?.on('data', (data) => {
-      console.log('stderr:', data.toString().length, 'chars');
-    });
-
-    // reopen.sh listens for messages (to close vscode window)
-    reopen.on('message', (msg: Msg) => {
-      if (msg.action === "close") {
-        resolve();
-        vscode.commands.executeCommand("workbench.action.closeWindow");
-        // Trigger script by sending workspacePath
-        reopen.send({ workspacePath: this.workspaceUri?.fsPath });
-      } else {
-        console.log(msg);
-        this.error.fire("Failed to activate Flox environment.");
-        reject();
-      }
-    });
-
-
   }
 }
