@@ -20,8 +20,10 @@ done | paste -sd ',' -)
 # Send ready message with environment variables
 send "{\"action\":\"ready\",\"env\":{$env_vars}}"
 
-# Block indefinitely by reading from stdin.
+# Block indefinitely by reading from fd.
 # When the parent VS Code process (which holds the other end of the pipe)
 # terminates for any reason, this pipe will break. The 'read' command
 # will then receive an EOF and exit, causing the script to terminate naturally.
-read -r
+while IFS= read -u "$fd" -r line; do
+    sleep 5
+done
