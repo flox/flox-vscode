@@ -392,14 +392,15 @@ export default class Env implements vscode.Disposable {
       });
 
       this.floxActivateProcess.stdout?.on('data', (data) => {
-        console.log('stdout:', data.toString().length, 'chars');
+        console.log('stdout:', data.toString());
       });
       this.floxActivateProcess.stderr?.on('data', (data) => {
-        console.log('stderr:', data.toString().length, 'chars');
+        console.log('stderr:', data.toString());
       });
 
 
       this.floxActivateProcess.on('message', async (msg: Msg) => {
+        
         if (msg.action === 'ready' && msg.env) {
           spawnComplete = true;
           this.isEnvActive = true;
