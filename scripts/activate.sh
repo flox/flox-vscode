@@ -8,14 +8,51 @@ fd="${NODE_CHANNEL_FD:-3}"
 send() {
     echo "$1" >&"$fd"
 }
+# Function to escape a string for JSON
+json_escape() {
+    local input="$1"
+    local output=""
+    local i char
+
+    for ((i=0; i<${#input}; i++)); do
+        char="${input:$i:1}"
+        case "$char" in
+            '"')  output+='\"' ;;
+            '\')  output+='\\' ;;
+            $'\b') output+='\b' ;;
+            $'\f') output+='\f' ;;
+            $'\n') output+='\n' ;;
+            $'\r') output+='\r' ;;
+            $'\t') output+='\t' ;;
+            *)    output+="$char" ;;
+        esac
+    done
+
+    echo "$output"
+}
 
 # Capture all environment variables and format as JSON
-# This creates a JSON object with all env vars
-env_vars=$(env | while IFS='=' read -r key value; do
-    # Escape special characters in the value for JSON
-    value=$(echo "$value" | sed 's/\\/\\\\/g' | sed 's/"/\\"/g' | sed 's/$/\\n/g' | tr -d '\n' | sed 's/\\n$//')
-    echo "\"$key\":\"$value\""
-done | paste -sd ',' -)
+# Use env -0 to null-terminate each variable, which properly handles multi-line values
+env_vars=""
+while IFS= read -r -d '' env_entry; do
+    # Split on the first = to separate key and value
+    key="${env_entry%%=*}"
+    value="${env_entry#*=}"
+
+    # Skip if key is empty
+    [ -z "$key" ] && continue
+
+    # Escape special characters in the key and value for JSON
+    key_escaped=$(json_escape "$key")
+    value_escaped=$(json_escape "$value")
+
+    # Append to env_vars with comma separator
+    if [ -n "$env_vars" ]; then
+        env_vars="$env_vars,\"$key_escaped\":\"$value_escaped\""
+    else
+        env_vars="\"$key_escaped\":\"$value_escaped\""
+    fi
+done < <(env -0)
 
 # Send ready message with environment variables
 send "{\"action\":\"ready\",\"env\":{$env_vars}}"
