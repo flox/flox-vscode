@@ -2,11 +2,14 @@
   "permissions": {
     "allow": [
       "Bash(gh issue view:*)",
+      "Bash(gh pr list:*)",
+      "Bash(gh pr view:*)",
+      "Bash(git fetch:*)",
       "Bash(npm run compile:*)",
-      "Bash(npm test:*)",
-      "Bash(npm run test:unit:*)",
-      "Bash(npm run test:integration:*)",
       "Bash(npm run lint:*)",
+      "Bash(npm run test:integration:*)",
+      "Bash(npm run test:unit:*)",
+      "Bash(npm test:*)",
       "WebFetch(domain:github.com)"
     ]
   }
