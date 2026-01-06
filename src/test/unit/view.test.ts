@@ -21,7 +21,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import { PackageItem, VariableItem, ServiceItem, InstallView, VarsView, ServicesView } from '../../view';
-import { System, Package } from '../../config';
+import { System, Package, ItemState } from '../../config';
 import { createMockExtensionContext } from '../mocks/vscode';
 
 suite('View Unit Tests', () => {
@@ -60,6 +60,28 @@ suite('View Unit Tests', () => {
       const item = new PackageItem('nodejs', 'description');
       assert.strictEqual(item.contextValue, 'package');
     });
+
+    test('should add asterisk suffix for pending items', () => {
+      const item = new PackageItem('nodejs', 'description', ItemState.PENDING);
+      assert.strictEqual(item.label, 'nodejs *');
+    });
+
+    test('should have warning color for pending items', () => {
+      const item = new PackageItem('nodejs', 'description', ItemState.PENDING);
+      const icon = item.iconPath as vscode.ThemeIcon;
+      assert.ok(icon.color instanceof vscode.ThemeColor);
+    });
+
+    test('should have tooltip for pending items', () => {
+      const item = new PackageItem('nodejs', 'description', ItemState.PENDING);
+      assert.ok(item.tooltip);
+      assert.ok((item.tooltip as string).toLowerCase().includes('pending'));
+    });
+
+    test('should not modify active items', () => {
+      const item = new PackageItem('nodejs', 'description', ItemState.ACTIVE);
+      assert.strictEqual(item.label, 'nodejs');
+    });
   });
 
   /**
@@ -89,6 +111,22 @@ suite('View Unit Tests', () => {
     test('should have contextValue of "variable"', () => {
       const item = new VariableItem('MY_VAR', 'my_value');
       assert.strictEqual(item.contextValue, 'variable');
+    });
+
+    test('should add asterisk suffix for pending variables', () => {
+      const item = new VariableItem('MY_VAR', 'my_value', ItemState.PENDING);
+      assert.strictEqual(item.label, 'MY_VAR *');
+    });
+
+    test('should have warning color for pending variables', () => {
+      const item = new VariableItem('MY_VAR', 'my_value', ItemState.PENDING);
+      const icon = item.iconPath as vscode.ThemeIcon;
+      assert.ok(icon.color instanceof vscode.ThemeColor);
+    });
+
+    test('should not modify active variables', () => {
+      const item = new VariableItem('MY_VAR', 'my_value', ItemState.ACTIVE);
+      assert.strictEqual(item.label, 'MY_VAR');
     });
   });
 
@@ -142,6 +180,22 @@ suite('View Unit Tests', () => {
       const item = new ServiceItem('myservice', '( Not started )', 'Not started');
       assert.strictEqual(item.contextValue, 'service');
     });
+
+    test('should add asterisk suffix for pending services', () => {
+      const item = new ServiceItem('myservice', '( Not started )', 'Not started', ItemState.PENDING);
+      assert.strictEqual(item.label, 'myservice *');
+    });
+
+    test('should have warning color for pending services', () => {
+      const item = new ServiceItem('myservice', '( Not started )', 'Not started', ItemState.PENDING);
+      const icon = item.iconPath as vscode.ThemeIcon;
+      assert.ok(icon.color instanceof vscode.ThemeColor);
+    });
+
+    test('should not modify active services', () => {
+      const item = new ServiceItem('myservice', '( Running )', 'Running', ItemState.ACTIVE);
+      assert.strictEqual(item.label, 'myservice');
+    });
   });
 
   /**
@@ -189,6 +243,7 @@ suite('View Unit Tests', () => {
           license: 'MIT',
           description: 'Node.js runtime',
           attr_path: 'nodejs',
+          state: ItemState.ACTIVE,
         }],
         ['python3', {
           install_id: 'python3',
@@ -198,6 +253,7 @@ suite('View Unit Tests', () => {
           license: 'PSF',
           description: 'Python interpreter',
           attr_path: 'python3',
+          state: ItemState.ACTIVE,
         }],
       ]);
 
@@ -277,17 +333,15 @@ suite('View Unit Tests', () => {
     test('should return variables when manifest has vars', async () => {
       await mockContext.workspaceState.update('flox.envExists', true);
 
-      // Manifest structure from manifest.lock: { manifest: { vars: {...} } }
+      // VarsView now uses env.variables Map instead of manifest.manifest.vars
+      const variablesMap = new Map([
+        ['MY_VAR', { name: 'MY_VAR', value: 'value1', state: ItemState.ACTIVE }],
+        ['OTHER_VAR', { name: 'OTHER_VAR', value: 'value2', state: ItemState.ACTIVE }],
+      ]);
+
       varsView.env = {
         context: mockContext,
-        manifest: {
-          manifest: {
-            vars: {
-              'MY_VAR': 'value1',
-              'OTHER_VAR': 'value2',
-            },
-          },
-        },
+        variables: variablesMap,
       } as any;
 
       const children = await varsView.getChildren();
@@ -343,6 +397,7 @@ suite('View Unit Tests', () => {
       ]);
 
       // Services are defined in manifest.manifest.services object
+      // Mock the new methods required by ServicesView
       servicesView.env = {
         context: mockContext,
         manifest: {
@@ -354,6 +409,9 @@ suite('View Unit Tests', () => {
           },
         },
         servicesStatus,
+        lockExists: true,
+        getMergedServiceNames: () => ['webserver', 'database'],
+        getServiceState: () => ItemState.ACTIVE,
       } as any;
 
       const children = await servicesView.getChildren();
@@ -379,6 +437,9 @@ suite('View Unit Tests', () => {
           },
         },
         servicesStatus,
+        lockExists: true,
+        getMergedServiceNames: () => ['webserver'],
+        getServiceState: () => ItemState.ACTIVE,
       } as any;
 
       const children = await servicesView.getChildren();
@@ -402,6 +463,9 @@ suite('View Unit Tests', () => {
           },
         },
         servicesStatus: new Map(), // Empty - no services started
+        lockExists: true,
+        getMergedServiceNames: () => ['webserver'],
+        getServiceState: () => ItemState.ACTIVE,
       } as any;
 
       const children = await servicesView.getChildren();

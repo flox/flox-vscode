@@ -3,7 +3,7 @@ import os from "os";
 import { promises as fs } from "fs";
 import { promisify } from 'util';
 import { spawn, execFile, ExecOptions, ChildProcess } from 'child_process';
-import { View, System, Packages, Package, Services } from './config';
+import { View, System, Packages, Package, Services, ItemState, Variable } from './config';
 
 const EDITORS: { [key: string]: string } = {
   "vscodium": "codium",
@@ -27,7 +27,10 @@ export default class Env implements vscode.Disposable {
   manifestLockWatcher: vscode.FileSystemWatcher;
   workspaceUri?: vscode.Uri;
   manifest?: any;
+  tomlManifest?: any;  // Parsed manifest.toml for comparison
+  lockExists: boolean = false;  // Track if lock file exists
   packages?: Packages;
+  variables: Map<string, Variable> = new Map();  // Variables with state tracking
   servicesStatus?: Services;
   system?: System;
   views: View[];  // TODO: specify a type
@@ -36,6 +39,7 @@ export default class Env implements vscode.Disposable {
   error = new vscode.EventEmitter<unknown>();
   floxActivateProcess: ChildProcess | undefined;
   isEnvActive: boolean = false;
+  isActivationInProgress: boolean = false;  // Track activation state
   originalEnvVars: { [key: string]: string } = {};
   activatedEnvVars: { [key: string]: string } = {};
   private output?: vscode.OutputChannel;
@@ -158,6 +162,182 @@ export default class Env implements vscode.Disposable {
     return undefined;
   }
 
+  /**
+   * Merge packages from lock file (ACTIVE) and toml file (PENDING).
+   * Items only in toml are marked as PENDING.
+   */
+  private mergePackages(lockExists: boolean) {
+    this.packages = new Map();
+
+    // Get install IDs from lock file (these are ACTIVE)
+    const lockInstallIds = new Set<string>();
+    if (this.manifest?.packages) {
+      for (const p of this.manifest.packages) {
+        lockInstallIds.add(p.install_id);
+      }
+    }
+
+    // Get install IDs from toml file
+    const tomlInstallIds = new Set<string>();
+    if (this.tomlManifest?.install) {
+      for (const key of Object.keys(this.tomlManifest.install)) {
+        tomlInstallIds.add(key);
+      }
+    }
+
+    // Build packages map for each system
+    for (const system in System) {
+      const systemValue = System[system as keyof typeof System];
+      const pkgsForSystem: Map<string, Package> = new Map();
+
+      // Add packages from lock file (ACTIVE)
+      if (this.manifest?.packages) {
+        for (const p of this.manifest.packages) {
+          if (p.system === systemValue) {
+            // Check if this package has pending changes in toml
+            const tomlPkg = this.tomlManifest?.install?.[p.install_id];
+            const hasPendingChanges = tomlPkg && this.packageHasChanges(p, tomlPkg);
+
+            pkgsForSystem.set(p.install_id, {
+              install_id: p.install_id,
+              system: p.system,
+              version: p.version,
+              group: p.group,
+              license: p.license,
+              description: p.description,
+              attr_path: p.attr_path,
+              state: hasPendingChanges ? ItemState.PENDING : ItemState.ACTIVE,
+            });
+          }
+        }
+      }
+
+      // Add packages only in toml (PENDING)
+      if (this.tomlManifest?.install) {
+        for (const [installId, tomlPkg] of Object.entries(this.tomlManifest.install)) {
+          if (!lockInstallIds.has(installId)) {
+            const pkg = tomlPkg as any;
+            pkgsForSystem.set(installId, {
+              install_id: installId,
+              system: systemValue,
+              version: '(pending)',
+              group: 'toplevel',
+              license: '',
+              description: '',
+              attr_path: pkg['pkg-path'] || installId,
+              state: ItemState.PENDING,
+            });
+          }
+        }
+      }
+
+      this.packages.set(systemValue, pkgsForSystem);
+    }
+  }
+
+  /**
+   * Check if a package has changes between lock and toml.
+   */
+  private packageHasChanges(lockPkg: any, tomlPkg: any): boolean {
+    // Compare pkg-path if specified in toml
+    if (tomlPkg['pkg-path'] && tomlPkg['pkg-path'] !== lockPkg.attr_path) {
+      return true;
+    }
+    // Compare version if specified in toml
+    if (tomlPkg.version && tomlPkg.version !== lockPkg.version) {
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * Merge variables from lock file (ACTIVE) and toml file (PENDING).
+   * Items only in toml are marked as PENDING.
+   */
+  private mergeVariables(lockExists: boolean) {
+    this.variables = new Map();
+
+    // Get vars from lock file (these are ACTIVE)
+    const lockVars = this.manifest?.manifest?.vars || {};
+
+    // Get vars from toml file
+    const tomlVars = this.tomlManifest?.vars || {};
+
+    // Add vars from lock file (ACTIVE)
+    for (const [name, value] of Object.entries(lockVars)) {
+      const tomlValue = tomlVars[name];
+      const hasPendingChanges = tomlValue !== undefined && tomlValue !== value;
+
+      this.variables.set(name, {
+        name,
+        value: value as string,
+        state: hasPendingChanges ? ItemState.PENDING : ItemState.ACTIVE,
+      });
+    }
+
+    // Add vars only in toml (PENDING)
+    for (const [name, value] of Object.entries(tomlVars)) {
+      if (!this.variables.has(name)) {
+        this.variables.set(name, {
+          name,
+          value: value as string,
+          state: lockExists ? ItemState.PENDING : ItemState.ACTIVE,
+        });
+      }
+    }
+  }
+
+  /**
+   * Get the state for a service based on lock/toml comparison.
+   */
+  getServiceState(serviceName: string, lockExists: boolean): ItemState {
+    const lockServices = this.manifest?.manifest?.services || {};
+    const tomlServices = this.tomlManifest?.services || {};
+
+    const inLock = serviceName in lockServices;
+    const inToml = serviceName in tomlServices;
+
+    if (!lockExists) {
+      // No lock file, everything is active (or pending if you prefer)
+      return ItemState.ACTIVE;
+    }
+
+    if (inLock && inToml) {
+      // In both - check if they differ
+      const lockService = lockServices[serviceName];
+      const tomlService = tomlServices[serviceName];
+      if (JSON.stringify(lockService) !== JSON.stringify(tomlService)) {
+        return ItemState.PENDING;
+      }
+      return ItemState.ACTIVE;
+    }
+
+    if (inToml && !inLock) {
+      // Only in toml = pending
+      return ItemState.PENDING;
+    }
+
+    // Only in lock = active
+    return ItemState.ACTIVE;
+  }
+
+  /**
+   * Get merged service names from both lock and toml.
+   */
+  getMergedServiceNames(): string[] {
+    const lockServices = this.manifest?.manifest?.services || {};
+    const tomlServices = this.tomlManifest?.services || {};
+
+    const serviceNames = new Set<string>();
+    for (const name of Object.keys(lockServices)) {
+      serviceNames.add(name);
+    }
+    for (const name of Object.keys(tomlServices)) {
+      serviceNames.add(name);
+    }
+    return Array.from(serviceNames);
+  }
+
   // initialize Flox environment
   async reload() {
     this.log('Reloading environment...');
@@ -174,53 +354,55 @@ export default class Env implements vscode.Disposable {
     // activate an environment from the first workspace
     const manifestFile = vscode.Uri.joinPath(this.workspaceUri, '.flox', 'env', 'manifest.toml');
     const manifestLockFile = vscode.Uri.joinPath(this.workspaceUri, '.flox', 'env', 'manifest.lock');
-    if (await this.fileExists(manifestLockFile)) {
+
+    // Load BOTH files for comparison
+    const lockExists = await this.fileExists(manifestLockFile);
+    const tomlExists = await this.fileExists(manifestFile);
+    this.lockExists = lockExists;  // Store for views to use
+
+    if (lockExists) {
       this.log(`Loading manifest from: ${manifestLockFile.fsPath}`);
       this.manifest = await this.loadFile(manifestLockFile);
-    } else if (await this.fileExists(manifestFile)) {
+    }
+    if (tomlExists) {
       this.log(`Loading manifest from: ${manifestFile.fsPath}`);
-      this.manifest = { manifest: await this.loadFile(manifestLockFile) };
-    } else {
+      this.tomlManifest = await this.loadFile(manifestFile);
+    }
+    if (!lockExists && !tomlExists) {
       this.log('No manifest file found');
     }
-    if (this.manifest?.packages) {
-      this.packages = new Map();
-      for (const system in System) {
-        const systemValue = System[system as keyof typeof System];
-        const pkgsForSystem: Map<string, Package> = new Map(
-          this.manifest.packages
-            .filter((p: any) => p.system === systemValue)
-            .map((p: any) => [
-              p.install_id,
-              {
-                install_id: p.install_id,
-                system: p.system,
-                version: p.version,
-                group: p.group,
-                license: p.license,
-                description: p.description,
-                attr_path: p.attr_path,
-              }
-            ])
-        );
-        this.packages.set(System[system as keyof typeof System], pkgsForSystem);
-      }
+
+    // If no lock file but toml exists, wrap toml in manifest structure
+    if (!lockExists && tomlExists) {
+      this.manifest = { manifest: this.tomlManifest };
     }
+
+    // Merge packages from lock and toml, marking state
+    this.mergePackages(lockExists);
+
+    // Merge variables from lock and toml, marking state
+    this.mergeVariables(lockExists);
 
     var exists = false;
     var hasPkgs = false;
     var hasVars = false;
     var hasServices = false;
-    if (this.manifest) {
-      exists = this.manifest !== undefined || true;
-      hasPkgs = this.manifest?.manifest?.install !== undefined && Object.keys(this.manifest.manifest.install).length > 0;
-      hasVars = this.manifest?.manifest?.vars !== undefined && Object.keys(this.manifest.manifest.vars).length > 0;
-      hasServices = this.manifest?.manifest?.services !== undefined && Object.keys(this.manifest.manifest.services).length > 0;
+    if (this.manifest || this.tomlManifest) {
+      exists = true;
+      // Check packages from both lock and toml
+      const lockPkgs = this.manifest?.manifest?.install || {};
+      const tomlPkgs = this.tomlManifest?.install || {};
+      hasPkgs = Object.keys(lockPkgs).length > 0 || Object.keys(tomlPkgs).length > 0;
+      // Check variables from merged map
+      hasVars = this.variables.size > 0;
+      // Check services from merged sources
+      hasServices = this.getMergedServiceNames().length > 0;
 
-      // Log summary of loaded manifest
-      const pkgCount = hasPkgs ? Object.keys(this.manifest.manifest.install).length : 0;
-      const varCount = hasVars ? Object.keys(this.manifest.manifest.vars).length : 0;
-      const serviceCount = hasServices ? Object.keys(this.manifest.manifest.services).length : 0;
+      // Log summary of loaded manifest (use merged counts)
+      const systemPkgs = this.packages?.get(this.system!) || new Map();
+      const pkgCount = systemPkgs.size;
+      const varCount = this.variables.size;
+      const serviceCount = this.getMergedServiceNames().length;
       this.log(`Environment loaded: ${pkgCount} packages, ${varCount} variables, ${serviceCount} services`);
     }
 
@@ -444,6 +626,7 @@ export default class Env implements vscode.Disposable {
 
   async spawnActivateProcess(resolve: (value: void) => void, reject: (reason?: any) => void) {
     // Spawn the flox activate -- sleep infinity process, this ensures an activation is started in the background
+    this.isActivationInProgress = true;
 
     let spawnComplete = false;
     const activateScript = vscode.Uri.joinPath(this.context.extensionUri, 'scripts', 'activate.sh');
@@ -465,6 +648,7 @@ export default class Env implements vscode.Disposable {
       this.floxActivateProcess.on('exit', (code, signal) => {
         this.log(`Flox activate process exited (code: ${code}, signal: ${signal})`);
         this.floxActivateProcess = undefined;
+        this.isActivationInProgress = false;
         this.context.workspaceState.update('flox.activatePid', undefined);
         if (!spawnComplete) {
           reject();
@@ -481,9 +665,13 @@ export default class Env implements vscode.Disposable {
         if (msg.action === 'ready' && msg.env) {
           spawnComplete = true;
           this.isEnvActive = true;
+          this.isActivationInProgress = false;
 
           // Apply environment variables to terminals
           this.applyEnvironmentVariables(msg.env);
+
+          // Reload to get fresh data from lock file
+          await this.reload();
 
           this.log('Environment activated successfully');
           resolve();
@@ -491,10 +679,13 @@ export default class Env implements vscode.Disposable {
           // Fallback if no env vars were sent
           spawnComplete = true;
           this.isEnvActive = true;
+          this.isActivationInProgress = false;
           this.log('Environment activated (no env vars received)');
+          await this.reload();
           resolve();
         } else {
           this.logError('Unexpected message from activate script', msg);
+          this.isActivationInProgress = false;
           this.error.fire("Failed to activate Flox environment.");
           reject();
         }
@@ -507,12 +698,14 @@ export default class Env implements vscode.Disposable {
         }
         this.displayError(`Failed to start flox activate: ${error.message}`);
         this.floxActivateProcess = undefined;
+        this.isActivationInProgress = false;
         this.context.workspaceState.update('flox.activatePid', undefined);
         reject();
       });
 
     } else {
       this.logError('Failed to start flox activate process');
+      this.isActivationInProgress = false;
       this.displayError("Failed to start flox activate process.");
       reject();
     }
