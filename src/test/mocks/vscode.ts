@@ -285,3 +285,74 @@ export function createMockCallTracker(): MockCallTracker {
     commandRegistrations: [],
   };
 }
+
+/**
+ * MockOutputChannel - Implements vscode.OutputChannel
+ *
+ * Used for testing output channel functionality. Captures all appended
+ * lines so tests can verify logging behavior.
+ *
+ * Key methods:
+ * - appendLine(value): Add a line to the output
+ * - getLines(): Get all logged lines (test helper)
+ * - clear(): Clear all logged lines
+ */
+export class MockOutputChannel implements vscode.OutputChannel {
+  readonly name: string;
+  private lines: string[] = [];
+
+  constructor(name: string = 'Flox') {
+    this.name = name;
+  }
+
+  append(value: string): void {
+    // For simplicity, we treat append as adding to the current line
+    if (this.lines.length === 0) {
+      this.lines.push(value);
+    } else {
+      this.lines[this.lines.length - 1] += value;
+    }
+  }
+
+  appendLine(value: string): void {
+    this.lines.push(value);
+  }
+
+  replace(_value: string): void {
+    // Not commonly used in our extension
+  }
+
+  clear(): void {
+    this.lines = [];
+  }
+
+  show(_preserveFocus?: boolean): void;
+  show(_column?: vscode.ViewColumn, _preserveFocus?: boolean): void;
+  show(_columnOrPreserveFocus?: vscode.ViewColumn | boolean, _preserveFocus?: boolean): void {
+    // No-op for mock
+  }
+
+  hide(): void {
+    // No-op for mock
+  }
+
+  dispose(): void {
+    this.lines = [];
+  }
+
+  // Test helper methods
+  getLines(): string[] {
+    return [...this.lines];
+  }
+
+  getLastLine(): string | undefined {
+    return this.lines.length > 0 ? this.lines[this.lines.length - 1] : undefined;
+  }
+
+  hasLine(pattern: string | RegExp): boolean {
+    if (typeof pattern === 'string') {
+      return this.lines.some(line => line.includes(pattern));
+    }
+    return this.lines.some(line => pattern.test(line));
+  }
+}
