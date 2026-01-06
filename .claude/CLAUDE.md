@@ -181,7 +181,8 @@ npm run compile && code --extensionDevelopmentPath=$PWD
 - Otherwise commands run directly
 
 **View State Management**:
-- Context keys (`flox.envExists`, `flox.envActive`, `flox.hasPkgs`, etc.) control UI visibility
+- Context keys (`flox.isInstalled`, `flox.envExists`, `flox.envActive`, `flox.hasPkgs`, etc.) control UI visibility
+- `flox.isInstalled` is checked on extension activation to show install guidance when Flox CLI is not available
 - Stored in both VSCode context (for UI conditions) and workspace state (for persistence)
 - Views refresh themselves by firing `_onDidChangeTreeData` event
 

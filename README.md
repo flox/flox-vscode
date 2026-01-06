@@ -24,8 +24,10 @@
 ## Installation
 
 ### Prerequisites
-- **Flox**: Install from [flox.dev](https://flox.dev)
+- **Flox**: Install from [flox.dev/docs/install-flox](https://flox.dev/docs/install-flox/)
 - **VSCode**: Version 1.87.0 or higher
+
+> **Note:** If Flox is not installed, the extension will display a message with a link to the installation guide. Once Flox is installed, reload VSCode to start using the extension.
 
 ### From VSCode Marketplace
 1. Open VSCode

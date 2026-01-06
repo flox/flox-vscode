@@ -41,6 +41,7 @@ export default class Env implements vscode.Disposable {
   private output?: vscode.OutputChannel;
   private manifestChangeTimeout: NodeJS.Timeout | undefined;
   private isReactivating: boolean = false;
+  private _isFloxInstalled: boolean = false;
 
   constructor(
     ctx: vscode.ExtensionContext,
@@ -679,5 +680,24 @@ export default class Env implements vscode.Disposable {
     }
 
     return searchResults;
+  }
+
+  get isFloxInstalled(): boolean {
+    return this._isFloxInstalled;
+  }
+
+  async checkFloxInstalled(): Promise<boolean> {
+    try {
+      await promisify(execFile)('flox', ['--version']);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async setFloxInstalled(value: boolean): Promise<void> {
+    this._isFloxInstalled = value;
+    await vscode.commands.executeCommand('setContext', 'flox.isInstalled', value);
+    await this.context.workspaceState.update('flox.isInstalled', value);
   }
 }

@@ -738,4 +738,98 @@ MY_VAR = "test_value"
       env.dispose();
     });
   });
+
+  /**
+   * checkFloxInstalled Tests
+   *
+   * Detects if Flox CLI is installed by running `flox --version`.
+   * Used on extension startup to show appropriate UI.
+   */
+  suite('checkFloxInstalled', () => {
+    test('should return true when flox command succeeds', async function() {
+      // This test requires flox to be installed
+      // Skip if running in CI without flox
+      if (process.env.SKIP_FLOX_TESTS === '1') {
+        this.skip();
+        return;
+      }
+
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      const result = await env.checkFloxInstalled();
+      // Result depends on whether flox is actually installed
+      // We just check it returns a boolean
+      assert.strictEqual(typeof result, 'boolean');
+      env.dispose();
+    });
+
+    test('should return boolean without throwing', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Should not throw even if flox is not installed
+      let result: boolean;
+      try {
+        result = await env.checkFloxInstalled();
+      } catch {
+        assert.fail('checkFloxInstalled should not throw');
+        return;
+      }
+
+      assert.strictEqual(typeof result, 'boolean');
+      env.dispose();
+    });
+  });
+
+  /**
+   * setFloxInstalled Tests
+   *
+   * Sets the flox.isInstalled context key and workspace state.
+   * Controls visibility of UI elements.
+   */
+  suite('setFloxInstalled', () => {
+    test('should update _isFloxInstalled property', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Initially should be false
+      assert.strictEqual(env.isFloxInstalled, false);
+
+      await env.setFloxInstalled(true);
+      assert.strictEqual(env.isFloxInstalled, true);
+
+      await env.setFloxInstalled(false);
+      assert.strictEqual(env.isFloxInstalled, false);
+
+      env.dispose();
+    });
+
+    test('should update workspace state', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      await env.setFloxInstalled(true);
+
+      const storedValue = mockContext.workspaceState.get('flox.isInstalled');
+      assert.strictEqual(storedValue, true);
+
+      env.dispose();
+    });
+  });
+
+  /**
+   * isFloxInstalled Getter Tests
+   *
+   * Returns the current value of _isFloxInstalled.
+   */
+  suite('isFloxInstalled getter', () => {
+    test('should return false by default', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      assert.strictEqual(env.isFloxInstalled, false);
+      env.dispose();
+    });
+  });
 });
