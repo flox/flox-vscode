@@ -455,6 +455,21 @@ export default class Env implements vscode.Disposable {
       }
     }
 
+    // Check if MCP availability changed (environment might have flox-mcp now)
+    if (this.isEnvActive) {
+      const mcpAvailable = await this.checkFloxMcpAvailable();
+      const previousMcpState = this.context.workspaceState.get('flox.mcpAvailable', false);
+
+      if (mcpAvailable !== previousMcpState) {
+        await this.setFloxMcpAvailable(mcpAvailable);
+
+        // If MCP just became available, trigger suggestion
+        if (mcpAvailable && this.checkCopilotInstalled()) {
+          await this.showMcpSuggestion();
+        }
+      }
+    }
+
     // Refresh all UI components (we need to do this last)
     if (this.manifest) {
       for (const view of this.views) {
@@ -892,6 +907,92 @@ export default class Env implements vscode.Disposable {
     this._isFloxInstalled = value;
     await vscode.commands.executeCommand('setContext', 'flox.isInstalled', value);
     await this.context.workspaceState.update('flox.isInstalled', value);
+  }
+
+  /**
+   * Check if flox-mcp command is available in PATH.
+   * This command is typically available when a Flox environment with flox-mcp package is active.
+   * @returns true if flox-mcp is in PATH, false otherwise
+   */
+  async checkFloxMcpAvailable(): Promise<boolean> {
+    try {
+      await promisify(execFile)('flox-mcp', ['--version']);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async setFloxMcpAvailable(value: boolean): Promise<void> {
+    await vscode.commands.executeCommand('setContext', 'flox.mcpAvailable', value);
+    await this.context.workspaceState.update('flox.mcpAvailable', value);
+    this.log(`MCP available: ${value}`);
+  }
+
+  /**
+   * Check if GitHub Copilot or Copilot Chat extension is installed.
+   * Either extension being active counts as "Copilot available".
+   * @returns true if Copilot is available, false otherwise
+   */
+  checkCopilotInstalled(): boolean {
+    const copilot = vscode.extensions.getExtension('GitHub.copilot');
+    const copilotChat = vscode.extensions.getExtension('GitHub.copilot-chat');
+    return !!(copilot || copilotChat);
+  }
+
+  async setCopilotInstalled(value: boolean): Promise<void> {
+    await vscode.commands.executeCommand('setContext', 'flox.copilotInstalled', value);
+    await this.context.workspaceState.update('flox.copilotInstalled', value);
+    this.log(`Copilot installed: ${value}`);
+  }
+
+  /**
+   * Show one-time suggestion to configure MCP server.
+   * Only shows if:
+   * - Copilot is installed
+   * - Flox env is active
+   * - MCP command is available
+   * - Notification hasn't been shown before
+   *
+   * @returns true if notification was shown, false otherwise
+   */
+  async showMcpSuggestion(): Promise<boolean> {
+    // Check if we've already shown this
+    const alreadyShown = this.context.workspaceState.get('flox.mcpSuggestionShown', false);
+    if (alreadyShown) {
+      this.log('MCP suggestion already shown in this workspace');
+      return false;
+    }
+
+    // Check all conditions
+    const copilotInstalled = this.checkCopilotInstalled();
+    const mcpAvailable = await this.checkFloxMcpAvailable();
+    const envActive = this.isEnvActive;
+
+    if (!copilotInstalled || !mcpAvailable || !envActive) {
+      this.log(`MCP suggestion skipped: copilot=${copilotInstalled}, mcp=${mcpAvailable}, active=${envActive}`);
+      return false;
+    }
+
+    // Mark as shown BEFORE showing notification (prevents duplicates if user dismisses quickly)
+    await this.context.workspaceState.update('flox.mcpSuggestionShown', true);
+
+    this.log('Showing MCP configuration suggestion');
+
+    // Show notification with action button
+    const action = await vscode.window.showInformationMessage(
+      'Flox Agentic MCP server is available! Configure it to enhance AI coding with Copilot.',
+      'Configure MCP',
+      'Learn More'
+    );
+
+    if (action === 'Configure MCP') {
+      await vscode.commands.executeCommand('flox.configureMcp');
+    } else if (action === 'Learn More') {
+      vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs/tutorials/flox-agentic/'));
+    }
+
+    return true;
   }
 
   /**

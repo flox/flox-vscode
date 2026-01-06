@@ -19,7 +19,7 @@
     "url": "https://github.com/flox/flox-vscode"
   },
   "engines": {
-    "vscode": "^1.86.0"
+    "vscode": "^1.102.0"
   },
   "categories": [
     "Other"
@@ -93,6 +93,17 @@
         "view": "floxServicesView",
         "contents": "Add services(s).\n[Edit manifest.toml](command:flox.edit)",
         "when": "flox.isInstalled && flox.envExists"
+      },
+      {
+        "view": "floxInfoView",
+        "contents": "Enhance AI coding with Flox Agentic integration.\n\n[Configure MCP Server](command:flox.configureMcp)",
+        "when": "flox.isInstalled && flox.envActive && flox.copilotInstalled && flox.mcpAvailable"
+      }
+    ],
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "floxMcp",
+        "label": "Flox MCP Server"
       }
     ],
     "views": {
@@ -191,6 +202,11 @@
         "command": "flox.search",
         "category": "Flox",
         "title": "Search packages"
+      },
+      {
+        "command": "flox.configureMcp",
+        "category": "Flox",
+        "title": "Configure Flox Agentic MCP Server"
       }
     ],
     "menus": {
