@@ -95,26 +95,28 @@ export async function activate(context: vscode.ExtensionContext) {
   await env.reload();
 
   /**
-   * Prompt to Activate Feature (Issue #47)
+   * Auto-Activate and Prompt Feature (Issues #47, #141)
    *
-   * When a Flox environment is detected but not activated, show a popup
-   * asking the user if they want to activate it. This improves discoverability
-   * for users who may not notice the sidebar.
+   * When a Flox environment is detected but not activated, either auto-activate
+   * (if user previously chose "Always Activate") or show a popup asking.
+   *
+   * Workspace state key `flox.autoActivate`:
+   * - `true`: Auto-activate without prompting (user chose "Always Activate")
+   * - `false`: Never activate or prompt (user chose "Never Activate")
+   * - `undefined`: Show popup (first time or user chose "Activate Once")
    *
    * The popup offers three options:
-   * - "Activate": Triggers the flox.activate command
-   * - "Not Now": Dismisses the popup (will appear again next time)
-   * - "Don't Ask Again": Disables the popup globally via flox.promptToActivate setting
+   * - "Always Activate": Activates AND remembers to auto-activate this workspace
+   * - "Activate Once": Activates just this time, asks again next time
+   * - "Never Activate": Remembers NOT to activate/prompt for this workspace
    *
-   * The popup is controlled by the `flox.promptToActivate` configuration setting
-   * (default: true). Users can disable it via:
-   * - Clicking "Don't Ask Again" in the popup
-   * - Setting `flox.promptToActivate` to false in VS Code settings
+   * The global `flox.promptToActivate` setting (default: true) acts as a master
+   * switch - if disabled, no prompts or auto-activation occurs.
    *
-   * The popup will NOT show when:
+   * The feature will NOT trigger when:
    * - No Flox environment exists in the workspace
    * - Environment is already activated
-   * - flox.promptToActivate setting is false
+   * - flox.promptToActivate global setting is false
    * - Extension just restarted after activation (justActivated flag was set)
    */
   const envExists = context.workspaceState.get('flox.envExists', false);
@@ -122,19 +124,34 @@ export async function activate(context: vscode.ExtensionContext) {
   const promptEnabled = vscode.workspace.getConfiguration('flox').get('promptToActivate', true);
 
   if (envExists && !envActive && promptEnabled) {
-    const selection = await vscode.window.showInformationMessage(
-      'A Flox environment was detected in this workspace. Would you like to activate it?',
-      'Activate',
-      'Not Now',
-      "Don't Ask Again"
-    );
+    // Check if user has a remembered preference for this workspace
+    const autoActivate = context.workspaceState.get<boolean | undefined>('flox.autoActivate');
 
-    if (selection === 'Activate') {
+    if (autoActivate === true) {
+      // User previously chose "Always Activate" - auto-activate silently
       await vscode.commands.executeCommand('flox.activate');
-    } else if (selection === "Don't Ask Again") {
-      await vscode.workspace.getConfiguration('flox').update('promptToActivate', false, vscode.ConfigurationTarget.Global);
+    } else if (autoActivate === false) {
+      // User previously chose "Never Activate" - skip silently
+      // Do nothing
+    } else {
+      // No preference (undefined) - show popup
+      const selection = await vscode.window.showInformationMessage(
+        'A Flox environment was detected in this workspace. Would you like to activate it?',
+        'Always Activate',
+        'Activate Once',
+        'Never Activate'
+      );
+
+      if (selection === 'Always Activate') {
+        await context.workspaceState.update('flox.autoActivate', true);
+        await vscode.commands.executeCommand('flox.activate');
+      } else if (selection === 'Activate Once') {
+        await vscode.commands.executeCommand('flox.activate');
+      } else if (selection === 'Never Activate') {
+        await context.workspaceState.update('flox.autoActivate', false);
+      }
+      // Dismiss (undefined) - do nothing, popup will appear next time
     }
-    // "Not Now" or dismiss (undefined) - do nothing, popup will appear next time
   }
 
   // Check for Flox updates (once per day, in background)
