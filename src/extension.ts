@@ -56,9 +56,14 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // Check if we just activated and need to spawn the background process.
   const justActivated = context.workspaceState.get('flox.justActivated', false);
+  output.appendLine(`[STEP 2] Checking justActivated flag: ${justActivated}`);
+
   if (justActivated) {
+    output.appendLine(`[STEP 2] justActivated is TRUE - entering post-activation flow`);
+
     // Unset the flag immediately to prevent this from running again.
     await context.workspaceState.update('flox.justActivated', false);
+    output.appendLine(`[STEP 2] Cleared justActivated flag`);
 
     await vscode.window.withProgress({
       location: vscode.ProgressLocation.Notification,
@@ -66,8 +71,11 @@ export async function activate(context: vscode.ExtensionContext) {
       cancellable: true,
     }, async (progress, token) => {
       return new Promise<void>(async (resolve, reject) => {
+        output.appendLine(`[STEP 2] Progress dialog shown`);
+
         // Check if a process already exists
         if (env.floxActivateProcess) {
+          output.appendLine(`[STEP 2] Process already exists (PID: ${env.floxActivateProcess.pid})`);
           console.log(`Flox activate process already running with PID: ${env.floxActivateProcess.pid}`);
           await vscode.commands.executeCommand('setContext', 'flox.envActive', true);
           env.displayMsg("Flox environment is already activated.");
@@ -77,101 +85,64 @@ export async function activate(context: vscode.ExtensionContext) {
 
         // Handle cancellation
         token.onCancellationRequested(() => {
+          output.appendLine(`[STEP 2] Activation cancelled by user`);
           console.log('Flox activation cancelled by user');
           env.killActivateProcess(true); // Silent mode - don't show messages
           reject(new Error('Activation cancelled by user'));
         });
 
         progress.report({ message: 'Starting flox activate process', increment: 60 });
+        output.appendLine(`[STEP 2] Calling env.spawnActivateProcess()`);
 
         env.spawnActivateProcess(async () => {
+          output.appendLine(`[STEP 2] spawnActivateProcess SUCCESS callback`);
           progress.report({ message: 'Environment activated', increment: 100 });
           resolve();
           await vscode.commands.executeCommand('setContext', 'flox.envActive', true);
           env.displayMsg("Flox environment activated successfully.");
 
-          // Check if MCP is available and register provider
-          const isMcpAvailable = await env.checkFloxMcpAvailable();
-          await env.setFloxMcpAvailable(isMcpAvailable);
+          // Check if MCP is available and register provider (in background - don't block)
+          output.appendLine(`[STEP 2] Starting background MCP check (non-blocking)...`);
+          env.checkFloxMcpAvailable().then(async (isMcpAvailable) => {
+            output.appendLine(`[STEP 2] MCP check complete: ${isMcpAvailable}`);
+            await env.setFloxMcpAvailable(isMcpAvailable);
 
-          if (isMcpAvailable && isCopilotInstalled) {
-            // Register MCP provider
-            mcpProvider = registerMcpProvider(context, env.workspaceUri);
+            if (isMcpAvailable && isCopilotInstalled) {
+              // Register MCP provider
+              mcpProvider = registerMcpProvider(context, env.workspaceUri);
 
-            // Show one-time suggestion
-            await env.showMcpSuggestion();
-          }
+              // Show one-time suggestion
+              await env.showMcpSuggestion();
+            }
+          }).catch((error) => {
+            output.appendLine(`[STEP 2] MCP check error: ${error}`);
+          });
+
+          output.appendLine(`[STEP 2] Post-activation complete (MCP check running in background)`);
         },
         async () => {
+          output.appendLine(`[STEP 2] spawnActivateProcess FAILURE callback`);
           env.displayError("Failed to start flox activate process.");
           await vscode.commands.executeCommand('setContext', 'flox.envActive', false);
           env.killActivateProcess(true);
           reject();
         });
+
+        output.appendLine(`[STEP 2] Waiting for spawnActivateProcess callbacks...`);
       });
     });
+    output.appendLine(`[STEP 2] Post-activation flow complete`);
+  } else {
+    output.appendLine(`[STEP 2] justActivated is FALSE - skipping post-activation flow`);
   }
 
-  await env.reload();
-
-  /**
-   * Auto-Activate and Prompt Feature (Issues #47, #141)
-   *
-   * When a Flox environment is detected but not activated, either auto-activate
-   * (if user previously chose "Always Activate") or show a popup asking.
-   *
-   * Workspace state key `flox.autoActivate`:
-   * - `true`: Auto-activate without prompting (user chose "Always Activate")
-   * - `false`: Never activate or prompt (user chose "Never Activate")
-   * - `undefined`: Show popup (first time or user chose "Activate Once")
-   *
-   * The popup offers three options:
-   * - "Always Activate": Activates AND remembers to auto-activate this workspace
-   * - "Activate Once": Activates just this time, asks again next time
-   * - "Never Activate": Remembers NOT to activate/prompt for this workspace
-   *
-   * The global `flox.promptToActivate` setting (default: true) acts as a master
-   * switch - if disabled, no prompts or auto-activation occurs.
-   *
-   * The feature will NOT trigger when:
-   * - No Flox environment exists in the workspace
-   * - Environment is already activated
-   * - flox.promptToActivate global setting is false
-   * - Extension just restarted after activation (justActivated flag was set)
-   */
-  const envExists = context.workspaceState.get('flox.envExists', false);
-  const envActive = context.workspaceState.get('flox.envActive', false);
-  const promptEnabled = vscode.workspace.getConfiguration('flox').get('promptToActivate', true);
-
-  if (envExists && !envActive && promptEnabled) {
-    // Check if user has a remembered preference for this workspace
-    const autoActivate = context.workspaceState.get<boolean | undefined>('flox.autoActivate');
-
-    if (autoActivate === true) {
-      // User previously chose "Always Activate" - auto-activate silently
-      await vscode.commands.executeCommand('flox.activate');
-    } else if (autoActivate === false) {
-      // User previously chose "Never Activate" - skip silently
-      // Do nothing
-    } else {
-      // No preference (undefined) - show popup
-      const selection = await vscode.window.showInformationMessage(
-        'A Flox environment was detected in this workspace. Would you like to activate it?',
-        'Always Activate',
-        'Activate Once',
-        'Never Activate'
-      );
-
-      if (selection === 'Always Activate') {
-        await context.workspaceState.update('flox.autoActivate', true);
-        await vscode.commands.executeCommand('flox.activate');
-      } else if (selection === 'Activate Once') {
-        await vscode.commands.executeCommand('flox.activate');
-      } else if (selection === 'Never Activate') {
-        await context.workspaceState.update('flox.autoActivate', false);
-      }
-      // Dismiss (undefined) - do nothing, popup will appear next time
-    }
+  // Only reload if we didn't just activate (activation already calls reload internally)
+  if (!justActivated) {
+    output.appendLine(`[STEP 3] Calling env.reload()`);
+    await env.reload();
+    output.appendLine(`[STEP 3] env.reload() complete`);
+  } else {
+    output.appendLine(`[STEP 3] Skipping reload (already done in post-activation flow)`);
   }
 
   // Check for Flox updates (once per day, in background)
@@ -205,6 +176,8 @@ export async function activate(context: vscode.ExtensionContext) {
   env.registerCommand('flox.activate', async () => {
     if (!env.workspaceUri) { return; }
 
+    output.appendLine(`[STEP 1] flox.activate command called`);
+
     await vscode.window.withProgress({
       location: vscode.ProgressLocation.Notification,
       title: "Activating Flox environment... ",
@@ -213,6 +186,7 @@ export async function activate(context: vscode.ExtensionContext) {
       return new Promise<void>(async (resolve, reject) => {
         try {
           const envExists = env.context.workspaceState.get('flox.envExists', false);
+          output.appendLine(`[STEP 1] envExists: ${envExists}`);
           if (!envExists) {
             env.displayError("Environment does not exist.");
             reject();
@@ -228,10 +202,14 @@ export async function activate(context: vscode.ExtensionContext) {
           progress.report({ message: 'Activating environment...', increment: 50 });
 
           // Set a flag that will be checked after the reload/restart.
+          output.appendLine(`[STEP 1] Setting flox.justActivated flag to true`);
           await env.context.workspaceState.update('flox.justActivated', true);
+          output.appendLine(`[STEP 1] Flag set successfully`);
 
           // This command configures the directory so that future shells will be activated.
+          output.appendLine(`[STEP 1] Running: flox activate --dir ${env.workspaceUri?.fsPath} -- true`);
           await env.exec("flox", { argv: ["activate", "--dir", env.workspaceUri?.fsPath || '', '--', 'true'] });
+          output.appendLine(`[STEP 1] flox activate command completed`);
 
           progress.report({ message: 'Reloading VS Code to apply environment...', increment: 90 });
 
@@ -239,10 +217,12 @@ export async function activate(context: vscode.ExtensionContext) {
           if (vscode.env.remoteName === undefined) {
             // For local environments, restarting the extension host is generally faster
             // and less disruptive than reloading the whole window.
+            output.appendLine(`[STEP 1] Restarting extension host (local environment)`);
             await vscode.commands.executeCommand('workbench.action.restartExtensionHost');
           } else {
             // For remote environments, a full window reload is required to get the
             // new environment variables from the remote server.
+            output.appendLine(`[STEP 1] Reloading window (remote environment)`);
             await vscode.commands.executeCommand('workbench.action.reloadWindow');
           }
 
@@ -250,6 +230,7 @@ export async function activate(context: vscode.ExtensionContext) {
           // but we call resolve() for completeness.
           resolve();
         } catch (e) {
+          output.appendLine(`[STEP 1] ERROR in flox.activate: ${e}`);
           reject(e);
         }
       });
@@ -645,4 +626,88 @@ export async function activate(context: vscode.ExtensionContext) {
       );
     }
   });
+
+  /**
+   * Auto-Activate and Prompt Feature (Issues #47, #141)
+   *
+   * When a Flox environment is detected but not activated, either auto-activate
+   * (if user previously chose "Always Activate") or show a popup asking.
+   *
+   * Workspace state key `flox.autoActivate`:
+   * - `true`: Auto-activate without prompting (user chose "Always Activate")
+   * - `false`: Never activate or prompt (user chose "Never Activate")
+   * - `undefined`: Show popup (first time or user chose "Activate Once")
+   *
+   * The popup offers three options:
+   * - "Always Activate": Activates AND remembers to auto-activate this workspace
+   * - "Activate Once": Activates just this time, asks again next time
+   * - "Never Activate": Remembers NOT to activate/prompt for this workspace
+   *
+   * The global `flox.promptToActivate` setting (default: true) acts as a master
+   * switch - if disabled, no prompts or auto-activation occurs.
+   *
+   * The feature will NOT trigger when:
+   * - No Flox environment exists in the workspace
+   * - Environment is already activated
+   * - flox.promptToActivate global setting is false
+   * - Extension just restarted after activation (justActivated flag was set)
+   *
+   * NOTE: This code runs AFTER all commands are registered to ensure
+   * that the flox.activate command exists when we try to call it.
+   */
+  const envExists = context.workspaceState.get('flox.envExists', false);
+  const envActive = context.workspaceState.get('flox.envActive', false);
+  const promptEnabled = vscode.workspace.getConfiguration('flox').get('promptToActivate', true);
+
+  output.appendLine(`[STEP 4] Auto-activate check: envExists=${envExists}, envActive=${envActive}, promptEnabled=${promptEnabled}`);
+
+  if (envExists && !envActive && promptEnabled) {
+    output.appendLine(`[STEP 4] Entering auto-activate flow`);
+
+    // Check if user has a remembered preference for this workspace
+    const autoActivate = context.workspaceState.get<boolean | undefined>('flox.autoActivate');
+    output.appendLine(`[STEP 4] autoActivate preference: ${autoActivate}`);
+
+    if (autoActivate === true) {
+      // User previously chose "Always Activate" - auto-activate silently
+      output.appendLine(`[STEP 4] Auto-activating (user preference: Always Activate)`);
+      await vscode.commands.executeCommand('flox.activate');
+      output.appendLine(`[STEP 4] Auto-activate command completed`);
+    } else if (autoActivate === false) {
+      // User previously chose "Never Activate" - skip silently
+      output.appendLine(`[STEP 4] Skipping activation (user preference: Never Activate)`);
+      // Do nothing
+    } else {
+      // No preference (undefined) - show popup
+      output.appendLine(`[STEP 4] Showing activation prompt to user`);
+      const selection = await vscode.window.showInformationMessage(
+        'A Flox environment was detected in this workspace. Would you like to activate it?',
+        'Always Activate',
+        'Activate Once',
+        'Never Activate'
+      );
+      output.appendLine(`[STEP 4] User selected: ${selection}`);
+
+      if (selection === 'Always Activate') {
+        await context.workspaceState.update('flox.autoActivate', true);
+        output.appendLine(`[STEP 4] Activating (Always Activate)`);
+        await vscode.commands.executeCommand('flox.activate');
+        output.appendLine(`[STEP 4] Activation command completed`);
+      } else if (selection === 'Activate Once') {
+        output.appendLine(`[STEP 4] Activating (Activate Once)`);
+        await vscode.commands.executeCommand('flox.activate');
+        output.appendLine(`[STEP 4] Activation command completed`);
+      } else if (selection === 'Never Activate') {
+        await context.workspaceState.update('flox.autoActivate', false);
+        output.appendLine(`[STEP 4] User chose Never Activate`);
+      } else {
+        output.appendLine(`[STEP 4] User dismissed prompt`);
+      }
+      // Dismiss (undefined) - do nothing, popup will appear next time
+    }
+  } else {
+    output.appendLine(`[STEP 4] Skipping auto-activate (conditions not met)`);
+  }
+
+  output.appendLine(`[STEP 5] Extension activation complete`);
 }

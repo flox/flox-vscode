@@ -203,19 +203,34 @@ npm run compile && code --extensionDevelopmentPath=$PWD
 
 ### Test Architecture
 
-Tests are split into two categories:
+Tests are organized into three categories:
 
 **Unit Tests** (`src/test/unit/`)
 - Fast, isolated tests with mocked VSCode APIs
 - No external dependencies (Flox CLI not required)
 - Test individual classes and functions
-- Run in ~70ms
+- Run in ~300ms (107 tests)
 
 **Integration Tests** (`src/test/integration/`)
 - Run in actual VSCode Extension Development Host
 - Test real extension activation and command registration
 - Some tests require Flox CLI installed
-- Run in ~50ms
+- Run in ~24s (46 tests)
+
+### Test Types
+
+| Type | File | Purpose |
+|------|------|---------|
+| **Happy Path** | `happy_path.test.ts` | End-to-end tests using VSCode commands (simulates user clicking buttons) |
+| **CLI Tests** | `cli.test.ts` | Direct Flox CLI operations (tests CLI, not VSCode integration) |
+| **Extension Tests** | `extension.test.ts` | Command registration, activation, configuration |
+
+### When to Use Each Test Type
+
+- **Happy Path Tests**: For testing complete user workflows (init → activate → install → deactivate)
+- **CLI Tests**: For testing Flox CLI behavior and manifest parsing
+- **Extension Tests**: For testing VSCode-specific functionality (commands, views, settings)
+- **Unit Tests**: For testing isolated logic without VSCode or Flox
 
 ### Test Commands
 
@@ -242,9 +257,15 @@ src/test/
 ├── unit/
 │   ├── config.test.ts      # System enum tests
 │   ├── view.test.ts        # TreeView provider tests
-│   └── env.test.ts         # Env class tests
+│   ├── env.test.ts         # Env class tests
+│   └── mcp.test.ts         # MCP provider tests
 └── integration/
+    ├── happy_path.test.ts  # E2E tests using VSCode commands
+    ├── cli.test.ts         # Direct Flox CLI tests
     └── extension.test.ts   # Extension activation & commands
+test-fixtures/
+└── workspace/              # Test workspace for integration tests
+    └── .gitkeep
 ```
 
 ### Mock Utilities (`src/test/mocks/vscode.ts`)
@@ -327,7 +348,81 @@ suite('Extension Integration Tests', () => {
 `.vscode-test.mjs` configures the test runner:
 - Unit tests: 10s timeout per test
 - Integration tests: 60s timeout (Flox operations can be slow)
+- Integration tests use `test-fixtures/workspace` as the workspace folder
 - Uses Mocha TDD style (`suite`/`test`)
+
+### Writing Happy Path (E2E) Tests
+
+Happy Path tests simulate user interactions using VSCode commands:
+
+```typescript
+suite('Happy Path Integration Tests', () => {
+  let workspaceDir: string;
+
+  setup(async function() {
+    // Get workspace from test runner (configured in .vscode-test.mjs)
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) {
+      this.skip();
+      return;
+    }
+    workspaceDir = workspaceFolders[0].uri.fsPath;
+
+    // Clean up any existing .flox directory
+    const floxDir = path.join(workspaceDir, '.flox');
+    if (fs.existsSync(floxDir)) {
+      fs.rmSync(floxDir, { recursive: true, force: true });
+    }
+  });
+
+  test('Complete workflow', async function() {
+    this.timeout(120000); // 2 minutes for slow operations
+
+    // Use VSCode commands (not CLI) to test user interactions
+    await vscode.commands.executeCommand('flox.init');
+
+    // Wait for async operations to complete
+    await waitFor(() => fs.existsSync(path.join(workspaceDir, '.flox')), 30000);
+
+    await vscode.commands.executeCommand('flox.activate');
+
+    // For operations that require UI (like install picker), use CLI directly
+    await execFileAsync('flox', ['install', 'hello', '--dir', workspaceDir]);
+
+    // Verify state
+    assert.ok(fs.existsSync(path.join(workspaceDir, '.flox', 'env', 'manifest.lock')));
+  });
+});
+```
+
+**Key Points for E2E Tests:**
+1. Use VSCode commands (`vscode.commands.executeCommand`) not CLI commands
+2. For UI-dependent commands (install picker), fall back to CLI
+3. Use `waitFor()` helper to wait for async file operations
+4. Set long timeouts (Flox operations can take 30+ seconds)
+5. Clean up `.flox` directory in `setup()` and `teardown()`
+6. Skip deactivate command in tests (it restarts extension host and kills the test)
+
+### Important Testing Gotchas
+
+1. **`flox.activate` and `flox.deactivate` restart the extension host**
+   - These commands will kill the test process
+   - For activate: the test runner handles the restart gracefully
+   - For deactivate: skip it or just verify state before deactivation
+
+2. **Commands must be registered before use**
+   - Auto-activate code must run AFTER all `registerCommand()` calls
+   - Otherwise you get "command not found" errors
+
+3. **Workspace state vs. Context keys**
+   - Context keys (`setContext`) are for UI conditions
+   - Workspace state is for persistence across restarts
+   - Both must be updated together for consistency
+
+4. **Test workspace folder**
+   - Integration tests use `test-fixtures/workspace/`
+   - This is configured in `.vscode-test.mjs` via `workspaceFolder`
+   - Without this, `vscode.workspace.workspaceFolders` is undefined
 
 ## Common Development Tasks
 
@@ -512,6 +607,8 @@ npm run compile
 
 ```
 flox-vscode/
+├── .claude/                  # Claude Code instructions
+│   └── CLAUDE.md             # This file
 ├── .flox/                    # Flox environment definition
 │   └── env/
 │       ├── manifest.toml     # Environment packages & config
@@ -520,6 +617,8 @@ flox-vscode/
 │   ├── launch.json           # Debugger configuration
 │   └── tasks.json            # Build tasks
 ├── .vscode-test.mjs          # Test runner configuration
+├── doc/                      # Developer documentation
+│   └── activation.md         # Activation flow with Mermaid diagrams
 ├── src/                      # TypeScript source
 │   ├── extension.ts          # Extension entry point
 │   ├── env.ts                # Core Flox integration logic
@@ -531,11 +630,16 @@ flox-vscode/
 │       ├── unit/             # Unit tests (fast, mocked)
 │       │   ├── config.test.ts
 │       │   ├── view.test.ts
-│       │   └── env.test.ts
+│       │   ├── env.test.ts
+│       │   └── mcp.test.ts
 │       └── integration/      # Integration tests (real VSCode)
-│           └── extension.test.ts
+│           ├── happy_path.test.ts  # E2E tests using VSCode commands
+│           ├── cli.test.ts         # Direct Flox CLI tests
+│           └── extension.test.ts   # Command registration tests
 ├── scripts/                  # Helper scripts
 │   └── activate.sh           # Background activation script
+├── test-fixtures/            # Test resources
+│   └── workspace/            # Workspace for integration tests
 ├── out/                      # Compiled JavaScript (gitignored)
 ├── node_modules/             # npm dependencies (gitignored)
 ├── package.json              # Extension manifest & dependencies
@@ -578,6 +682,52 @@ flox-vscode/
 3. Use Debug Console to inspect variables
 4. Check "Flox" output channel for extension logs
 5. Use Developer Tools (Help > Toggle Developer Tools)
+
+### Extension Logging System
+
+The extension logs to the "Flox" output channel with prefixed messages:
+
+| Prefix | Location | Description |
+|--------|----------|-------------|
+| `[STEP 1]` | extension.ts | User clicks activate |
+| `[STEP 2]` | extension.ts | Post-activation flow (after restart) |
+| `[STEP 3]` | extension.ts | Initial reload/refresh |
+| `[STEP 4]` | extension.ts | Auto-activate prompt |
+| `[STEP 5]` | extension.ts | Extension activation complete |
+| `[SPAWN]` | env.ts | Background process spawning |
+| `[RELOAD]` | env.ts | Manifest parsing and view refresh |
+| `[MCP]` | env.ts | MCP server detection |
+
+To view logs:
+1. Open Output panel (View → Output)
+2. Select "Flox" from dropdown
+3. Logs appear in real-time during extension operations
+
+### Common Debugging Scenarios
+
+**Activation Hangs:**
+1. Check for `[SPAWN]` messages - is the process spawning?
+2. Look for `[MCP]` messages - MCP check might be hanging
+3. Verify `activate.sh` IPC message format
+
+**Auto-Activate Loop:**
+1. Check if `flox.envActive` is set in BOTH context AND workspace state
+2. Look for `[STEP 4]` messages repeating
+3. Verify the command registration order (auto-activate must run after `registerCommand`)
+
+**Commands Not Found:**
+1. Ensure auto-activate code runs AFTER all `registerCommand()` calls
+2. Check for registration errors in the output channel
+
+**Performance Issues:**
+1. Look for blocking `await` calls on slow operations
+2. MCP checks should be non-blocking (use `.then()` not `await`)
+3. Check if `reload()` is being called multiple times
+
+### Detailed Architecture Documentation
+
+For comprehensive documentation of the activation flow with Mermaid diagrams, see:
+- [`doc/activation.md`](../doc/activation.md) - Complete activation flow documentation
 
 ## Code Style Guidelines
 

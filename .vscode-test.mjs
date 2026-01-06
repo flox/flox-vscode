@@ -27,6 +27,7 @@ export default defineConfig([
     // Integration tests - slower, requires VSCode and optionally Flox CLI
     label: 'integration',
     files: 'out/test/integration/**/*.test.js',
+    workspaceFolder: './test-fixtures/workspace',
     mocha: {
       timeout: 60000,  // 60 seconds per test (Flox operations can be slow)
       ui: 'tdd',

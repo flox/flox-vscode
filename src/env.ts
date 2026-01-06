@@ -406,7 +406,8 @@ export default class Env implements vscode.Disposable {
       this.log(`Environment loaded: ${pkgCount} packages, ${varCount} variables, ${serviceCount} services`);
     }
 
-    Promise.all([
+    this.log(`[RELOAD] Setting context and workspace state...`);
+    await Promise.all([
       vscode.commands.executeCommand('setContext', 'flox.envExists', exists),
       vscode.commands.executeCommand('setContext', 'flox.hasPkgs', hasPkgs),
       vscode.commands.executeCommand('setContext', 'flox.hasVars', hasVars),
@@ -416,12 +417,19 @@ export default class Env implements vscode.Disposable {
       this.context.workspaceState.update('flox.hasVars', hasVars),
       this.context.workspaceState.update('flox.hasServices', hasServices)
     ]);
+    this.log(`[RELOAD] Context and workspace state set`);
 
     // Check if the environment is active
-    vscode.commands.executeCommand('setContext', 'flox.envActive', this.isEnvActive);
+    this.log(`[RELOAD] Setting flox.envActive to ${this.isEnvActive}`);
+    await Promise.all([
+      vscode.commands.executeCommand('setContext', 'flox.envActive', this.isEnvActive),
+      this.context.workspaceState.update('flox.envActive', this.isEnvActive)
+    ]);
+    this.log(`[RELOAD] flox.envActive set (context and workspace state)`);
 
     // Check for services status
     if (hasServices === true) {
+      this.log(`[RELOAD] Checking services status...`);
       const result = await this.exec(
         "flox",
         { argv: ["services", "status", "--json", "--dir", this.workspaceUri?.fsPath || ''] },
@@ -453,31 +461,58 @@ export default class Env implements vscode.Disposable {
           }
         }
       }
+      this.log(`[RELOAD] Services status checked`);
+    } else {
+      this.log(`[RELOAD] No services to check (hasServices=false)`);
     }
 
     // Check if MCP availability changed (environment might have flox-mcp now)
+    // Run this in the background to avoid blocking activation
+    this.log(`[RELOAD] Checking MCP availability (isEnvActive=${this.isEnvActive})...`);
     if (this.isEnvActive) {
-      const mcpAvailable = await this.checkFloxMcpAvailable();
-      const previousMcpState = this.context.workspaceState.get('flox.mcpAvailable', false);
+      this.log(`[RELOAD] Starting background MCP check (non-blocking)...`);
 
-      if (mcpAvailable !== previousMcpState) {
-        await this.setFloxMcpAvailable(mcpAvailable);
+      // Fire and forget - don't await this!
+      this.checkFloxMcpAvailable().then(async (mcpAvailable) => {
+        this.log(`[RELOAD] MCP available: ${mcpAvailable}`);
+        const previousMcpState = this.context.workspaceState.get('flox.mcpAvailable', false);
 
-        // If MCP just became available, trigger suggestion
-        if (mcpAvailable && this.checkCopilotInstalled()) {
-          await this.showMcpSuggestion();
+        if (mcpAvailable !== previousMcpState) {
+          this.log(`[RELOAD] MCP state changed from ${previousMcpState} to ${mcpAvailable}`);
+          await this.setFloxMcpAvailable(mcpAvailable);
+
+          // If MCP just became available, trigger suggestion
+          if (mcpAvailable && this.checkCopilotInstalled()) {
+            this.log(`[RELOAD] Showing MCP suggestion...`);
+            await this.showMcpSuggestion();
+            this.log(`[RELOAD] MCP suggestion shown`);
+          }
+        } else {
+          this.log(`[RELOAD] MCP state unchanged (${mcpAvailable})`);
         }
-      }
+      }).catch((error) => {
+        this.log(`[RELOAD] MCP check error: ${error}`);
+      });
+
+      this.log(`[RELOAD] MCP check started in background, continuing...`);
+    } else {
+      this.log(`[RELOAD] Skipping MCP check (environment not active)`);
     }
 
     // Refresh all UI components (we need to do this last)
+    this.log(`[RELOAD] Refreshing views (${this.views.length} views)...`);
     if (this.manifest) {
       for (const view of this.views) {
         if (view?.refresh) {
+          this.log(`[RELOAD] Refreshing view...`);
           await view.refresh();
         }
       }
+      this.log(`[RELOAD] All views refreshed`);
+    } else {
+      this.log(`[RELOAD] No manifest, skipping view refresh`);
     }
+    this.log(`[RELOAD] Reload complete!`);
   }
 
   dispose() {
@@ -641,11 +676,14 @@ export default class Env implements vscode.Disposable {
 
   async spawnActivateProcess(resolve: (value: void) => void, reject: (reason?: any) => void) {
     // Spawn the flox activate -- sleep infinity process, this ensures an activation is started in the background
+    this.log(`[SPAWN] Starting spawnActivateProcess`);
     this.isActivationInProgress = true;
 
     let spawnComplete = false;
     const activateScript = vscode.Uri.joinPath(this.context.extensionUri, 'scripts', 'activate.sh');
 
+    this.log(`[SPAWN] Script path: ${activateScript.fsPath}`);
+    this.log(`[SPAWN] Workspace path: ${this.workspaceUri?.fsPath}`);
     this.log(`Starting flox activate process...`);
 
     this.floxActivateProcess = spawn('flox', ['activate', '--dir', this.workspaceUri?.fsPath || '', '--', activateScript.fsPath], {
@@ -654,18 +692,23 @@ export default class Env implements vscode.Disposable {
       detached: false, // Keep as child process so it dies with the parent
     });
 
+    this.log(`[SPAWN] spawn() called, checking PID...`);
+
     if (this.floxActivateProcess.pid) {
+      this.log(`[SPAWN] Process spawned successfully (PID: ${this.floxActivateProcess.pid})`);
+
       // Store the PID in workspace state
       await this.context.workspaceState.update('flox.activatePid', this.floxActivateProcess.pid);
       this.log(`Flox activate process started (PID: ${this.floxActivateProcess.pid})`);
 
       // Handle process exit
       this.floxActivateProcess.on('exit', (code, signal) => {
-        this.log(`Flox activate process exited (code: ${code}, signal: ${signal})`);
+        this.log(`[SPAWN] Process exited (code: ${code}, signal: ${signal}, spawnComplete: ${spawnComplete})`);
         this.floxActivateProcess = undefined;
         this.isActivationInProgress = false;
         this.context.workspaceState.update('flox.activatePid', undefined);
         if (!spawnComplete) {
+          this.log(`[SPAWN] Process exited before completion - calling reject()`);
           reject();
         }
       });
@@ -673,25 +716,40 @@ export default class Env implements vscode.Disposable {
       // Capture stderr for debugging (only log if there's an error)
       let stderrBuffer = '';
       this.floxActivateProcess.stderr?.on('data', (data) => {
-        stderrBuffer += data.toString();
+        const chunk = data.toString();
+        stderrBuffer += chunk;
+        this.log(`[SPAWN] stderr: ${chunk}`);
       });
 
+      // Capture stdout too
+      this.floxActivateProcess.stdout?.on('data', (data) => {
+        this.log(`[SPAWN] stdout: ${data.toString()}`);
+      });
+
+      this.log(`[SPAWN] Registered event handlers, waiting for 'message' event...`);
+
       this.floxActivateProcess.on('message', async (msg: Msg) => {
+        this.log(`[SPAWN] Received IPC message: ${JSON.stringify(msg).substring(0, 200)}...`);
+
         if (msg.action === 'ready' && msg.env) {
+          this.log(`[SPAWN] Ready message with ${Object.keys(msg.env).length} env vars`);
           spawnComplete = true;
           this.isEnvActive = true;
           this.isActivationInProgress = false;
 
+          this.log(`[SPAWN] Applying environment variables...`);
           // Apply environment variables to terminals
           this.applyEnvironmentVariables(msg.env);
 
+          this.log(`[SPAWN] Calling reload()...`);
           // Reload to get fresh data from lock file
           await this.reload();
 
-          this.log('Environment activated successfully');
+          this.log('[SPAWN] Environment activated successfully - calling resolve()');
           resolve();
         } else if (msg.action === 'ready') {
           // Fallback if no env vars were sent
+          this.log(`[SPAWN] Ready message without env vars`);
           spawnComplete = true;
           this.isEnvActive = true;
           this.isActivationInProgress = false;
@@ -699,7 +757,7 @@ export default class Env implements vscode.Disposable {
           await this.reload();
           resolve();
         } else {
-          this.logError('Unexpected message from activate script', msg);
+          this.logError('[SPAWN] Unexpected message from activate script', msg);
           this.isActivationInProgress = false;
           this.error.fire("Failed to activate Flox environment.");
           reject();
@@ -707,9 +765,9 @@ export default class Env implements vscode.Disposable {
       });
       // Handle errors
       this.floxActivateProcess.on('error', (error) => {
-        this.logError('Flox activate process error', error);
+        this.logError('[SPAWN] Flox activate process error', error);
         if (stderrBuffer) {
-          this.logError('Process stderr', stderrBuffer);
+          this.logError('[SPAWN] Process stderr buffer', stderrBuffer);
         }
         this.displayError(`Failed to start flox activate: ${error.message}`);
         this.floxActivateProcess = undefined;
@@ -718,8 +776,10 @@ export default class Env implements vscode.Disposable {
         reject();
       });
 
+      this.log(`[SPAWN] All event handlers registered, process is running`);
+
     } else {
-      this.logError('Failed to start flox activate process');
+      this.logError('[SPAWN] Failed to get PID after spawn() call');
       this.isActivationInProgress = false;
       this.displayError("Failed to start flox activate process.");
       reject();
@@ -896,7 +956,7 @@ export default class Env implements vscode.Disposable {
 
   async checkFloxInstalled(): Promise<boolean> {
     try {
-      await promisify(execFile)('flox', ['--version']);
+      await promisify(execFile)('flox', ['--version'], { timeout: 5000 }); // 5 second timeout
       return true;
     } catch {
       return false;
@@ -915,10 +975,17 @@ export default class Env implements vscode.Disposable {
    * @returns true if flox-mcp is in PATH, false otherwise
    */
   async checkFloxMcpAvailable(): Promise<boolean> {
+    this.log('[MCP] Checking if flox-mcp is available...');
     try {
-      await promisify(execFile)('flox-mcp', ['--version']);
+      this.log('[MCP] Running: flox-mcp --version');
+      await promisify(execFile)('flox-mcp', ['--version'], { timeout: 2000 }); // 2 second timeout
+      this.log('[MCP] flox-mcp command succeeded');
       return true;
-    } catch {
+    } catch (error: any) {
+      this.log(`[MCP] flox-mcp check failed: ${error?.message || error}`);
+      if (error?.killed) {
+        this.log('[MCP] flox-mcp command timed out after 2 seconds');
+      }
       return false;
     }
   }
