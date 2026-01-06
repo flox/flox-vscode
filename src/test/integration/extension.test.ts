@@ -157,6 +157,12 @@ suite('Extension Integration Tests', () => {
       assert.ok(exists, 'flox.search command should be registered');
     });
 
+    test('flox.configureMcp command should be registered', async () => {
+      // Configures Flox Agentic MCP server
+      const exists = await commandExists('flox.configureMcp');
+      assert.ok(exists, 'flox.configureMcp command should be registered');
+    });
+
     test('all expected commands should be registered', async () => {
       // Comprehensive check of all commands
       const expectedCommands = [
@@ -173,6 +179,7 @@ suite('Extension Integration Tests', () => {
         'flox.serviceRestart',
         'flox.edit',
         'flox.search',
+        'flox.configureMcp',
       ];
 
       const allCommands = await vscode.commands.getCommands(true);

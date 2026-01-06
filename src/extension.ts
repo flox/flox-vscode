@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as os from 'os';
 import Env from './env';
 import { VarsView, InstallView, ServicesView, PackageItem, ServiceItem } from './view';
+import { registerMcpProvider, FloxMcpProvider } from './mcp';
 
 export async function activate(context: vscode.ExtensionContext) {
 
@@ -23,9 +24,16 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const env = new Env(context, undefined, output);
 
+  // MCP provider instance
+  let mcpProvider: FloxMcpProvider | undefined;
+
   // Check if Flox CLI is installed
   const isFloxInstalled = await env.checkFloxInstalled();
   await env.setFloxInstalled(isFloxInstalled);
+
+  // Check if GitHub Copilot is installed
+  const isCopilotInstalled = env.checkCopilotInstalled();
+  await env.setCopilotInstalled(isCopilotInstalled);
 
   // Register command to open Flox installation page (always available)
   env.registerCommand('flox.openInstallPage', () => {
@@ -81,6 +89,18 @@ export async function activate(context: vscode.ExtensionContext) {
           resolve();
           await vscode.commands.executeCommand('setContext', 'flox.envActive', true);
           env.displayMsg("Flox environment activated successfully.");
+
+          // Check if MCP is available and register provider
+          const isMcpAvailable = await env.checkFloxMcpAvailable();
+          await env.setFloxMcpAvailable(isMcpAvailable);
+
+          if (isMcpAvailable && isCopilotInstalled) {
+            // Register MCP provider
+            mcpProvider = registerMcpProvider(context, env.workspaceUri);
+
+            // Show one-time suggestion
+            await env.showMcpSuggestion();
+          }
         },
         async () => {
           env.displayError("Failed to start flox activate process.");
@@ -526,5 +546,56 @@ export async function activate(context: vscode.ExtensionContext) {
     const terminal = vscode.window.createTerminal({ name: command });
     terminal.show(false);
     terminal.sendText(command, true);
+  });
+
+  env.registerCommand('flox.configureMcp', async () => {
+    // Check conditions
+    const mcpAvailable = await env.checkFloxMcpAvailable();
+    const copilotInstalled = env.checkCopilotInstalled();
+    const envActive = env.isEnvActive;
+
+    if (!envActive) {
+      vscode.window.showWarningMessage(
+        'Flox environment must be active to configure MCP server. Please activate first.'
+      );
+      return;
+    }
+
+    if (!mcpAvailable) {
+      const action = await vscode.window.showWarningMessage(
+        'flox-mcp command not found in PATH. Install it in your Flox environment first.',
+        'Learn More'
+      );
+      if (action === 'Learn More') {
+        vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs/tutorials/flox-agentic/'));
+      }
+      return;
+    }
+
+    if (!copilotInstalled) {
+      const action = await vscode.window.showWarningMessage(
+        'GitHub Copilot extension is not installed. Install it to use MCP features.',
+        'Install Copilot'
+      );
+      if (action === 'Install Copilot') {
+        vscode.env.openExternal(vscode.Uri.parse('https://marketplace.visualstudio.com/items?itemName=GitHub.copilot'));
+      }
+      return;
+    }
+
+    // All conditions met - register provider if not already done
+    if (!mcpProvider) {
+      mcpProvider = registerMcpProvider(context, env.workspaceUri);
+    }
+
+    if (mcpProvider) {
+      vscode.window.showInformationMessage(
+        'Flox Agentic MCP server is configured! Use @flox in Copilot Chat to access Flox tools and resources.'
+      );
+    } else {
+      vscode.window.showErrorMessage(
+        'Failed to configure MCP server. This feature requires VSCode 1.102 or newer.'
+      );
+    }
   });
 }

@@ -958,4 +958,89 @@ MY_VAR = "test_value"
       env.dispose();
     });
   });
+
+  /**
+   * MCP Detection Tests
+   *
+   * Tests for checking if flox-mcp command is available and Copilot is installed.
+   */
+  suite('MCP Detection', () => {
+    test('checkFloxMcpAvailable should be defined', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Just verify the method exists
+      assert.strictEqual(typeof env.checkFloxMcpAvailable, 'function');
+
+      env.dispose();
+    });
+
+    test('setFloxMcpAvailable should update context and state', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      await env.setFloxMcpAvailable(true);
+
+      const storedValue = mockContext.workspaceState.get('flox.mcpAvailable');
+      assert.strictEqual(storedValue, true);
+
+      env.dispose();
+    });
+
+    test('checkCopilotInstalled should return boolean', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      const result = env.checkCopilotInstalled();
+
+      // Should return boolean
+      assert.strictEqual(typeof result, 'boolean');
+
+      env.dispose();
+    });
+
+    test('setCopilotInstalled should update context and state', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      await env.setCopilotInstalled(true);
+
+      const storedValue = mockContext.workspaceState.get('flox.copilotInstalled');
+      assert.strictEqual(storedValue, true);
+
+      env.dispose();
+    });
+  });
+
+  /**
+   * MCP Suggestion Tests
+   *
+   * Tests for the one-time MCP suggestion notification.
+   */
+  suite('MCP Suggestion', () => {
+    test('showMcpSuggestion should skip if already shown', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Mark as already shown
+      await mockContext.workspaceState.update('flox.mcpSuggestionShown', true);
+
+      const result = await env.showMcpSuggestion();
+
+      // Should return false (not shown)
+      assert.strictEqual(result, false);
+
+      env.dispose();
+    });
+
+    test('showMcpSuggestion should be defined', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Just verify the method exists
+      assert.strictEqual(typeof env.showMcpSuggestion, 'function');
+
+      env.dispose();
+    });
+  });
 });
