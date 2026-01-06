@@ -318,6 +318,58 @@ suite('Extension Integration Tests', () => {
   });
 
   /**
+   * Configuration: flox.checkForUpdates setting (Issue #146)
+   *
+   * Tests for the global setting to disable version update checks.
+   * - Default value should be true (enabled)
+   * - Should be modifiable by user
+   * - Should be readable by extension
+   */
+  suite('Configuration: flox.checkForUpdates', () => {
+    // Reset the setting to default before each test to ensure isolation
+    setup(async () => {
+      const config = vscode.workspace.getConfiguration('flox');
+      // Reset to undefined to get default value
+      await config.update('checkForUpdates', undefined, vscode.ConfigurationTarget.Global);
+    });
+
+    test('flox.checkForUpdates setting should be registered with default true', () => {
+      // Get the flox configuration
+      const config = vscode.workspace.getConfiguration('flox');
+
+      // Inspect the setting to verify its default value
+      const inspection = config.inspect<boolean>('checkForUpdates');
+
+      assert.ok(inspection, 'Setting should be inspectable');
+      assert.strictEqual(
+        inspection?.defaultValue,
+        true,
+        'Default value should be true'
+      );
+    });
+
+    test('flox.checkForUpdates setting should be modifiable', async () => {
+      const config = vscode.workspace.getConfiguration('flox');
+
+      // Update to false - this should not throw
+      try {
+        await config.update('checkForUpdates', false, vscode.ConfigurationTarget.Global);
+        assert.ok(true, 'Setting should be modifiable without error');
+      } catch (error) {
+        assert.fail(`Setting should be modifiable: ${error}`);
+      }
+    });
+
+    test('flox.checkForUpdates setting should be readable', () => {
+      const config = vscode.workspace.getConfiguration('flox');
+
+      // The setting should be readable (returns boolean or undefined)
+      const value = config.get<boolean>('checkForUpdates');
+      assert.strictEqual(typeof value, 'boolean', 'Setting should return a boolean');
+    });
+  });
+
+  /**
    * Auto-Activate Feature Tests (Issue #141)
    *
    * User Story: Remember workspace activation preference
