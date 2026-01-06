@@ -94,6 +94,26 @@ export async function activate(context: vscode.ExtensionContext) {
 
   await env.reload();
 
+  // Show popup to activate environment if detected but not active
+  const envExists = context.workspaceState.get('flox.envExists', false);
+  const envActive = context.workspaceState.get('flox.envActive', false);
+  const promptEnabled = vscode.workspace.getConfiguration('flox').get('promptToActivate', true);
+
+  if (envExists && !envActive && promptEnabled) {
+    const selection = await vscode.window.showInformationMessage(
+      'A Flox environment was detected in this workspace. Would you like to activate it?',
+      'Activate',
+      'Not Now',
+      "Don't Ask Again"
+    );
+
+    if (selection === 'Activate') {
+      await vscode.commands.executeCommand('flox.activate');
+    } else if (selection === "Don't Ask Again") {
+      await vscode.workspace.getConfiguration('flox').update('promptToActivate', false, vscode.ConfigurationTarget.Global);
+    }
+  }
+
   // Check for Flox updates (once per day, in background)
   env.checkForFloxUpdate();
 
