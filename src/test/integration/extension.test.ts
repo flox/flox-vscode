@@ -259,4 +259,54 @@ suite('Extension Integration Tests', () => {
       }
     });
   });
+
+  /**
+   * Configuration Tests
+   *
+   * Verify that extension configuration settings are registered and accessible.
+   * These settings control extension behavior like whether to show activation prompts.
+   */
+  suite('Configuration Settings', () => {
+    // Reset the setting to default before each test to ensure isolation
+    setup(async () => {
+      const config = vscode.workspace.getConfiguration('flox');
+      // Reset to undefined to get default value
+      await config.update('promptToActivate', undefined, vscode.ConfigurationTarget.Global);
+    });
+
+    test('flox.promptToActivate setting should be registered with default true', () => {
+      // Get the flox configuration
+      const config = vscode.workspace.getConfiguration('flox');
+
+      // Inspect the setting to verify its default value
+      const inspection = config.inspect<boolean>('promptToActivate');
+
+      assert.ok(inspection, 'Setting should be inspectable');
+      assert.strictEqual(
+        inspection?.defaultValue,
+        true,
+        'Default value should be true'
+      );
+    });
+
+    test('flox.promptToActivate setting should be modifiable', async () => {
+      const config = vscode.workspace.getConfiguration('flox');
+
+      // Update to false - this should not throw
+      try {
+        await config.update('promptToActivate', false, vscode.ConfigurationTarget.Global);
+        assert.ok(true, 'Setting should be modifiable without error');
+      } catch (error) {
+        assert.fail(`Setting should be modifiable: ${error}`);
+      }
+    });
+
+    test('flox.promptToActivate setting should be readable', () => {
+      const config = vscode.workspace.getConfiguration('flox');
+
+      // The setting should be readable (returns boolean or undefined)
+      const value = config.get<boolean>('promptToActivate');
+      assert.strictEqual(typeof value, 'boolean', 'Setting should return a boolean');
+    });
+  });
 });

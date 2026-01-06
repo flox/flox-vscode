@@ -94,7 +94,29 @@ export async function activate(context: vscode.ExtensionContext) {
 
   await env.reload();
 
-  // Show popup to activate environment if detected but not active
+  /**
+   * Prompt to Activate Feature (Issue #47)
+   *
+   * When a Flox environment is detected but not activated, show a popup
+   * asking the user if they want to activate it. This improves discoverability
+   * for users who may not notice the sidebar.
+   *
+   * The popup offers three options:
+   * - "Activate": Triggers the flox.activate command
+   * - "Not Now": Dismisses the popup (will appear again next time)
+   * - "Don't Ask Again": Disables the popup globally via flox.promptToActivate setting
+   *
+   * The popup is controlled by the `flox.promptToActivate` configuration setting
+   * (default: true). Users can disable it via:
+   * - Clicking "Don't Ask Again" in the popup
+   * - Setting `flox.promptToActivate` to false in VS Code settings
+   *
+   * The popup will NOT show when:
+   * - No Flox environment exists in the workspace
+   * - Environment is already activated
+   * - flox.promptToActivate setting is false
+   * - Extension just restarted after activation (justActivated flag was set)
+   */
   const envExists = context.workspaceState.get('flox.envExists', false);
   const envActive = context.workspaceState.get('flox.envActive', false);
   const promptEnabled = vscode.workspace.getConfiguration('flox').get('promptToActivate', true);
@@ -112,6 +134,7 @@ export async function activate(context: vscode.ExtensionContext) {
     } else if (selection === "Don't Ask Again") {
       await vscode.workspace.getConfiguration('flox').update('promptToActivate', false, vscode.ConfigurationTarget.Global);
     }
+    // "Not Now" or dismiss (undefined) - do nothing, popup will appear next time
   }
 
   // Check for Flox updates (once per day, in background)
