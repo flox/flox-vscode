@@ -541,6 +541,91 @@ MY_VAR = "test_value"
       // Should not throw when disposing
       env.dispose();
     });
+
+    test('should clear pending reactivation timer', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Access private property via any cast to test timer cleanup
+      // In a real scenario, the timer would be set by manifest.toml change handler
+      (env as any).manifestChangeTimeout = setTimeout(() => {}, 10000);
+
+      // Dispose should clear the timer without error
+      env.dispose();
+
+      // Timer should be cleared
+      assert.strictEqual((env as any).manifestChangeTimeout, undefined);
+    });
+  });
+
+  /**
+   * reactivateEnvironment Tests
+   *
+   * When manifest.toml changes and environment is active:
+   * 1. Kill existing background flox process
+   * 2. Spawn new activation process to capture new env vars
+   * 3. Refresh UI views
+   *
+   * The isReactivating guard prevents concurrent reactivation attempts.
+   */
+  suite('reactivateEnvironment', () => {
+    test('should have isReactivating guard initialized to false', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Guard should start as false
+      assert.strictEqual((env as any).isReactivating, false);
+      env.dispose();
+    });
+
+    test('should skip if already reactivating', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Set guard to true (simulating in-progress reactivation)
+      (env as any).isReactivating = true;
+
+      // Call should return early without error
+      await env.reactivateEnvironment();
+
+      // Guard should still be true (not modified by early return)
+      assert.strictEqual((env as any).isReactivating, true);
+      env.dispose();
+    });
+
+    test('should set isReactivating to false after completion', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Call reactivateEnvironment - it will fail because no process exists
+      // but should still reset the guard in finally block
+      try {
+        await env.reactivateEnvironment();
+      } catch {
+        // Expected - spawn will fail in test environment
+      }
+
+      // Guard should be reset to false after completion (success or failure)
+      assert.strictEqual((env as any).isReactivating, false);
+      env.dispose();
+    });
+  });
+
+  /**
+   * Debounce Tests
+   *
+   * Manifest.toml change handler uses 500ms debounce to prevent
+   * rapid reactivation during file editing.
+   */
+  suite('debounce', () => {
+    test('should initialize manifestChangeTimeout as undefined', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Timer should not exist initially
+      assert.strictEqual((env as any).manifestChangeTimeout, undefined);
+      env.dispose();
+    });
   });
 
   /**

@@ -39,6 +39,8 @@ export default class Env implements vscode.Disposable {
   originalEnvVars: { [key: string]: string } = {};
   activatedEnvVars: { [key: string]: string } = {};
   private output?: vscode.OutputChannel;
+  private manifestChangeTimeout: NodeJS.Timeout | undefined;
+  private isReactivating: boolean = false;
 
   constructor(
     ctx: vscode.ExtensionContext,
@@ -66,7 +68,25 @@ export default class Env implements vscode.Disposable {
     });
     this.manifestWatcher.onDidChange(async _ => {
       this.log('manifest.toml file changed');
-      await this.exec("flox", { argv: ["activate", "--dir", this.workspaceUri?.fsPath || '', "--", "true"] });
+
+      // Clear pending debounce timer
+      if (this.manifestChangeTimeout) {
+        clearTimeout(this.manifestChangeTimeout);
+      }
+
+      // Debounce: wait 500ms after last change
+      this.manifestChangeTimeout = setTimeout(async () => {
+        this.manifestChangeTimeout = undefined;
+
+        if (this.isEnvActive) {
+          // Active: full reactivation to capture new env vars
+          await this.reactivateEnvironment();
+        } else {
+          // Inactive: just refresh UI
+          await this.exec("flox", { argv: ["activate", "--dir", this.workspaceUri?.fsPath || '', "--", "true"] });
+          await this.reload();
+        }
+      }, 500);
     });
 
     this.manifestLockWatcher = vscode.workspace.createFileSystemWatcher("**/.flox/env/manifest.lock", false, false, false);
@@ -263,6 +283,11 @@ export default class Env implements vscode.Disposable {
   }
 
   dispose() {
+    // Clear any pending reactivation timer
+    if (this.manifestChangeTimeout) {
+      clearTimeout(this.manifestChangeTimeout);
+      this.manifestChangeTimeout = undefined;
+    }
     this.manifestWatcher.dispose();
     this.manifestLockWatcher.dispose();
     // Kill the activate process to prevent orphaned sleep processes
@@ -532,6 +557,47 @@ export default class Env implements vscode.Disposable {
     this.log('Environment deactivated');
     if (!silent) {
       this.displayMsg("Flox environment deactivated successfully.");
+    }
+  }
+
+  async reactivateEnvironment(): Promise<void> {
+    if (this.isReactivating) {
+      this.log('Reactivation already in progress, skipping');
+      return;
+    }
+
+    this.isReactivating = true;
+    this.log('Reactivating environment...');
+
+    try {
+      // 1. Kill existing background process (silent)
+      await this.killActivateProcess(true);
+
+      // 2. Respawn activation process
+      await new Promise<void>((resolve, reject) => {
+        this.spawnActivateProcess(
+          () => {
+            this.log('Environment reactivated successfully');
+            resolve();
+          },
+          (error?: any) => {
+            this.log(`Failed to reactivate: ${error}`);
+            reject(error);
+          }
+        );
+      });
+
+      // 3. Update context and refresh UI
+      await vscode.commands.executeCommand('setContext', 'flox.envActive', true);
+      await this.reload();
+
+    } catch (error) {
+      this.log(`Reactivation failed: ${error}`);
+      this.displayError('Failed to reactivate Flox environment.');
+      this.isEnvActive = false;
+      await vscode.commands.executeCommand('setContext', 'flox.envActive', false);
+    } finally {
+      this.isReactivating = false;
     }
   }
 
