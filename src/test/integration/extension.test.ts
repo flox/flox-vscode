@@ -145,6 +145,12 @@ suite('Extension Integration Tests', () => {
       assert.ok(exists, 'flox.serviceRestart command should be registered');
     });
 
+    test('flox.serviceLogs command should be registered', async () => {
+      // Shows logs for a running service
+      const exists = await commandExists('flox.serviceLogs');
+      assert.ok(exists, 'flox.serviceLogs command should be registered');
+    });
+
     test('flox.edit command should be registered', async () => {
       // Opens manifest.toml in editor
       const exists = await commandExists('flox.edit');
@@ -177,6 +183,7 @@ suite('Extension Integration Tests', () => {
         'flox.serviceStart',
         'flox.serviceStop',
         'flox.serviceRestart',
+        'flox.serviceLogs',
         'flox.edit',
         'flox.search',
         'flox.configureMcp',

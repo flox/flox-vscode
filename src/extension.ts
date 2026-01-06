@@ -511,6 +511,50 @@ export async function activate(context: vscode.ExtensionContext) {
     });
   });
 
+  env.registerCommand('flox.serviceLogs', async (service: ServiceItem | undefined) => {
+    if (!env.workspaceUri) { return; }
+
+    // If service not provided (via Command Palette), show QuickPick of running services only
+    if (!service) {
+      const runningServices: vscode.QuickPickItem[] = [];
+      if (env?.servicesStatus) {
+        for (const [name, status] of env.servicesStatus) {
+          if (status?.status?.toLowerCase() === "running") {
+            runningServices.push({
+              label: name,
+              description: status?.status,
+            });
+          }
+        }
+      }
+
+      if (runningServices.length === 0) {
+        env.displayMsg("No running services to show logs for.");
+        return;
+      }
+
+      const selected = await vscode.window.showQuickPick(runningServices, {
+        placeHolder: 'Select a running service to show logs',
+      });
+      if (selected === undefined || selected?.label === undefined) {
+        env.displayMsg("No service selected.");
+        return;
+      }
+
+      service = new ServiceItem(selected.label, "", "running");
+    }
+
+    const terminalName = `flox: ${service.label} logs`;
+
+    // Reuse existing terminal if it exists
+    let terminal = vscode.window.terminals.find(t => t.name === terminalName);
+    if (!terminal) {
+      terminal = vscode.window.createTerminal({ name: terminalName });
+      terminal.sendText(`flox services logs --dir "${env.workspaceUri.fsPath}" --follow ${service.label}`, true);
+    }
+    terminal.show();
+  });
+
   env.registerCommand('flox.edit', async () => {
     if (!env.workspaceUri) { return; }
 
