@@ -79,6 +79,12 @@ suite('Extension Integration Tests', () => {
       return commands.includes(commandId);
     }
 
+    test('flox.openInstallPage command should be registered', async () => {
+      // Opens Flox installation page - always registered
+      const exists = await commandExists('flox.openInstallPage');
+      assert.ok(exists, 'flox.openInstallPage command should be registered');
+    });
+
     test('flox.init command should be registered', async () => {
       // Creates new Flox environment
       const exists = await commandExists('flox.init');
@@ -148,6 +154,7 @@ suite('Extension Integration Tests', () => {
     test('all expected commands should be registered', async () => {
       // Comprehensive check of all commands
       const expectedCommands = [
+        'flox.openInstallPage',
         'flox.init',
         'flox.version',
         'flox.activate',

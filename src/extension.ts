@@ -23,6 +23,20 @@ export async function activate(context: vscode.ExtensionContext) {
 
   const env = new Env(context, undefined, output);
 
+  // Check if Flox CLI is installed
+  const isFloxInstalled = await env.checkFloxInstalled();
+  await env.setFloxInstalled(isFloxInstalled);
+
+  // Register command to open Flox installation page (always available)
+  env.registerCommand('flox.openInstallPage', () => {
+    vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs/install-flox/'));
+  });
+
+  // If Flox is not installed, skip further initialization
+  if (!isFloxInstalled) {
+    return;
+  }
+
   env.registerView('floxInstallView', installView);
   env.registerView('floxVarsView', varsView);
   env.registerView('floxServicesView', servicesView);

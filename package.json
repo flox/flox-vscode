@@ -48,46 +48,51 @@
         }
       ]
     },
-    "viewsWelcome": [ 
+    "viewsWelcome": [
+      {
+        "view": "floxInfoView",
+        "contents": "Flox is not installed.\n\nFlox is a virtual environment and package manager that helps you manage dependencies.\n\n[Install Flox](command:flox.openInstallPage)",
+        "when": "!flox.isInstalled"
+      },
       {
         "view": "floxInfoView",
         "contents": "Welcome to Flox! We couldn't find any Flox environment.\n[Create environment](command:flox.init)",
-        "when": "!flox.envExists"
+        "when": "flox.isInstalled && !flox.envExists"
       },
       {
         "view": "floxInfoView",
         "contents": "[Activate & Restart](command:flox.activate)",
-        "when": "flox.envExists && !flox.envActive"
+        "when": "flox.isInstalled && flox.envExists && !flox.envActive"
       },
       {
         "view": "floxInfoView",
         "contents": "[Deactivate & Restart](command:flox.deactivate)",
-        "when": "flox.envExists && flox.envActive"
+        "when": "flox.isInstalled && flox.envExists && flox.envActive"
       },
       {
         "view": "floxInfoView",
         "contents": "Your environment is active!",
-        "when": "flox.envActive"
+        "when": "flox.isInstalled && flox.envActive"
       },
       {
         "view": "floxInfoView",
         "contents": "Find and install a package.\n[Install a package](command:flox.install)",
-        "when": "flox.envExists"
+        "when": "flox.isInstalled && flox.envExists"
       },
       {
         "view": "floxInfoView",
         "contents": "Don't be a stranger, [say hi](https://go.flox.dev/slack)!",
-        "when": "!flox.envActive"
+        "when": "flox.isInstalled && !flox.envActive"
       },
       {
         "view": "floxVarsView",
         "contents": "Add variable(s).\n[Edit manifest.toml](command:flox.edit)",
-        "when": "flox.envExists"
+        "when": "flox.isInstalled && flox.envExists"
       },
       {
         "view": "floxServicesView",
         "contents": "Add services(s).\n[Edit manifest.toml](command:flox.edit)",
-        "when": "flox.envExists"
+        "when": "flox.isInstalled && flox.envExists"
       }
     ],
     "views": {
@@ -99,21 +104,26 @@
         {
           "id": "floxInstallView",
           "name": "Installed Packages",
-          "when": "flox.envExists"
+          "when": "flox.isInstalled && flox.envExists"
         },
         {
           "id": "floxVarsView",
           "name": "Variables",
-          "when": "flox.envExists"
+          "when": "flox.isInstalled && flox.envExists"
         },
         {
           "id": "floxServicesView",
           "name": "Services",
-          "when": "flox.envExists"
+          "when": "flox.isInstalled && flox.envExists"
         }
       ]
     },
     "commands": [
+      {
+        "command": "flox.openInstallPage",
+        "category": "Flox",
+        "title": "Install Flox"
+      },
       {
         "command": "flox.init",
         "category": "Flox",
@@ -181,16 +191,21 @@
     "menus": {
       "commandPalette": [
         {
+          "command": "flox.openInstallPage",
+          "when": "!flox.isInstalled"
+        },
+        {
           "command": "flox.init",
-          "when": "!flox.envExists"
+          "when": "flox.isInstalled && !flox.envExists"
         },
         {
           "command": "flox.version",
+          "when": "flox.isInstalled",
           "group": "commandPalette"
         },
         {
           "command": "flox.activate",
-          "when": "flox.envExists",
+          "when": "flox.isInstalled && flox.envExists",
           "group": "commandPalette"
         }
       ],
@@ -198,7 +213,7 @@
         {
           "command": "flox.init",
           "title": "Create new environment",
-          "when": "view == floxInfoView && !flox.envExists"
+          "when": "view == floxInfoView && flox.isInstalled && !flox.envExists"
         },
         {
           "command": "flox.install",
