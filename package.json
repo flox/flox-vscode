@@ -273,6 +273,16 @@
           "when": "flox.envActive && view == floxServicesView && viewItem == service-running"
         }
       ]
+    },
+    "configuration": {
+      "title": "Flox",
+      "properties": {
+        "flox.promptToActivate": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a popup to activate the Flox environment when one is detected in the workspace."
+        }
+      }
     }
   },
   "vsce": {
