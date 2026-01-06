@@ -700,4 +700,147 @@ export default class Env implements vscode.Disposable {
     await vscode.commands.executeCommand('setContext', 'flox.isInstalled', value);
     await this.context.workspaceState.update('flox.isInstalled', value);
   }
+
+  /**
+   * Get the currently installed Flox version.
+   * @returns The version string (e.g., "1.3.1") or undefined if not available
+   */
+  async getFloxVersion(): Promise<string | undefined> {
+    try {
+      const result = await promisify(execFile)('flox', ['--version']);
+      // Output is like "flox 1.3.1" or "flox version 1.3.1"
+      const match = result.stdout.toString().match(/(\d+\.\d+\.\d+)/);
+      return match ? match[1] : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * Fetch the latest Flox version from GitHub releases.
+   * @returns The latest version string (e.g., "1.3.2") or undefined if fetch fails
+   */
+  async getLatestFloxVersion(): Promise<string | undefined> {
+    try {
+      // Use GitHub API to get the latest release
+      const https = await import('https');
+      return new Promise((resolve) => {
+        const options = {
+          hostname: 'api.github.com',
+          path: '/repos/flox/flox/releases/latest',
+          headers: {
+            'User-Agent': 'flox-vscode-extension',
+            'Accept': 'application/vnd.github.v3+json',
+          },
+        };
+
+        const req = https.get(options, (res) => {
+          let data = '';
+          res.on('data', (chunk) => { data += chunk; });
+          res.on('end', () => {
+            try {
+              const json = JSON.parse(data);
+              // tag_name is like "v1.3.2"
+              const match = json.tag_name?.match(/(\d+\.\d+\.\d+)/);
+              resolve(match ? match[1] : undefined);
+            } catch {
+              resolve(undefined);
+            }
+          });
+        });
+
+        req.on('error', () => resolve(undefined));
+        req.setTimeout(10000, () => {
+          req.destroy();
+          resolve(undefined);
+        });
+      });
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * Compare two semantic version strings.
+   * @returns negative if v1 < v2, 0 if equal, positive if v1 > v2
+   */
+  compareVersions(v1: string, v2: string): number {
+    const parts1 = v1.split('.').map(Number);
+    const parts2 = v2.split('.').map(Number);
+
+    for (let i = 0; i < Math.max(parts1.length, parts2.length); i++) {
+      const p1 = parts1[i] || 0;
+      const p2 = parts2[i] || 0;
+      if (p1 !== p2) {
+        return p1 - p2;
+      }
+    }
+    return 0;
+  }
+
+  /**
+   * Check if a newer version of Flox is available.
+   * Only checks once per day (stores last check time in globalState).
+   * Shows a notification with upgrade link if update is available.
+   */
+  async checkForFloxUpdate(): Promise<void> {
+    const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+    const lastCheckKey = 'flox.lastUpdateCheck';
+    const lastVersionKey = 'flox.lastKnownVersion';
+
+    // Check if we've already checked today
+    const lastCheck = this.context.globalState.get<number>(lastCheckKey, 0);
+    const now = Date.now();
+
+    if (now - lastCheck < ONE_DAY_MS) {
+      this.log('Skipping update check (checked within last 24 hours)');
+      return;
+    }
+
+    this.log('Checking for Flox updates...');
+
+    const currentVersion = await this.getFloxVersion();
+    if (!currentVersion) {
+      this.log('Could not determine current Flox version');
+      return;
+    }
+
+    const latestVersion = await this.getLatestFloxVersion();
+    if (!latestVersion) {
+      this.log('Could not fetch latest Flox version');
+      return;
+    }
+
+    // Store the check time
+    await this.context.globalState.update(lastCheckKey, now);
+
+    this.log(`Current Flox version: ${currentVersion}, Latest: ${latestVersion}`);
+
+    // Compare versions
+    if (this.compareVersions(latestVersion, currentVersion) > 0) {
+      // Don't show notification if we already notified about this version
+      const lastNotifiedVersion = this.context.globalState.get<string>(lastVersionKey);
+      if (lastNotifiedVersion === latestVersion) {
+        this.log(`Already notified about version ${latestVersion}`);
+        return;
+      }
+
+      // Store that we've notified about this version
+      await this.context.globalState.update(lastVersionKey, latestVersion);
+
+      this.log(`New Flox version available: ${latestVersion}`);
+
+      // Show notification with upgrade button
+      const action = await vscode.window.showInformationMessage(
+        `A new version of Flox is available (${latestVersion}). You are using ${currentVersion}.`,
+        'Upgrade Instructions'
+      );
+
+      if (action === 'Upgrade Instructions') {
+        vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs/install-flox/#upgrade-flox'));
+      }
+    } else {
+      this.log('Flox is up to date');
+    }
+  }
 }

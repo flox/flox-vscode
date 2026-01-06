@@ -32,6 +32,11 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs/install-flox/'));
   });
 
+  // Register command to open Flox upgrade page (always available)
+  env.registerCommand('flox.openUpgradePage', () => {
+    vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs/install-flox/#upgrade-flox'));
+  });
+
   // If Flox is not installed, skip further initialization
   if (!isFloxInstalled) {
     return;
@@ -88,6 +93,9 @@ export async function activate(context: vscode.ExtensionContext) {
   }
 
   await env.reload();
+
+  // Check for Flox updates (once per day, in background)
+  env.checkForFloxUpdate();
 
   env.registerCommand('flox.init', async () => {
     if (!env.workspaceUri) { return; }
