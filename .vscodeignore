@@ -16,3 +16,4 @@ scripts/**
 assets/**
 !assets/icon.png
 !assets/icon.svg
+w/**
