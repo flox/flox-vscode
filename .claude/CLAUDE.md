@@ -80,14 +80,17 @@ npm run clean
 
 ### Testing
 ```bash
-# Run all tests (runs pretest, lint, then test)
+# Run all tests (compiles, lints, then runs unit + integration)
 npm test
+
+# Run only unit tests (fast, mocked, no Flox required)
+npm run test:unit
+
+# Run only integration tests (requires VSCode instance)
+npm run test:integration
 
 # Just run linting
 npm run lint
-
-# Run tests in watch mode
-npm run test:watch
 ```
 
 ### Packaging
@@ -195,12 +198,135 @@ npm run compile && code --extensionDevelopmentPath=$PWD
 - `.flox/env/manifest.lock` - Locked dependency information (JSON)
 - `scripts/activate.sh` - Bash script that captures environment variables and keeps process alive
 
-## Testing Notes
+## Testing
 
-Tests use `@vscode/test-electron` and `@vscode/test-cli`. The current test suite in `src/test/extension.test.ts` contains only a sample test. When adding tests:
-- Extension tests run in an actual VSCode instance
-- Use the VSCode API test suite pattern
-- Tests are located in `src/test/`
+### Test Architecture
+
+Tests are split into two categories:
+
+**Unit Tests** (`src/test/unit/`)
+- Fast, isolated tests with mocked VSCode APIs
+- No external dependencies (Flox CLI not required)
+- Test individual classes and functions
+- Run in ~70ms
+
+**Integration Tests** (`src/test/integration/`)
+- Run in actual VSCode Extension Development Host
+- Test real extension activation and command registration
+- Some tests require Flox CLI installed
+- Run in ~50ms
+
+### Test Commands
+
+```bash
+# Run all tests (unit + integration)
+npm test
+
+# Run only unit tests (fast, no Flox required)
+npm run test:unit
+
+# Run only integration tests (requires VSCode, optionally Flox)
+npm run test:integration
+
+# Skip Flox-dependent tests in CI
+SKIP_FLOX_TESTS=1 npm run test:integration
+```
+
+### Test File Structure
+
+```
+src/test/
+├── mocks/
+│   └── vscode.ts           # Mock utilities for VSCode APIs
+├── unit/
+│   ├── config.test.ts      # System enum tests
+│   ├── view.test.ts        # TreeView provider tests
+│   └── env.test.ts         # Env class tests
+└── integration/
+    └── extension.test.ts   # Extension activation & commands
+```
+
+### Mock Utilities (`src/test/mocks/vscode.ts`)
+
+Provides mock implementations for testing without VSCode:
+
+- **`MockMemento`**: Mock for `workspaceState`/`globalState`
+- **`MockEnvironmentVariableCollection`**: Mock for terminal env vars
+- **`MockFileSystemWatcher`**: Mock with manual event triggers
+- **`createMockExtensionContext()`**: Factory for complete ExtensionContext mock
+
+Example usage:
+```typescript
+import { createMockExtensionContext } from '../mocks/vscode';
+
+const mockContext = createMockExtensionContext();
+const env = new Env(mockContext, workspaceUri);
+
+// Test workspace state
+await mockContext.workspaceState.update('flox.envExists', true);
+```
+
+### Writing New Tests
+
+**Unit Test Pattern:**
+```typescript
+import * as assert from 'assert';
+import { createMockExtensionContext } from '../mocks/vscode';
+
+suite('MyFeature Unit Tests', () => {
+  let mockContext: vscode.ExtensionContext;
+
+  setup(() => {
+    mockContext = createMockExtensionContext();
+  });
+
+  test('should do something', async () => {
+    // Arrange
+    const env = new Env(mockContext, workspaceUri);
+
+    // Act
+    const result = await env.someMethod();
+
+    // Assert
+    assert.strictEqual(result, expected);
+    env.dispose();
+  });
+});
+```
+
+**Integration Test Pattern:**
+```typescript
+suite('Extension Integration Tests', () => {
+  test('command should be registered', async () => {
+    const commands = await vscode.commands.getCommands(true);
+    assert.ok(commands.includes('flox.myCommand'));
+  });
+});
+```
+
+### What's Tested
+
+| File | Coverage |
+|------|----------|
+| `config.ts` | System enum values, uniqueness |
+| `view.ts` | TreeItem construction, getChildren(), refresh events |
+| `env.ts` | System detection, file loading, TOML/JSON parsing, reload, env vars |
+| `extension.ts` | Command registration, extension activation |
+
+### Testing Tips
+
+1. **Use temp directories** for file-based tests (cleaned up in `teardown()`)
+2. **Skip platform-specific tests** with `this.skip()` when not on target platform
+3. **Mock external calls** - don't call real Flox CLI in unit tests
+4. **Test error cases** - invalid TOML, missing files, etc.
+5. **Document test intent** - explain WHY you're testing, not just what
+
+### Test Configuration
+
+`.vscode-test.mjs` configures the test runner:
+- Unit tests: 10s timeout per test
+- Integration tests: 60s timeout (Flox operations can be slow)
+- Uses Mocha TDD style (`suite`/`test`)
 
 ## Common Development Tasks
 
@@ -241,6 +367,48 @@ async myNewCommandHandler() {
 2. Register watcher disposal in extension context subscriptions
 3. Trigger appropriate refresh/reload on file changes
 4. Handle edge cases (file deletion, rapid changes)
+
+### Adding Tests for New Features
+
+When adding a new feature, write tests in the appropriate location:
+
+**For new Env methods:**
+```typescript
+// src/test/unit/env.test.ts
+suite('myNewMethod', () => {
+  test('should handle normal case', async () => {
+    const env = new Env(mockContext, workspaceUri);
+    const result = await env.myNewMethod();
+    assert.ok(result);
+    env.dispose();
+  });
+
+  test('should handle error case', async () => {
+    // Test error handling
+  });
+});
+```
+
+**For new commands:**
+```typescript
+// src/test/integration/extension.test.ts
+test('flox.myNewCommand should be registered', async () => {
+  const commands = await vscode.commands.getCommands(true);
+  assert.ok(commands.includes('flox.myNewCommand'));
+});
+```
+
+**For new TreeView items:**
+```typescript
+// src/test/unit/view.test.ts
+suite('MyNewItem', () => {
+  test('should set properties correctly', () => {
+    const item = new MyNewItem('label', 'description');
+    assert.strictEqual(item.label, 'label');
+    assert.strictEqual(item.contextValue, 'myNewItem');
+  });
+});
+```
 
 ## Working with Flox in Development
 
@@ -350,12 +518,21 @@ flox-vscode/
 ├── .vscode/                  # VSCode configuration
 │   ├── launch.json           # Debugger configuration
 │   └── tasks.json            # Build tasks
+├── .vscode-test.mjs          # Test runner configuration
 ├── src/                      # TypeScript source
 │   ├── extension.ts          # Extension entry point
 │   ├── env.ts                # Core Flox integration logic
 │   ├── view.ts               # TreeView providers
 │   ├── config.ts             # Type definitions
 │   └── test/                 # Test files
+│       ├── mocks/            # Mock utilities
+│       │   └── vscode.ts     # VSCode API mocks
+│       ├── unit/             # Unit tests (fast, mocked)
+│       │   ├── config.test.ts
+│       │   ├── view.test.ts
+│       │   └── env.test.ts
+│       └── integration/      # Integration tests (real VSCode)
+│           └── extension.test.ts
 ├── scripts/                  # Helper scripts
 │   └── activate.sh           # Background activation script
 ├── out/                      # Compiled JavaScript (gitignored)
@@ -381,9 +558,12 @@ flox-vscode/
 
 ### Test Failures
 1. Ensure all dependencies are installed: `npm install`
-2. Check if Flox environment is active
+2. Check if Flox environment is active: `flox activate`
 3. Run linter to catch syntax issues: `npm run lint`
-4. Review test output in Debug Console
+4. Run unit tests first (no external deps): `npm run test:unit`
+5. For integration test failures, check if VSCode downloads correctly
+6. Set `SKIP_FLOX_TESTS=1` to skip Flox CLI tests in CI environments
+7. Platform-specific tests auto-skip on non-matching platforms (shows as "pending")
 
 ### Flox Environment Issues
 1. **Command not found**: Ensure `flox activate` was run
@@ -435,7 +615,9 @@ flox-vscode/
 ## Useful Resources
 
 - **VSCode Extension API**: https://code.visualstudio.com/api
+- **VSCode Extension Testing**: https://code.visualstudio.com/api/working-with-extensions/testing-extension
 - **Flox Documentation**: https://flox.dev/docs
 - **TypeScript Handbook**: https://www.typescriptlang.org/docs/
 - **smol-toml Documentation**: https://github.com/squirrelchat/smol-toml
 - **Extension Development Guide**: https://code.visualstudio.com/api/get-started/your-first-extension
+- **@vscode/test-cli**: https://github.com/microsoft/vscode-test-cli

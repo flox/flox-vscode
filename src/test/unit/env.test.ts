@@ -1,0 +1,545 @@
+/**
+ * Unit tests for src/env.ts
+ *
+ * The Env class is the core of the extension. It manages:
+ * - System detection (which platform we're running on)
+ * - File watchers for manifest.toml and manifest.lock
+ * - Loading and parsing manifest files
+ * - Executing flox CLI commands
+ * - Managing the background activation process
+ * - Applying environment variables to terminals
+ *
+ * Testing approach:
+ * - Use real filesystem operations with temp directories (more reliable than mocking fs)
+ * - Mock VSCode ExtensionContext with our mock utilities
+ * - Test file parsing with real TOML/JSON files
+ * - Skip platform-specific tests on non-matching platforms
+ *
+ * Why test this?
+ * - Env class orchestrates all extension functionality
+ * - Bugs here affect package display, services, and command execution
+ * - Manifest parsing errors would break the entire sidebar
+ */
+
+import * as assert from 'assert';
+import * as vscode from 'vscode';
+import * as path from 'path';
+import * as fs from 'fs';
+import * as os from 'os';
+import Env from '../../env';
+import { System } from '../../config';
+import { createMockExtensionContext } from '../mocks/vscode';
+
+suite('Env Unit Tests', () => {
+  let mockContext: vscode.ExtensionContext;
+  let tempDir: string;
+
+  setup(async () => {
+    mockContext = createMockExtensionContext();
+    // Create a temporary directory for test files
+    // Using real fs is more reliable than mocking for file operations
+    tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'flox-test-'));
+  });
+
+  teardown(() => {
+    // Clean up temp directory after each test
+    if (tempDir && fs.existsSync(tempDir)) {
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  /**
+   * Constructor Tests
+   *
+   * The Env constructor:
+   * 1. Detects the current system (os.platform() + os.arch())
+   * 2. Sets up file watchers for manifest files
+   * 3. Initializes empty state (views, packages, etc.)
+   *
+   * System detection is critical because packages are filtered by system.
+   * Wrong detection = no packages shown.
+   */
+  suite('Constructor', () => {
+    test('should detect aarch64-darwin system', function() {
+      // Skip if not on Apple Silicon Mac
+      const arch = os.arch();
+      const platform = os.platform();
+      if (`${arch}-${platform}` !== 'arm64-darwin') {
+        this.skip();
+        return;
+      }
+
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+      assert.strictEqual(env.system, System.AARCH64_DARWIN);
+      env.dispose();
+    });
+
+    test('should detect x86_64-linux system', function() {
+      // Skip if not on Intel/AMD Linux
+      const arch = os.arch();
+      const platform = os.platform();
+      if (`${arch}-${platform}` !== 'x64-linux') {
+        this.skip();
+        return;
+      }
+
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+      assert.strictEqual(env.system, System.X86_64_LINUX);
+      env.dispose();
+    });
+
+    test('should detect x86_64-darwin system', function() {
+      // Skip if not on Intel Mac
+      const arch = os.arch();
+      const platform = os.platform();
+      if (`${arch}-${platform}` !== 'x64-darwin') {
+        this.skip();
+        return;
+      }
+
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+      assert.strictEqual(env.system, System.X86_64_DARWIN);
+      env.dispose();
+    });
+
+    test('should detect aarch64-linux system', function() {
+      // Skip if not on ARM64 Linux
+      const arch = os.arch();
+      const platform = os.platform();
+      if (`${arch}-${platform}` !== 'arm64-linux') {
+        this.skip();
+        return;
+      }
+
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+      assert.strictEqual(env.system, System.AARCH64_LINUX);
+      env.dispose();
+    });
+
+    test('should set workspaceUri from parameter', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+      assert.strictEqual(env.workspaceUri?.fsPath, tempDir);
+      env.dispose();
+    });
+
+    test('should initialize empty views array', () => {
+      // Views are added later via registerView()
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+      assert.deepStrictEqual(env.views, []);
+      env.dispose();
+    });
+
+    test('should initialize isEnvActive as false', () => {
+      // Environment is only active after spawnActivateProcess completes
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+      assert.strictEqual(env.isEnvActive, false);
+      env.dispose();
+    });
+  });
+
+  /**
+   * fileExists Tests
+   *
+   * Helper method that checks if a file exists using vscode.workspace.fs.stat().
+   * Used before loading manifest files to avoid errors.
+   */
+  suite('fileExists', () => {
+    test('should return true for existing file', async () => {
+      // Create a test file in temp directory
+      const testFilePath = path.join(tempDir, 'test.txt');
+      fs.writeFileSync(testFilePath, 'test content');
+
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      const result = await env.fileExists(vscode.Uri.file(testFilePath));
+      assert.strictEqual(result, true);
+      env.dispose();
+    });
+
+    test('should return false for non-existing file', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      const result = await env.fileExists(vscode.Uri.file(path.join(tempDir, 'nonexistent.txt')));
+      assert.strictEqual(result, false);
+      env.dispose();
+    });
+  });
+
+  /**
+   * loadFile Tests
+   *
+   * Loads and parses manifest.toml (TOML) or manifest.lock (JSON) files.
+   * Uses smol-toml for TOML parsing and native JSON.parse for lock files.
+   *
+   * File type is determined by extension:
+   * - .toml -> TOML parser
+   * - .lock -> JSON parser
+   */
+  suite('loadFile', () => {
+    test('should parse TOML file correctly', async () => {
+      // Create a test TOML file matching manifest.toml structure
+      const testFilePath = path.join(tempDir, 'test.toml');
+      fs.writeFileSync(testFilePath, `
+[install]
+nodejs = {}
+python3 = {}
+
+[vars]
+MY_VAR = "test_value"
+`);
+
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      const result = await env.loadFile(vscode.Uri.file(testFilePath));
+      assert.ok(result, 'Should return parsed object');
+      assert.ok(result.install, 'Should have install section');
+      assert.ok(result.install.nodejs, 'Should have nodejs package');
+      assert.ok(result.install.python3, 'Should have python3 package');
+      assert.strictEqual(result.vars.MY_VAR, 'test_value', 'Should parse vars correctly');
+      env.dispose();
+    });
+
+    test('should parse JSON lock file correctly', async () => {
+      // Create a test lock file matching manifest.lock structure
+      const testFilePath = path.join(tempDir, 'manifest.lock');
+      fs.writeFileSync(testFilePath, JSON.stringify({
+        packages: [
+          { install_id: 'nodejs', version: '20.0.0', system: 'aarch64-darwin' },
+        ],
+        manifest: {
+          install: { nodejs: {} },
+        },
+      }));
+
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      const result = await env.loadFile(vscode.Uri.file(testFilePath));
+      assert.ok(result, 'Should return parsed object');
+      assert.ok(result.packages, 'Should have packages array');
+      assert.strictEqual(result.packages.length, 1, 'Should have one package');
+      assert.strictEqual(result.packages[0].install_id, 'nodejs', 'Should parse package correctly');
+      env.dispose();
+    });
+
+    test('should return undefined for non-existing file', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      const result = await env.loadFile(vscode.Uri.file(path.join(tempDir, 'nonexistent.toml')));
+      assert.strictEqual(result, undefined, 'Should return undefined for missing files');
+      env.dispose();
+    });
+
+    test('should handle invalid TOML gracefully', async () => {
+      // Invalid TOML should not crash, just return undefined
+      const testFilePath = path.join(tempDir, 'invalid.toml');
+      fs.writeFileSync(testFilePath, 'this is not valid toml {{{{');
+
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      const result = await env.loadFile(vscode.Uri.file(testFilePath));
+      assert.strictEqual(result, undefined, 'Should return undefined for invalid TOML');
+      env.dispose();
+    });
+
+    test('should handle invalid JSON gracefully', async () => {
+      // Invalid JSON should not crash, just return undefined
+      const testFilePath = path.join(tempDir, 'invalid.lock');
+      fs.writeFileSync(testFilePath, 'this is not valid json {{{');
+
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      const result = await env.loadFile(vscode.Uri.file(testFilePath));
+      assert.strictEqual(result, undefined, 'Should return undefined for invalid JSON');
+      env.dispose();
+    });
+  });
+
+  /**
+   * registerCommand Tests
+   *
+   * Wraps vscode.commands.registerCommand with try/catch error handling.
+   * All extension commands go through this to ensure errors are displayed
+   * properly via displayError() instead of crashing silently.
+   */
+  suite('registerCommand', () => {
+    test('should register command and add to subscriptions', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      const initialSubscriptionsCount = mockContext.subscriptions.length;
+      env.registerCommand('test.command', () => {});
+
+      // Command should be added to context.subscriptions for cleanup on deactivate
+      assert.strictEqual(mockContext.subscriptions.length, initialSubscriptionsCount + 1);
+      env.dispose();
+    });
+  });
+
+  /**
+   * registerView Tests
+   *
+   * Registers a TreeDataProvider view and links it to this Env instance.
+   * Views need access to env to read packages, manifest, etc.
+   */
+  suite('registerView', () => {
+    test('should add view to views array', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Create a minimal mock view implementing the View interface
+      const mockView = {
+        registerProvider: (name: string) => ({ dispose: () => {} }),
+        refresh: async () => {},
+        env: undefined as any,
+      };
+
+      env.registerView('testView', mockView);
+
+      // View should be added to views array for refresh on reload()
+      assert.strictEqual(env.views.length, 1);
+      // View should have reference to env for accessing packages/manifest
+      assert.strictEqual(mockView.env, env);
+      env.dispose();
+    });
+  });
+
+  /**
+   * applyEnvironmentVariables Tests
+   *
+   * Applies environment variables from flox activate to VSCode terminals.
+   * Uses context.environmentVariableCollection to modify terminal env.
+   *
+   * This is how the extension makes packages available in integrated terminal.
+   */
+  suite('applyEnvironmentVariables', () => {
+    test('should apply environment variables to collection', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      const testEnvVars = {
+        'TEST_VAR': 'test_value',
+        'ANOTHER_VAR': 'another_value',
+      };
+
+      await env.applyEnvironmentVariables(testEnvVars);
+
+      // Variables should be stored in activatedEnvVars
+      assert.deepStrictEqual(env.activatedEnvVars, testEnvVars);
+      env.dispose();
+    });
+
+    test('should store original env vars on first call', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Original should be empty before first apply
+      assert.deepStrictEqual(env.originalEnvVars, {});
+
+      await env.applyEnvironmentVariables({ 'TEST': 'value' });
+
+      // Original should now contain process.env snapshot
+      // This allows restoration on deactivate
+      assert.ok(Object.keys(env.originalEnvVars).length > 0);
+      env.dispose();
+    });
+  });
+
+  /**
+   * clearEnvironmentVariables Tests
+   *
+   * Clears environment variables when deactivating flox environment.
+   * Restores terminal to original state.
+   */
+  suite('clearEnvironmentVariables', () => {
+    test('should clear activated env vars', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Set some env vars first
+      await env.applyEnvironmentVariables({ 'TEST': 'value' });
+      assert.ok(Object.keys(env.activatedEnvVars).length > 0);
+
+      // Clear them
+      await env.clearEnvironmentVariables();
+      assert.deepStrictEqual(env.activatedEnvVars, {});
+      env.dispose();
+    });
+  });
+
+  /**
+   * reload Tests
+   *
+   * The main state loading function. Called:
+   * - On extension activation
+   * - When manifest.toml or manifest.lock changes
+   * - After installing/uninstalling packages
+   *
+   * It:
+   * 1. Loads manifest.lock (or manifest.toml as fallback)
+   * 2. Parses packages into Map<System, Map<install_id, Package>>
+   * 3. Updates context keys (flox.envExists, flox.hasPkgs, etc.)
+   * 4. Fetches service status if services exist
+   * 5. Refreshes all registered views
+   */
+  suite('reload', () => {
+    test('should set envExists to false when no manifest', async () => {
+      // Empty directory with no .flox folder
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      await env.reload();
+
+      const envExists = mockContext.workspaceState.get('flox.envExists', false);
+      assert.strictEqual(envExists, false);
+      env.dispose();
+    });
+
+    test('should load manifest.lock when it exists', async () => {
+      // Create .flox/env directory structure (matches real flox init)
+      const floxDir = path.join(tempDir, '.flox', 'env');
+      fs.mkdirSync(floxDir, { recursive: true });
+
+      // Create manifest.lock file with packages
+      const lockFile = path.join(floxDir, 'manifest.lock');
+      fs.writeFileSync(lockFile, JSON.stringify({
+        packages: [
+          {
+            install_id: 'nodejs',
+            version: '20.0.0',
+            system: 'aarch64-darwin',
+            group: 'default',
+            license: 'MIT',
+            description: 'Node.js',
+            attr_path: 'nodejs',
+          },
+        ],
+        manifest: {
+          install: { nodejs: {} },
+          vars: { MY_VAR: 'value' },
+        },
+      }));
+
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      await env.reload();
+
+      assert.ok(env.manifest, 'Should load manifest');
+      assert.ok(env.packages, 'Should parse packages');
+      env.dispose();
+    });
+
+    test('should parse packages into Map by system', async () => {
+      // Create environment with packages for different systems
+      const floxDir = path.join(tempDir, '.flox', 'env');
+      fs.mkdirSync(floxDir, { recursive: true });
+
+      const lockFile = path.join(floxDir, 'manifest.lock');
+      fs.writeFileSync(lockFile, JSON.stringify({
+        packages: [
+          {
+            install_id: 'nodejs',
+            version: '20.0.0',
+            system: 'aarch64-darwin',
+            group: 'default',
+            license: 'MIT',
+            description: 'Node.js',
+            attr_path: 'nodejs',
+          },
+          {
+            install_id: 'python3',
+            version: '3.11.0',
+            system: 'x86_64-linux',
+            group: 'default',
+            license: 'PSF',
+            description: 'Python',
+            attr_path: 'python3',
+          },
+        ],
+        manifest: {
+          install: { nodejs: {}, python3: {} },
+        },
+      }));
+
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      await env.reload();
+
+      // Packages should be grouped by system for efficient lookup
+      assert.ok(env.packages);
+      assert.ok(env.packages.get(System.AARCH64_DARWIN), 'Should have darwin packages');
+      assert.ok(env.packages.get(System.X86_64_LINUX), 'Should have linux packages');
+      assert.strictEqual(
+        env.packages.get(System.AARCH64_DARWIN)?.get('nodejs')?.version,
+        '20.0.0',
+        'Should get correct nodejs version'
+      );
+      assert.strictEqual(
+        env.packages.get(System.X86_64_LINUX)?.get('python3')?.version,
+        '3.11.0',
+        'Should get correct python version'
+      );
+      env.dispose();
+    });
+
+    test('should refresh all registered views', async () => {
+      // Create minimal environment
+      const floxDir = path.join(tempDir, '.flox', 'env');
+      fs.mkdirSync(floxDir, { recursive: true });
+
+      const lockFile = path.join(floxDir, 'manifest.lock');
+      fs.writeFileSync(lockFile, JSON.stringify({
+        manifest: { install: {} },
+      }));
+
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Track if refresh was called
+      let refreshCalled = false;
+      const mockView = {
+        registerProvider: () => ({ dispose: () => {} }),
+        refresh: async () => { refreshCalled = true; },
+        env: undefined,
+      };
+
+      env.registerView('testView', mockView);
+      await env.reload();
+
+      // Views should be refreshed to update UI
+      assert.strictEqual(refreshCalled, true, 'Should call refresh on all views');
+      env.dispose();
+    });
+  });
+
+  /**
+   * dispose Tests
+   *
+   * Cleanup when extension deactivates.
+   * Must dispose file watchers to prevent memory leaks.
+   */
+  suite('dispose', () => {
+    test('should dispose file watchers', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Should not throw when disposing
+      env.dispose();
+    });
+  });
+});

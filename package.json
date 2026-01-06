@@ -266,6 +266,8 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test",
+    "test:unit": "vscode-test --label unit",
+    "test:integration": "vscode-test --label integration",
     "clean": "rm -rf ./out"
   },
   "devDependencies": {
