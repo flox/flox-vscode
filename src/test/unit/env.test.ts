@@ -629,6 +629,132 @@ MY_VAR = "test_value"
   });
 
   /**
+   * isFloxInstalled Getter Tests
+   *
+   * Returns the current value of _isFloxInstalled.
+   */
+  suite('isFloxInstalled getter', () => {
+    test('should return false by default', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      assert.strictEqual(env.isFloxInstalled, false);
+      env.dispose();
+    });
+  });
+
+  /**
+   * compareVersions Tests
+   *
+   * Compares semantic version strings for update checking.
+   */
+  suite('compareVersions', () => {
+    test('should return 0 for equal versions', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      assert.strictEqual(env.compareVersions('1.0.0', '1.0.0'), 0);
+      assert.strictEqual(env.compareVersions('2.3.4', '2.3.4'), 0);
+      env.dispose();
+    });
+
+    test('should return positive when v1 > v2', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      assert.ok(env.compareVersions('2.0.0', '1.0.0') > 0);
+      assert.ok(env.compareVersions('1.1.0', '1.0.0') > 0);
+      assert.ok(env.compareVersions('1.0.1', '1.0.0') > 0);
+      env.dispose();
+    });
+
+    test('should return negative when v1 < v2', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      assert.ok(env.compareVersions('1.0.0', '2.0.0') < 0);
+      assert.ok(env.compareVersions('1.0.0', '1.1.0') < 0);
+      assert.ok(env.compareVersions('1.0.0', '1.0.1') < 0);
+      env.dispose();
+    });
+
+    test('should handle version strings with different lengths', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      assert.strictEqual(env.compareVersions('1.0', '1.0.0'), 0);
+      assert.ok(env.compareVersions('1.0.1', '1.0') > 0);
+      env.dispose();
+    });
+  });
+
+  /**
+   * getFloxVersion Tests
+   *
+   * Gets the currently installed Flox version by running `flox --version`.
+   */
+  suite('getFloxVersion', () => {
+    test('should return version string when flox is installed', async function() {
+      // Skip if flox is not installed
+      if (process.env.SKIP_FLOX_TESTS === '1') {
+        this.skip();
+        return;
+      }
+
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      const version = await env.getFloxVersion();
+      // Should return a version like "1.3.1"
+      if (version) {
+        assert.ok(/^\d+\.\d+\.\d+/.test(version), `Version should be semver format: ${version}`);
+      }
+      env.dispose();
+    });
+
+    test('should return undefined without throwing when flox not installed', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // This test just verifies the method doesn't throw
+      const version = await env.getFloxVersion();
+      // Result depends on whether flox is installed
+      assert.ok(version === undefined || typeof version === 'string');
+      env.dispose();
+    });
+  });
+
+  /**
+   * checkForFloxUpdate Tests
+   *
+   * Checks for Flox updates (once per day).
+   */
+  suite('checkForFloxUpdate', () => {
+    test('should not throw when called', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Should not throw even if network is unavailable
+      await env.checkForFloxUpdate();
+      env.dispose();
+    });
+
+    test('should skip check if checked within last 24 hours', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const mockOutput = new MockOutputChannel('Flox');
+      const env = new Env(mockContext, workspaceUri, mockOutput);
+
+      // Set last check to now
+      await mockContext.globalState.update('flox.lastUpdateCheck', Date.now());
+
+      await env.checkForFloxUpdate();
+
+      assert.ok(mockOutput.hasLine('Skipping update check'), 'Should skip recent check');
+      env.dispose();
+    });
+  });
+
+  /**
    * Logging Tests
    *
    * The Env class logs to a VSCode OutputChannel for debugging.

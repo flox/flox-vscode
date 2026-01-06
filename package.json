@@ -125,6 +125,11 @@
         "title": "Install Flox"
       },
       {
+        "command": "flox.openUpgradePage",
+        "category": "Flox",
+        "title": "Upgrade Flox"
+      },
+      {
         "command": "flox.init",
         "category": "Flox",
         "title": "Create new environment"
