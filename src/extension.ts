@@ -155,7 +155,10 @@ export async function activate(context: vscode.ExtensionContext) {
   }
 
   // Check for Flox updates (once per day, in background)
-  env.checkForFloxUpdate();
+  const checkForUpdates = vscode.workspace.getConfiguration('flox').get<boolean>('checkForUpdates', true);
+  if (checkForUpdates) {
+    env.checkForFloxUpdate();
+  }
 
   env.registerCommand('flox.init', async () => {
     if (!env.workspaceUri) { return; }

@@ -281,6 +281,11 @@
           "type": "boolean",
           "default": true,
           "description": "Show a popup to activate the Flox environment when one is detected in the workspace."
+        },
+        "flox.checkForUpdates": {
+          "type": "boolean",
+          "default": true,
+          "description": "Periodically check for newer versions of Flox and show a notification when an update is available."
         }
       }
     }
