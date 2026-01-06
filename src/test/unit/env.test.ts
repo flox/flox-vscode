@@ -28,7 +28,7 @@ import * as fs from 'fs';
 import * as os from 'os';
 import Env from '../../env';
 import { System } from '../../config';
-import { createMockExtensionContext } from '../mocks/vscode';
+import { createMockExtensionContext, MockOutputChannel } from '../mocks/vscode';
 
 suite('Env Unit Tests', () => {
   let mockContext: vscode.ExtensionContext;
@@ -539,6 +539,117 @@ MY_VAR = "test_value"
       const env = new Env(mockContext, workspaceUri);
 
       // Should not throw when disposing
+      env.dispose();
+    });
+  });
+
+  /**
+   * Logging Tests
+   *
+   * The Env class logs to a VSCode OutputChannel for debugging.
+   * Users can view these logs in the Output panel under "Flox".
+   *
+   * Logging helps with:
+   * - Debugging user issues
+   * - Understanding command execution flow
+   * - Tracking file watcher events
+   */
+  suite('Logging', () => {
+    test('should log messages to output channel', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const mockOutput = new MockOutputChannel('Flox');
+      const env = new Env(mockContext, workspaceUri, mockOutput);
+
+      env.log('Test message');
+
+      assert.ok(mockOutput.hasLine('Test message'), 'Should log message');
+      env.dispose();
+    });
+
+    test('should log with timestamp', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const mockOutput = new MockOutputChannel('Flox');
+      const env = new Env(mockContext, workspaceUri, mockOutput);
+
+      env.log('Test message');
+
+      // Timestamp format: [2026-01-06T10:30:00.000Z]
+      assert.ok(mockOutput.hasLine(/^\[\d{4}-\d{2}-\d{2}T/), 'Should include timestamp');
+      env.dispose();
+    });
+
+    test('should log error messages with ERROR prefix', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const mockOutput = new MockOutputChannel('Flox');
+      const env = new Env(mockContext, workspaceUri, mockOutput);
+
+      env.logError('Something went wrong');
+
+      assert.ok(mockOutput.hasLine('ERROR: Something went wrong'), 'Should log error with prefix');
+      env.dispose();
+    });
+
+    test('should log error with stack trace when Error provided', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const mockOutput = new MockOutputChannel('Flox');
+      const env = new Env(mockContext, workspaceUri, mockOutput);
+
+      const error = new Error('Test error');
+      env.logError('Operation failed', error);
+
+      assert.ok(mockOutput.hasLine('ERROR: Operation failed'), 'Should log error message');
+      assert.ok(mockOutput.hasLine('Test error'), 'Should include error message');
+      env.dispose();
+    });
+
+    test('should work without output channel', () => {
+      // Output channel is optional - extension should work without it
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri); // No output channel
+
+      // Should not throw
+      env.log('Test message');
+      env.logError('Test error');
+      env.dispose();
+    });
+
+    test('should log during reload', async () => {
+      const floxDir = path.join(tempDir, '.flox', 'env');
+      fs.mkdirSync(floxDir, { recursive: true });
+      fs.writeFileSync(path.join(floxDir, 'manifest.lock'), JSON.stringify({
+        manifest: { install: { nodejs: {} } },
+      }));
+
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const mockOutput = new MockOutputChannel('Flox');
+      const env = new Env(mockContext, workspaceUri, mockOutput);
+
+      await env.reload();
+
+      assert.ok(mockOutput.hasLine('Reloading environment'), 'Should log reload start');
+      assert.ok(mockOutput.hasLine('Environment loaded'), 'Should log reload complete');
+      env.dispose();
+    });
+
+    test('should log environment variable application', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const mockOutput = new MockOutputChannel('Flox');
+      const env = new Env(mockContext, workspaceUri, mockOutput);
+
+      await env.applyEnvironmentVariables({ 'TEST': 'value', 'ANOTHER': 'value2' });
+
+      assert.ok(mockOutput.hasLine(/Applied \d+ environment variables/), 'Should log env var count');
+      env.dispose();
+    });
+
+    test('should log environment variable clearing', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const mockOutput = new MockOutputChannel('Flox');
+      const env = new Env(mockContext, workspaceUri, mockOutput);
+
+      await env.clearEnvironmentVariables();
+
+      assert.ok(mockOutput.hasLine('Cleared environment variables'), 'Should log clear');
       env.dispose();
     });
   });

@@ -1,14 +1,27 @@
 import * as vscode from 'vscode';
+import * as os from 'os';
 import Env from './env';
 import { VarsView, InstallView, ServicesView, PackageItem, ServiceItem } from './view';
 
 export async function activate(context: vscode.ExtensionContext) {
 
+  const output = vscode.window.createOutputChannel('Flox');
+  context.subscriptions.push(output);
+
+  // Log startup info for debugging
+  const timestamp = new Date().toISOString();
+  output.appendLine(`[${timestamp}] Flox extension starting...`);
+  output.appendLine(`[${timestamp}] System: ${os.platform()} ${os.arch()}`);
+  output.appendLine(`[${timestamp}] VSCode: ${vscode.version}`);
+  if (vscode.workspace.workspaceFolders?.[0]) {
+    output.appendLine(`[${timestamp}] Workspace: ${vscode.workspace.workspaceFolders[0].uri.fsPath}`);
+  }
+
   const installView = new InstallView();
   const varsView = new VarsView();
   const servicesView = new ServicesView();
 
-  const env = new Env(context);
+  const env = new Env(context, undefined, output);
 
   env.registerView('floxInstallView', installView);
   env.registerView('floxVarsView', varsView);
