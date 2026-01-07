@@ -562,7 +562,7 @@ export default class Env implements vscode.Disposable {
 
   public async displayMsg(message: string) {
     this.log(message);
-    await vscode.window.showInformationMessage(`Flox: ${message}`);
+    await vscode.window.showInformationMessage(message);
   }
 
   public async displayError(error: unknown) {
@@ -574,7 +574,8 @@ export default class Env implements vscode.Disposable {
     }
     if (message !== undefined) {
       this.logError(message, error);
-      await vscode.window.showErrorMessage(`Flox Error: ${message}`);
+      const displayMessage = message.startsWith('Error:') ? message : `Error: ${message}`;
+      await vscode.window.showErrorMessage(displayMessage);
     }
   }
 
@@ -769,7 +770,11 @@ export default class Env implements vscode.Disposable {
         if (stderrBuffer) {
           this.logError('[SPAWN] Process stderr buffer', stderrBuffer);
         }
-        this.displayError(`Failed to start flox activate: ${error.message}`);
+        if (error.message?.includes('ENOENT')) {
+          this.displayError("Flox is not installed or not in PATH. Install Flox from flox.dev and try again. See logs for details.");
+        } else {
+          this.displayError(`Activation failed: ${error.message}. Check Flox is installed and try restarting VSCode. See logs for details.`);
+        }
         this.floxActivateProcess = undefined;
         this.isActivationInProgress = false;
         this.context.workspaceState.update('flox.activatePid', undefined);
@@ -781,7 +786,7 @@ export default class Env implements vscode.Disposable {
     } else {
       this.logError('[SPAWN] Failed to get PID after spawn() call');
       this.isActivationInProgress = false;
-      this.displayError("Failed to start flox activate process.");
+      this.displayError("Failed to start Flox environment. Verify your manifest.toml is valid. See logs for details.");
       reject();
     }
   }
@@ -811,7 +816,7 @@ export default class Env implements vscode.Disposable {
         // For any other error, log it and display it to the user.
         this.logError('Failed to kill flox activate process', e);
         if (!silent) {
-          this.displayError(`Failed to deactivate Flox environment: ${e}`);
+          this.displayError(`Deactivation failed: ${e}. Your environment may still be active. Try restarting VSCode to clear it fully. See logs for details.`);
         }
         return; // Stop further processing on unexpected errors.
       }
@@ -862,7 +867,7 @@ export default class Env implements vscode.Disposable {
 
     } catch (error) {
       this.log(`Reactivation failed: ${error}`);
-      this.displayError('Failed to reactivate Flox environment.');
+      this.displayError('Reactivation failed when manifest changed. Your packages may be out of sync. Check your manifest.toml and manually run "flox activate" or restart VSCode.');
       this.isEnvActive = false;
       await vscode.commands.executeCommand('setContext', 'flox.envActive', false);
     } finally {
@@ -875,14 +880,11 @@ export default class Env implements vscode.Disposable {
       prompt: 'Search packages',
       placeHolder: query,
     });
-    if (searchStr === undefined) {
-      this.displayMsg("Search query is empty, try again.");
+    if (!searchStr || searchStr.trim().length === 0) {
+      this.displayMsg("Search query is empty. Please enter a search term and try again.");
       return;
     }
     searchStr = searchStr.trim();
-    if (searchStr.length <= 0) {
-      this.displayMsg("Search query is empty, try again.");
-    }
 
     return searchStr;
   }
@@ -917,7 +919,11 @@ export default class Env implements vscode.Disposable {
         progress.report({ increment: 100 });
 
         if (!result?.stdout) {
-          this.displayError(`Something went wrong when searching for '${query}': ${result?.stderr}`);
+          if (result?.stderr?.includes('network') || result?.stderr?.includes('connection')) {
+            this.displayError(`Search failed for '${query}'. Check your internet connection and try again. See logs for details.`);
+          } else {
+            this.displayError(`Search failed for '${query}'. ${result?.stderr}. Try searching for a different term or check logs.`);
+          }
           reject([]);
           return;
         }
