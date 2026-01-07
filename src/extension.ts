@@ -169,6 +169,18 @@ export async function activate(context: vscode.ExtensionContext) {
     env.checkForFloxUpdate();
   }
 
+  env.registerCommand('flox.checkForUpdates', async () => {
+    await vscode.window.withProgress({
+      location: vscode.ProgressLocation.Notification,
+      title: "Checking for Flox updates...",
+      cancellable: false,
+    }, async (progress) => {
+      progress.report({ increment: 0 });
+      await env.checkForFloxUpdate(true); // force = true
+      progress.report({ increment: 100 });
+    });
+  });
+
   env.registerCommand('flox.init', async () => {
     if (!env.workspaceUri) { return; }
 

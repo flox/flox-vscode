@@ -752,6 +752,51 @@ MY_VAR = "test_value"
       assert.ok(mockOutput.hasLine('Skipping update check'), 'Should skip recent check');
       env.dispose();
     });
+
+    test('should bypass cooldown when forced', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const mockOutput = new MockOutputChannel('Flox');
+      const env = new Env(mockContext, workspaceUri, mockOutput);
+
+      // Set last check to 1 hour ago (within 24hr window)
+      const oneHourAgo = Date.now() - (60 * 60 * 1000);
+      await mockContext.globalState.update('flox.lastUpdateCheck', oneHourAgo);
+
+      // Force check should NOT skip
+      await env.checkForFloxUpdate(true);
+
+      // Should NOT contain "Skipping update check"
+      assert.ok(!mockOutput.hasLine('Skipping update check'),
+        'Should not skip when forced');
+      // Should contain "Checking for Flox updates"
+      assert.ok(mockOutput.hasLine('Checking for Flox updates'),
+        'Should attempt check when forced');
+      env.dispose();
+    });
+
+    test('should not skip when forced even if checked recently', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const mockOutput = new MockOutputChannel('Flox');
+      const env = new Env(mockContext, workspaceUri, mockOutput);
+
+      // Set last check to now
+      await mockContext.globalState.update('flox.lastUpdateCheck', Date.now());
+
+      // Without force, should skip
+      await env.checkForFloxUpdate(false);
+      assert.ok(mockOutput.hasLine('Skipping update check'), 'Should skip without force');
+
+      // Clear output
+      mockOutput.clear();
+
+      // With force, should NOT skip
+      await env.checkForFloxUpdate(true);
+      assert.ok(!mockOutput.hasLine('Skipping update check'),
+        'Should not skip when forced');
+      assert.ok(mockOutput.hasLine('Checking for Flox updates'),
+        'Should check when forced');
+      env.dispose();
+    });
   });
 
   /**

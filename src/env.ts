@@ -1187,16 +1187,16 @@ export default class Env implements vscode.Disposable {
    * Only checks once per day (stores last check time in globalState).
    * Shows a notification with upgrade link if update is available.
    */
-  async checkForFloxUpdate(): Promise<void> {
+  async checkForFloxUpdate(force: boolean = false): Promise<void> {
     const ONE_DAY_MS = 24 * 60 * 60 * 1000;
     const lastCheckKey = 'flox.lastUpdateCheck';
     const lastVersionKey = 'flox.lastKnownVersion';
 
-    // Check if we've already checked today
+    // Check if we've already checked today (skip cooldown if forced)
     const lastCheck = this.context.globalState.get<number>(lastCheckKey, 0);
     const now = Date.now();
 
-    if (now - lastCheck < ONE_DAY_MS) {
+    if (!force && now - lastCheck < ONE_DAY_MS) {
       this.log('Skipping update check (checked within last 24 hours)');
       return;
     }
@@ -1206,12 +1206,18 @@ export default class Env implements vscode.Disposable {
     const currentVersion = await this.getFloxVersion();
     if (!currentVersion) {
       this.log('Could not determine current Flox version');
+      if (force) {
+        vscode.window.showWarningMessage('Could not determine Flox version. Is Flox installed?');
+      }
       return;
     }
 
     const latestVersion = await this.getLatestFloxVersion();
     if (!latestVersion) {
       this.log('Could not fetch latest Flox version');
+      if (force) {
+        vscode.window.showWarningMessage('Could not check for updates. Please check your internet connection.');
+      }
       return;
     }
 
@@ -1245,6 +1251,9 @@ export default class Env implements vscode.Disposable {
       }
     } else {
       this.log('Flox is up to date');
+      if (force) {
+        vscode.window.showInformationMessage(`Flox is up to date (version ${currentVersion})`);
+      }
     }
   }
 }
