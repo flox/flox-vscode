@@ -1,0 +1,6 @@
+{
+  "timeout": 120000,
+  "ui": "bdd",
+  "color": true,
+  "slow": 30000
+}

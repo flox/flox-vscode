@@ -335,6 +335,7 @@
     "test": "vscode-test",
     "test:unit": "vscode-test --label unit",
     "test:integration": "vscode-test --label integration",
+    "test:ui": "extest setup-and-run out/test/ui/*.test.js --mocha_config .mocharc-ui.json",
     "clean": "rm -rf ./out"
   },
   "devDependencies": {
@@ -347,7 +348,8 @@
     "@vscode/vsce": "^3.7.1",
     "eslint": "^9.39.2",
     "ovsx": "^0.10.7",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vscode-extension-tester": "^8.19.0"
   },
   "dependencies": {
     "smol-toml": "^1.6.0"
