@@ -50,9 +50,27 @@ export async function activate(context: vscode.ExtensionContext) {
     return;
   }
 
+  // Create TreeView instances (not just providers) so we can update badges
+  const installTreeView = vscode.window.createTreeView('floxInstallView', {
+    treeDataProvider: installView
+  });
+  const varsTreeView = vscode.window.createTreeView('floxVarsView', {
+    treeDataProvider: varsView
+  });
+  const servicesTreeView = vscode.window.createTreeView('floxServicesView', {
+    treeDataProvider: servicesView
+  });
+
+  // Register views with Env (for backward compatibility with refresh logic)
   env.registerView('floxInstallView', installView);
   env.registerView('floxVarsView', varsView);
   env.registerView('floxServicesView', servicesView);
+
+  // Pass TreeView instances to Env for badge management
+  env.registerTreeViews([installTreeView, varsTreeView, servicesTreeView]);
+
+  // Add to subscriptions for cleanup
+  context.subscriptions.push(installTreeView, varsTreeView, servicesTreeView);
 
   // Check if we just activated and need to spawn the background process.
   const justActivated = context.workspaceState.get('flox.justActivated', false);

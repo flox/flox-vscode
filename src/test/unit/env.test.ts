@@ -1043,4 +1043,87 @@ MY_VAR = "test_value"
       env.dispose();
     });
   });
+
+  /**
+   * Badge Management Tests
+   *
+   * Tests the activity bar badge feature that shows a checkmark when environment is active.
+   * The badge is visible on the Flox icon in the activity bar without opening the panel.
+   */
+  suite('Badge Management', () => {
+    let mockTreeViews: vscode.TreeView<any>[];
+
+    setup(() => {
+      // Create mock TreeView objects with badge property
+      mockTreeViews = [
+        { badge: undefined } as vscode.TreeView<any>,
+        { badge: undefined } as vscode.TreeView<any>,
+        { badge: undefined } as vscode.TreeView<any>,
+      ];
+    });
+
+    test('should set badge when environment becomes active', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+      env.registerTreeViews(mockTreeViews);
+
+      env.isEnvActive = true;
+      env['updateActivityBadge']();  // Call private method
+
+      for (const treeView of mockTreeViews) {
+        assert.ok(treeView.badge);
+        assert.strictEqual(treeView.badge.value, 1);
+        assert.strictEqual(treeView.badge.tooltip, 'Flox environment is active');
+      }
+
+      env.dispose();
+    });
+
+    test('should clear badge when environment is deactivated', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+      env.registerTreeViews(mockTreeViews);
+
+      // Set active first
+      env.isEnvActive = true;
+      env['updateActivityBadge']();
+      assert.ok(mockTreeViews[0].badge);
+
+      // Then deactivate
+      env.isEnvActive = false;
+      env['updateActivityBadge']();
+
+      for (const treeView of mockTreeViews) {
+        assert.strictEqual(treeView.badge, undefined);
+      }
+
+      env.dispose();
+    });
+
+    test('should not crash when called before TreeViews registered', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Should not throw
+      assert.doesNotThrow(() => {
+        env['updateActivityBadge']();
+      });
+
+      env.dispose();
+    });
+
+    test('registerTreeViews should store TreeView references', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      assert.strictEqual(env['treeViews'].length, 0);
+
+      env.registerTreeViews(mockTreeViews);
+
+      assert.strictEqual(env['treeViews'].length, 3);
+      assert.strictEqual(env['treeViews'], mockTreeViews);
+
+      env.dispose();
+    });
+  });
 });

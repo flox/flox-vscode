@@ -34,6 +34,7 @@ export default class Env implements vscode.Disposable {
   servicesStatus?: Services;
   system?: System;
   views: View[];  // TODO: specify a type
+  treeViews: vscode.TreeView<any>[] = [];  // Store TreeView instances for badge updates
 
   context: vscode.ExtensionContext;
   error = new vscode.EventEmitter<unknown>();
@@ -426,6 +427,7 @@ export default class Env implements vscode.Disposable {
       this.context.workspaceState.update('flox.envActive', this.isEnvActive)
     ]);
     this.log(`[RELOAD] flox.envActive set (context and workspace state)`);
+    this.updateActivityBadge();
 
     // Check for services status
     if (hasServices === true) {
@@ -599,6 +601,39 @@ export default class Env implements vscode.Disposable {
       ));
   }
 
+  /**
+   * Register TreeView instances for badge updates.
+   * Called from extension.ts after creating TreeView objects.
+   */
+  public registerTreeViews(treeViews: vscode.TreeView<any>[]) {
+    this.treeViews = treeViews;
+    this.log('TreeView instances registered for badge updates');
+  }
+
+  /**
+   * Update badge on all TreeViews based on environment active state.
+   * Shows a green checkmark when environment is active.
+   */
+  private updateActivityBadge() {
+    if (this.treeViews.length === 0) {
+      this.log('No TreeViews registered, skipping badge update');
+      return;
+    }
+
+    const badge: vscode.ViewBadge | undefined = this.isEnvActive
+      ? {
+          tooltip: 'Flox environment is active',
+          value: 1  // Show "1" to indicate active
+        }
+      : undefined;  // No badge when inactive
+
+    for (const treeView of this.treeViews) {
+      treeView.badge = badge;
+    }
+
+    this.log(`Activity badge ${this.isEnvActive ? 'set' : 'cleared'}`);
+  }
+
   public async exec(command: string, options: CommandExecOptions, handleError?: (error: any) => boolean) {
     let execOptions: ExecOptions = {};
     if (options.cwd === null || options.cwd) {
@@ -746,6 +781,7 @@ export default class Env implements vscode.Disposable {
           await this.reload();
 
           this.log('[SPAWN] Environment activated successfully - calling resolve()');
+          this.updateActivityBadge();
           resolve();
         } else if (msg.action === 'ready') {
           // Fallback if no env vars were sent
@@ -824,6 +860,7 @@ export default class Env implements vscode.Disposable {
     await vscode.commands.executeCommand('setContext', 'flox.envActive', false);
 
     this.log('Environment deactivated');
+    this.updateActivityBadge();
     if (!silent) {
       this.displayMsg("Flox environment deactivated successfully.");
     }
