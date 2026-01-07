@@ -61,12 +61,12 @@
       },
       {
         "view": "floxInfoView",
-        "contents": "[Activate & Restart](command:flox.activate)",
+        "contents": "[Activate Environment](command:flox.activate)",
         "when": "flox.isInstalled && flox.envExists && !flox.envActive"
       },
       {
         "view": "floxInfoView",
-        "contents": "[Deactivate & Restart](command:flox.deactivate)",
+        "contents": "[Deactivate Environment](command:flox.deactivate)",
         "when": "flox.isInstalled && flox.envExists && flox.envActive"
       },
       {
@@ -85,13 +85,18 @@
         "when": "flox.isInstalled && !flox.envActive"
       },
       {
+        "view": "floxInstallView",
+        "contents": "Install packages to your environment.\n[Install a package](command:flox.install)\n[Edit manifest.toml](command:flox.edit)",
+        "when": "flox.isInstalled && flox.envExists && !flox.hasPkgs"
+      },
+      {
         "view": "floxVarsView",
-        "contents": "Add variable(s).\n[Edit manifest.toml](command:flox.edit)",
+        "contents": "Add variable(s) in manifest.toml.",
         "when": "flox.isInstalled && flox.envExists"
       },
       {
         "view": "floxServicesView",
-        "contents": "Add services(s).\n[Edit manifest.toml](command:flox.edit)",
+        "contents": "Add service(s) in manifest.toml.",
         "when": "flox.isInstalled && flox.envExists"
       },
       {
@@ -159,6 +164,11 @@
         "command": "flox.version",
         "category": "Flox",
         "title": "Show version"
+      },
+      {
+        "command": "flox.checkForUpdates",
+        "category": "Flox",
+        "title": "Check for Updates"
       },
       {
         "command": "flox.activate",
@@ -244,6 +254,11 @@
         },
         {
           "command": "flox.version",
+          "when": "flox.isInstalled",
+          "group": "commandPalette"
+        },
+        {
+          "command": "flox.checkForUpdates",
           "when": "flox.isInstalled",
           "group": "commandPalette"
         },

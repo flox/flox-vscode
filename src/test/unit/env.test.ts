@@ -752,6 +752,51 @@ MY_VAR = "test_value"
       assert.ok(mockOutput.hasLine('Skipping update check'), 'Should skip recent check');
       env.dispose();
     });
+
+    test('should bypass cooldown when forced', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const mockOutput = new MockOutputChannel('Flox');
+      const env = new Env(mockContext, workspaceUri, mockOutput);
+
+      // Set last check to 1 hour ago (within 24hr window)
+      const oneHourAgo = Date.now() - (60 * 60 * 1000);
+      await mockContext.globalState.update('flox.lastUpdateCheck', oneHourAgo);
+
+      // Force check should NOT skip
+      await env.checkForFloxUpdate(true);
+
+      // Should NOT contain "Skipping update check"
+      assert.ok(!mockOutput.hasLine('Skipping update check'),
+        'Should not skip when forced');
+      // Should contain "Checking for Flox updates"
+      assert.ok(mockOutput.hasLine('Checking for Flox updates'),
+        'Should attempt check when forced');
+      env.dispose();
+    });
+
+    test('should not skip when forced even if checked recently', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const mockOutput = new MockOutputChannel('Flox');
+      const env = new Env(mockContext, workspaceUri, mockOutput);
+
+      // Set last check to now
+      await mockContext.globalState.update('flox.lastUpdateCheck', Date.now());
+
+      // Without force, should skip
+      await env.checkForFloxUpdate(false);
+      assert.ok(mockOutput.hasLine('Skipping update check'), 'Should skip without force');
+
+      // Clear output
+      mockOutput.clear();
+
+      // With force, should NOT skip
+      await env.checkForFloxUpdate(true);
+      assert.ok(!mockOutput.hasLine('Skipping update check'),
+        'Should not skip when forced');
+      assert.ok(mockOutput.hasLine('Checking for Flox updates'),
+        'Should check when forced');
+      env.dispose();
+    });
   });
 
   /**
@@ -1125,6 +1170,89 @@ MY_VAR = "test_value"
 
       // Just verify the method exists
       assert.strictEqual(typeof env.showMcpSuggestion, 'function');
+
+      env.dispose();
+    });
+  });
+
+  /**
+   * Badge Management Tests
+   *
+   * Tests the activity bar badge feature that shows a checkmark when environment is active.
+   * The badge is visible on the Flox icon in the activity bar without opening the panel.
+   */
+  suite('Badge Management', () => {
+    let mockTreeViews: vscode.TreeView<any>[];
+
+    setup(() => {
+      // Create mock TreeView objects with badge property
+      mockTreeViews = [
+        { badge: undefined } as vscode.TreeView<any>,
+        { badge: undefined } as vscode.TreeView<any>,
+        { badge: undefined } as vscode.TreeView<any>,
+      ];
+    });
+
+    test('should set badge when environment becomes active', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+      env.registerTreeViews(mockTreeViews);
+
+      env.isEnvActive = true;
+      env['updateActivityBadge']();  // Call private method
+
+      for (const treeView of mockTreeViews) {
+        assert.ok(treeView.badge);
+        assert.strictEqual(treeView.badge.value, 1);
+        assert.strictEqual(treeView.badge.tooltip, 'Flox environment is active');
+      }
+
+      env.dispose();
+    });
+
+    test('should clear badge when environment is deactivated', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+      env.registerTreeViews(mockTreeViews);
+
+      // Set active first
+      env.isEnvActive = true;
+      env['updateActivityBadge']();
+      assert.ok(mockTreeViews[0].badge);
+
+      // Then deactivate
+      env.isEnvActive = false;
+      env['updateActivityBadge']();
+
+      for (const treeView of mockTreeViews) {
+        assert.strictEqual(treeView.badge, undefined);
+      }
+
+      env.dispose();
+    });
+
+    test('should not crash when called before TreeViews registered', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Should not throw
+      assert.doesNotThrow(() => {
+        env['updateActivityBadge']();
+      });
+
+      env.dispose();
+    });
+
+    test('registerTreeViews should store TreeView references', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      assert.strictEqual(env['treeViews'].length, 0);
+
+      env.registerTreeViews(mockTreeViews);
+
+      assert.strictEqual(env['treeViews'].length, 3);
+      assert.strictEqual(env['treeViews'], mockTreeViews);
 
       env.dispose();
     });
