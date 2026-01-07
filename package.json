@@ -85,13 +85,18 @@
         "when": "flox.isInstalled && !flox.envActive"
       },
       {
+        "view": "floxInstallView",
+        "contents": "Install packages to your environment.\n[Install a package](command:flox.install)\n[Edit manifest.toml](command:flox.edit)",
+        "when": "flox.isInstalled && flox.envExists && !flox.hasPkgs"
+      },
+      {
         "view": "floxVarsView",
-        "contents": "Add variable(s).\n[Edit manifest.toml](command:flox.edit)",
+        "contents": "Add variable(s) in manifest.toml.",
         "when": "flox.isInstalled && flox.envExists"
       },
       {
         "view": "floxServicesView",
-        "contents": "Add services(s).\n[Edit manifest.toml](command:flox.edit)",
+        "contents": "Add service(s) in manifest.toml.",
         "when": "flox.isInstalled && flox.envExists"
       },
       {
