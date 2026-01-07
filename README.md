@@ -20,6 +20,13 @@
 🚀 **Services** - Monitor and control background services
 🔄 **Auto-sync** - Automatic refresh when manifest files change
 💻 **Integrated Terminal** - Environment variables automatically applied to terminals
+🔔 **Auto-Activation** - Prompts to activate environment with remember preference
+📌 **Pending Indicators** - Visual markers for uncommitted manifest changes
+🔄 **Auto-Reactivate** - Environment refreshes when manifest.toml changes
+📋 **Service Logs** - View real-time logs for running services
+🐛 **Debug Output** - Detailed logs in the Output panel for troubleshooting
+🤖 **MCP Integration** - AI-powered tools for GitHub Copilot users
+✅ **Update Checks** - Notifies when newer Flox versions are available
 
 ## Installation
 
@@ -94,6 +101,43 @@ Access these via Command Palette (Cmd+Shift+P / Ctrl+Shift+P):
 - `Flox: Upgrade` - Upgrade a package to latest version
 - `Flox: Edit` - Open manifest in editor
 - `Flox: Search` - Search for packages in Flox catalog
+- `Flox: Show service logs` - Open terminal with live service logs
+- `Flox: Configure Flox Agentic MCP Server` - Set up MCP for Copilot
+- `Flox: Install Flox` - Open installation page (shown when Flox not installed)
+- `Flox: Upgrade Flox` - Open upgrade instructions (shown when update available)
+
+## Settings
+
+Configure the extension behavior via VSCode settings:
+
+| Setting | Default | Description |
+|---------|---------|-------------|
+| `flox.promptToActivate` | `true` | Show popup when Flox environment is detected |
+| `flox.checkForUpdates` | `true` | Check for Flox CLI updates (once per 24 hours) |
+
+**Per-Workspace Behavior:**
+- After activation prompt, choose "Always Activate" or "Never Activate" to remember preference
+- Preference is stored per-workspace in VSCode's workspace state
+
+## AI Integration (MCP)
+
+The extension integrates with GitHub Copilot via the Model Context Protocol (MCP) to provide AI-powered Flox tools.
+
+### Prerequisites
+- VSCode 1.102 or higher
+- GitHub Copilot extension installed
+- `flox-mcp` command available in PATH (from [Flox Agentic](https://github.com/flox/flox-agentic))
+
+### Setup
+1. Activate your Flox environment
+2. If `flox-mcp` is detected, a notification will appear
+3. Click "Configure MCP" to enable the integration
+4. Or run Command Palette → "Flox: Configure Flox Agentic MCP Server"
+
+### What You Get
+- Flox-specific tools available in Copilot Chat agent mode
+- Context-aware package suggestions
+- Environment management through natural language
 
 ## FAQ
 
@@ -151,6 +195,24 @@ flox activate
 
 Flox has millions of package versions from the Nix ecosystem!
 
+### How do I view debug logs?
+
+1. Open the Output panel (View → Output)
+2. Select "Flox" from the dropdown
+3. Logs show command execution, file changes, and activation lifecycle
+
+### How do I disable the activation prompt?
+
+**Global:** Set `flox.promptToActivate` to `false` in settings
+**Per-Workspace:** Click "Never Activate" when prompted - this workspace won't prompt again
+
+### How do I disable update checks?
+
+Set `flox.checkForUpdates` to `false` in settings to skip periodic Flox version checks.
+
+### What does the asterisk (*) mean next to a package?
+
+Items with `*` are "pending" - they exist in `manifest.toml` but haven't been committed to the lock file yet. Run `flox activate` to apply changes.
 
 ## 🔧 Development
 

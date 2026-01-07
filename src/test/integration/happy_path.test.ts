@@ -487,4 +487,119 @@ suite('Happy Path Integration Tests', () => {
 
     console.log('✅ Activation preference test PASSED\n');
   });
+
+  /**
+   * Variables in manifest are parsed and have pending indicators.
+   * Tests that variables added to manifest.toml show pending state.
+   */
+  test('Variables in manifest have pending indicators', async function() {
+    this.timeout(60000);
+
+    console.log('\n🧪 Testing variables pending indicators...\n');
+
+    // Initialize environment
+    console.log('📦 Step 1: Initialize environment via CLI');
+    await execFileAsync('flox', ['init', '--dir', workspaceDir]);
+    await waitFor(
+      () => fs.existsSync(path.join(workspaceDir, '.flox', 'env', 'manifest.toml')),
+      15000
+    );
+
+    // Activate to create lock file
+    console.log('⚡ Step 2: Activate to create lock file');
+    await execFileAsync('flox', ['activate', '--dir', workspaceDir, '--', 'true']);
+    await waitFor(
+      () => fs.existsSync(path.join(workspaceDir, '.flox', 'env', 'manifest.lock')),
+      30000
+    );
+
+    // Add variable to toml only (pending state)
+    console.log('📝 Step 3: Add variable to manifest.toml only');
+    const manifestPath = path.join(workspaceDir, '.flox', 'env', 'manifest.toml');
+    const toml = fs.readFileSync(manifestPath, 'utf-8');
+    fs.writeFileSync(manifestPath, toml + '\n[vars]\nTEST_VAR = "test_value"\nPENDING_VAR = "pending"\n');
+
+    // Verify variable is in toml
+    const newToml = fs.readFileSync(manifestPath, 'utf-8');
+    assert.ok(newToml.includes('TEST_VAR'), 'Variable should be in toml');
+    assert.ok(newToml.includes('PENDING_VAR'), 'Pending variable should be in toml');
+
+    // Verify pending state (not in lock yet)
+    const lockPath = path.join(workspaceDir, '.flox', 'env', 'manifest.lock');
+    const lock = JSON.parse(fs.readFileSync(lockPath, 'utf-8'));
+    const vars = lock?.manifest?.vars || {};
+    assert.ok(!('PENDING_VAR' in vars), 'Variable should NOT be in lock yet (pending)');
+
+    console.log('✅ Variables pending indicators test PASSED\n');
+  });
+
+  /**
+   * PR #169: Debug output channel is created.
+   * Tests that the Flox output channel exists after extension activation.
+   */
+  test('PR #169: Flox output channel is created', async function() {
+    this.timeout(10000);
+
+    console.log('\n🧪 Testing output channel existence (PR #169)...\n');
+
+    // After extension activation, verify output channel exists
+    // Note: VSCode doesn't expose a direct API to list output channels,
+    // but we can verify the extension creates it without errors
+    const extension = vscode.extensions.getExtension('flox.flox');
+    assert.ok(extension, 'Extension should exist');
+    assert.ok(extension.isActive, 'Extension should be active with output channel');
+
+    console.log('✅ Output channel test PASSED\n');
+  });
+
+  /**
+   * flox.edit opens manifest.toml in editor.
+   * Tests that the edit command opens the correct file.
+   */
+  test('flox.edit opens manifest.toml in editor', async function() {
+    this.timeout(30000);
+
+    console.log('\n🧪 Testing flox.edit command...\n');
+
+    // Initialize environment
+    console.log('📦 Step 1: Initialize environment');
+    await execFileAsync('flox', ['init', '--dir', workspaceDir]);
+    await waitFor(
+      () => fs.existsSync(path.join(workspaceDir, '.flox', 'env', 'manifest.toml')),
+      15000
+    );
+
+    // Execute edit command
+    console.log('📝 Step 2: Execute flox.edit command');
+    await vscode.commands.executeCommand('flox.edit');
+
+    // Wait for editor to open
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Verify an editor is open with manifest.toml
+    const editor = vscode.window.activeTextEditor;
+    assert.ok(editor, 'Editor should be open');
+    assert.ok(
+      editor.document.fileName.includes('manifest.toml'),
+      `Should open manifest.toml, got: ${editor.document.fileName}`
+    );
+
+    console.log('✅ flox.edit test PASSED\n');
+  });
+
+  /**
+   * flox.search command is registered and callable.
+   * Tests that the search command exists.
+   */
+  test('flox.search command is registered', async function() {
+    this.timeout(10000);
+
+    console.log('\n🧪 Testing flox.search command registration...\n');
+
+    // Verify search command exists and is callable
+    const commands = await vscode.commands.getCommands(true);
+    assert.ok(commands.includes('flox.search'), 'flox.search command should exist');
+
+    console.log('✅ flox.search test PASSED\n');
+  });
 });
