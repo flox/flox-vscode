@@ -54,22 +54,48 @@ suite('Flox CLI Integration Tests', function() {
 
   teardown(async function() {
     // Clean up temp directory
-    if (tempDir && fs.existsSync(tempDir)) {
-      // Deactivate any running flox environment first
-      try {
-        execSync('flox delete --force', { cwd: tempDir, stdio: 'pipe' });
-      } catch {
-        // Ignore errors - env might not exist
-      }
+    // SAFETY: Only clean up if tempDir is set AND is in the system temp directory
+    if (tempDir && tempDir.includes(os.tmpdir()) && fs.existsSync(tempDir)) {
+      // NOTE: We do NOT run 'flox delete' here because:
+      // 1. If the temp dir doesn't have a .flox, flox delete walks UP the directory tree
+      //    and can delete the project root's .flox directory (a major bug we discovered!)
+      // 2. We already have safety checks in the flox() helper to only run in temp dir
+      // 3. rmSync will clean up everything including any .flox directory
       fs.rmSync(tempDir, { recursive: true, force: true });
     }
   });
 
   /**
-   * Helper to run flox command in temp directory
+   * Helper to run flox command in temp directory.
+   * Injects --dir flag after the subcommand to explicitly target the temp directory,
+   * preventing flox from walking up the directory tree.
    */
   function flox(args: string): string {
-    return execSync(`flox ${args}`, {
+    // SAFETY: Never run flox commands outside temp directory
+    if (!tempDir || !tempDir.includes(os.tmpdir())) {
+      throw new Error('tempDir is not set or not in system temp directory');
+    }
+    // Parse the command to inject --dir after the subcommand
+    // e.g., "init" -> "init --dir tempDir"
+    // e.g., "install hello" -> "install --dir tempDir hello"
+    // e.g., "activate -- hello" -> "activate --dir tempDir -- hello"
+    const parts = args.split(' ');
+    const subcommand = parts[0];
+    const rest = parts.slice(1);
+
+    // Commands that don't operate on a specific environment and don't need --dir
+    const globalCommands = ['search', 'show'];
+
+    let fullArgs: string;
+    if (globalCommands.includes(subcommand)) {
+      // Global commands don't need --dir
+      fullArgs = args;
+    } else {
+      // Insert --dir right after the subcommand
+      fullArgs = [subcommand, '--dir', tempDir, ...rest].join(' ');
+    }
+
+    return execSync(`flox ${fullArgs}`, {
       cwd: tempDir,
       encoding: 'utf-8',
       stdio: 'pipe',
