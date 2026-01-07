@@ -194,6 +194,13 @@
         "title": "Restart a service"
       },
       {
+        "command": "flox.serviceLogs",
+        "category": "Flox",
+        "when": "flox.envActive",
+        "icon": "$(output)",
+        "title": "Show service logs"
+      },
+      {
         "command": "flox.edit",
         "category": "Flox",
         "title": "Edit manifest.toml"
@@ -228,6 +235,10 @@
           "command": "flox.activate",
           "when": "flox.isInstalled && flox.envExists",
           "group": "commandPalette"
+        },
+        {
+          "command": "flox.serviceLogs",
+          "when": "flox.envActive && flox.hasServices"
         }
       ],
       "view/title": [
@@ -285,6 +296,11 @@
         },
         {
           "command": "flox.serviceRestart",
+          "group": "inline",
+          "when": "flox.envActive && view == floxServicesView && viewItem == service-running"
+        },
+        {
+          "command": "flox.serviceLogs",
           "group": "inline",
           "when": "flox.envActive && view == floxServicesView && viewItem == service-running"
         }
