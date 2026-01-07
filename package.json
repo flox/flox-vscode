@@ -151,6 +151,11 @@
         "title": "Show version"
       },
       {
+        "command": "flox.checkForUpdates",
+        "category": "Flox",
+        "title": "Check for Updates"
+      },
+      {
         "command": "flox.activate",
         "category": "Flox",
         "title": "Activate environment"
@@ -228,6 +233,11 @@
         },
         {
           "command": "flox.version",
+          "when": "flox.isInstalled",
+          "group": "commandPalette"
+        },
+        {
+          "command": "flox.checkForUpdates",
           "when": "flox.isInstalled",
           "group": "commandPalette"
         },

@@ -103,6 +103,12 @@ suite('Extension Integration Tests', () => {
       assert.ok(exists, 'flox.version command should be registered');
     });
 
+    test('flox.checkForUpdates command should be registered', async () => {
+      // Manually checks for Flox CLI updates
+      const exists = await commandExists('flox.checkForUpdates');
+      assert.ok(exists, 'flox.checkForUpdates command should be registered');
+    });
+
     test('flox.activate command should be registered', async () => {
       // Activates Flox environment
       const exists = await commandExists('flox.activate');
