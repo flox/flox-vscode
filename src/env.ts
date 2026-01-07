@@ -622,9 +622,9 @@ export default class Env implements vscode.Disposable {
 
     const badge: vscode.ViewBadge | undefined = this.isEnvActive
       ? {
-          tooltip: 'Flox environment is active',
-          value: 1  // Show "1" to indicate active
-        }
+        tooltip: 'Flox environment is active',
+        value: 1  // Show "1" to indicate active
+      }
       : undefined;  // No badge when inactive
 
     for (const treeView of this.treeViews) {
