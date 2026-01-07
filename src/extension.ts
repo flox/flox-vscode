@@ -176,7 +176,14 @@ export async function activate(context: vscode.ExtensionContext) {
     setTimeout(async () => {
       if (!env.workspaceUri) { return; }
       if (result?.stdout) {
-        env.displayMsg(`Flox environment created: ${result.stdout}`);
+        const action = await vscode.window.showInformationMessage(
+          'Flox environment created successfully!',
+          'Learn More'
+        );
+
+        if (action === 'Learn More') {
+          vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs'));
+        }
       }
       await env.exec("flox", { argv: ["activate", "--dir", env.workspaceUri.fsPath, "--", "true"] });
       await env.reload();
