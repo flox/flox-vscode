@@ -1176,6 +1176,74 @@ MY_VAR = "test_value"
   });
 
   /**
+   * MCP Installation Prompt Tests
+   *
+   * Tests the offerToInstallMcp() method that prompts users to install
+   * the flox-mcp-server package when MCP is not detected.
+   */
+  suite('offerToInstallMcp', () => {
+    test('should skip if prompt already shown', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Mark as already shown
+      await mockContext.workspaceState.update('flox.mcpInstallPromptShown', true);
+
+      const result = await env.offerToInstallMcp();
+
+      // Should return false for both values
+      assert.strictEqual(result.installed, false);
+      assert.strictEqual(result.mcpAvailable, false);
+
+      env.dispose();
+    });
+
+    test('should skip if environment does not exist', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Set envExists to false
+      await mockContext.workspaceState.update('flox.envExists', false);
+      await mockContext.workspaceState.update('flox.mcpInstallPromptShown', false);
+
+      const result = await env.offerToInstallMcp();
+
+      // Should return false for both values
+      assert.strictEqual(result.installed, false);
+      assert.strictEqual(result.mcpAvailable, false);
+
+      env.dispose();
+    });
+
+    test('should skip if environment not active', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Set envExists to true but environment is not active (no activate process)
+      await mockContext.workspaceState.update('flox.envExists', true);
+      await mockContext.workspaceState.update('flox.mcpInstallPromptShown', false);
+
+      const result = await env.offerToInstallMcp();
+
+      // Should return false for both values (isEnvActive will be false)
+      assert.strictEqual(result.installed, false);
+      assert.strictEqual(result.mcpAvailable, false);
+
+      env.dispose();
+    });
+
+    test('offerToInstallMcp should be defined', () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      // Just verify the method exists
+      assert.strictEqual(typeof env.offerToInstallMcp, 'function');
+
+      env.dispose();
+    });
+  });
+
+  /**
    * Badge Management Tests
    *
    * Tests the activity bar badge feature that shows a checkmark when environment is active.

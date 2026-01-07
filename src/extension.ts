@@ -181,6 +181,19 @@ export async function activate(context: vscode.ExtensionContext) {
 
               // Show one-time suggestion
               await env.showMcpSuggestion();
+            } else if (!isMcpAvailable) {
+              // MCP not found - offer to install it
+              output.appendLine(`[STEP 2] MCP not available, offering to install...`);
+              const installResult = await env.offerToInstallMcp();
+
+              if (installResult.installed && installResult.mcpAvailable && isCopilotInstalled) {
+                // Installation succeeded - register MCP provider
+                output.appendLine(`[STEP 2] MCP installed successfully, registering provider...`);
+                mcpProvider = registerMcpProvider(context, env.workspaceUri);
+
+                // Show configuration suggestion
+                await env.showMcpSuggestion();
+              }
             }
           }).catch((error) => {
             output.appendLine(`[STEP 2] MCP check error: ${error}`);
