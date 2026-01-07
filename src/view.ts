@@ -50,6 +50,27 @@ export class VariableItem extends vscode.TreeItem {
   contextValue = 'variable';
 }
 
+export class SettingsItem extends vscode.TreeItem {
+  constructor(
+    public readonly label: string,
+    public readonly description: string,
+    public readonly value: boolean | undefined,
+  ) {
+    super(label);
+    this.iconPath = new vscode.ThemeIcon('settings-gear');
+    this.description = description;
+
+    // Set contextValue based on whether preference is set
+    if (value === true) {
+      this.contextValue = 'settings-autoactivate-always';
+    } else if (value === false) {
+      this.contextValue = 'settings-autoactivate-never';
+    } else {
+      this.contextValue = 'settings-autoactivate-notset';
+    }
+  }
+}
+
 export class ServiceItem extends vscode.TreeItem {
   public readonly state: ItemState;
 
@@ -220,6 +241,49 @@ export class ServicesView implements View, vscode.TreeDataProvider<PackageItem> 
     }
 
     return [];
+  }
+}
+
+export class SettingsView implements View, vscode.TreeDataProvider<SettingsItem> {
+
+  env?: Env;
+
+  private _onDidChangeTreeData: vscode.EventEmitter<SettingsItem | undefined | null | void> = new vscode.EventEmitter<SettingsItem | undefined | null | void>();
+  readonly onDidChangeTreeData: vscode.Event<SettingsItem | undefined | null | void> = this._onDidChangeTreeData.event;
+
+  async refresh() {
+    this._onDidChangeTreeData.fire();
+  }
+
+  registerProvider(viewName: string) {
+    return vscode.window.registerTreeDataProvider(viewName, this);
+  }
+
+  getTreeItem(item: SettingsItem): vscode.TreeItem {
+    return item;
+  }
+
+  async getChildren(item?: SettingsItem): Promise<SettingsItem[]> {
+    const envExists = this.env?.context.workspaceState.get('flox.envExists', false);
+    if (!envExists || item) {
+      return [];
+    }
+
+    // Get current auto-activate preference
+    const autoActivate = this.env?.context.workspaceState.get<boolean | undefined>('flox.autoActivate');
+
+    let description: string;
+    if (autoActivate === true) {
+      description = 'Always';
+    } else if (autoActivate === false) {
+      description = 'Never';
+    } else {
+      description = 'Not Set';
+    }
+
+    return [
+      new SettingsItem('Auto-Activate', description, autoActivate)
+    ];
   }
 }
 

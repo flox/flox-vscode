@@ -169,6 +169,12 @@ suite('Extension Integration Tests', () => {
       assert.ok(exists, 'flox.configureMcp command should be registered');
     });
 
+    test('flox.resetAutoActivate command should be registered', async () => {
+      // Resets auto-activate preference
+      const exists = await commandExists('flox.resetAutoActivate');
+      assert.ok(exists, 'flox.resetAutoActivate command should be registered');
+    });
+
     test('all expected commands should be registered', async () => {
       // Comprehensive check of all commands
       const expectedCommands = [
@@ -187,6 +193,7 @@ suite('Extension Integration Tests', () => {
         'flox.edit',
         'flox.search',
         'flox.configureMcp',
+        'flox.resetAutoActivate',
       ];
 
       const allCommands = await vscode.commands.getCommands(true);

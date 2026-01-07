@@ -20,9 +20,11 @@
 
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { PackageItem, VariableItem, ServiceItem, InstallView, VarsView, ServicesView } from '../../view';
+import * as os from 'os';
+import { PackageItem, VariableItem, ServiceItem, SettingsItem, InstallView, VarsView, ServicesView, SettingsView } from '../../view';
 import { System, Package, ItemState } from '../../config';
 import { createMockExtensionContext } from '../mocks/vscode';
+import Env from '../../env';
 
 suite('View Unit Tests', () => {
   /**
@@ -127,6 +129,40 @@ suite('View Unit Tests', () => {
     test('should not modify active variables', () => {
       const item = new VariableItem('MY_VAR', 'my_value', ItemState.ACTIVE);
       assert.strictEqual(item.label, 'MY_VAR');
+    });
+  });
+
+  /**
+   * SettingsItem Tests
+   *
+   * SettingsItem represents a settings item in the Settings view.
+   * The contextValue changes based on the auto-activate preference value:
+   * - "settings-autoactivate-always": Auto-activate is set to Always
+   * - "settings-autoactivate-never": Auto-activate is set to Never
+   * - "settings-autoactivate-notset": Auto-activate preference not set
+   */
+  suite('SettingsItem', () => {
+    test('should set contextValue to settings-autoactivate-always when value is true', () => {
+      const item = new SettingsItem('Auto-Activate', 'Always', true);
+      assert.strictEqual(item.contextValue, 'settings-autoactivate-always');
+      assert.strictEqual(item.label, 'Auto-Activate');
+      assert.strictEqual(item.description, 'Always');
+    });
+
+    test('should set contextValue to settings-autoactivate-never when value is false', () => {
+      const item = new SettingsItem('Auto-Activate', 'Never', false);
+      assert.strictEqual(item.contextValue, 'settings-autoactivate-never');
+    });
+
+    test('should set contextValue to settings-autoactivate-notset when value is undefined', () => {
+      const item = new SettingsItem('Auto-Activate', 'Not Set', undefined);
+      assert.strictEqual(item.contextValue, 'settings-autoactivate-notset');
+    });
+
+    test('should have settings-gear icon', () => {
+      const item = new SettingsItem('Auto-Activate', 'Always', true);
+      assert.ok(item.iconPath instanceof vscode.ThemeIcon);
+      assert.strictEqual((item.iconPath as vscode.ThemeIcon).id, 'settings-gear');
     });
   });
 
@@ -481,6 +517,70 @@ suite('View Unit Tests', () => {
       });
 
       await servicesView.refresh();
+      assert.strictEqual(eventFired, true);
+    });
+  });
+
+  /**
+   * SettingsView Tests
+   *
+   * SettingsView shows settings items like auto-activate preference.
+   */
+  suite('SettingsView', () => {
+    let settingsView: SettingsView;
+    let mockContext: vscode.ExtensionContext;
+    let workspaceUri: vscode.Uri;
+
+    setup(() => {
+      settingsView = new SettingsView();
+      mockContext = createMockExtensionContext();
+      workspaceUri = vscode.Uri.file(os.tmpdir());
+      settingsView.env = new Env(mockContext, workspaceUri);
+    });
+
+    teardown(() => {
+      settingsView.env?.dispose();
+    });
+
+    test('should return empty array when environment does not exist', async () => {
+      await mockContext.workspaceState.update('flox.envExists', false);
+      const children = await settingsView.getChildren();
+      assert.strictEqual(children.length, 0);
+    });
+
+    test('should return settings item when environment exists', async () => {
+      await mockContext.workspaceState.update('flox.envExists', true);
+      await mockContext.workspaceState.update('flox.autoActivate', true);
+
+      const children = await settingsView.getChildren();
+      assert.strictEqual(children.length, 1);
+      assert.strictEqual(children[0].label, 'Auto-Activate');
+      assert.strictEqual(children[0].description, 'Always');
+    });
+
+    test('should show "Never" when autoActivate is false', async () => {
+      await mockContext.workspaceState.update('flox.envExists', true);
+      await mockContext.workspaceState.update('flox.autoActivate', false);
+
+      const children = await settingsView.getChildren();
+      assert.strictEqual(children[0].description, 'Never');
+    });
+
+    test('should show "Not Set" when autoActivate is undefined', async () => {
+      await mockContext.workspaceState.update('flox.envExists', true);
+      await mockContext.workspaceState.update('flox.autoActivate', undefined);
+
+      const children = await settingsView.getChildren();
+      assert.strictEqual(children[0].description, 'Not Set');
+    });
+
+    test('refresh should fire onDidChangeTreeData event', async () => {
+      let eventFired = false;
+      settingsView.onDidChangeTreeData(() => {
+        eventFired = true;
+      });
+
+      await settingsView.refresh();
       assert.strictEqual(eventFired, true);
     });
   });

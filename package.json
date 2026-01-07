@@ -98,6 +98,11 @@
         "view": "floxInfoView",
         "contents": "Enhance AI coding with Flox Agentic integration.\n\n[Configure MCP Server](command:flox.configureMcp)",
         "when": "flox.isInstalled && flox.envActive && flox.copilotInstalled && flox.mcpAvailable"
+      },
+      {
+        "view": "floxSettingsView",
+        "contents": "No settings available.",
+        "when": "flox.isInstalled && !flox.envExists"
       }
     ],
     "mcpServerDefinitionProviders": [
@@ -125,6 +130,11 @@
         {
           "id": "floxServicesView",
           "name": "Services",
+          "when": "flox.isInstalled && flox.envExists"
+        },
+        {
+          "id": "floxSettingsView",
+          "name": "Settings",
           "when": "flox.isInstalled && flox.envExists"
         }
       ]
@@ -214,6 +224,12 @@
         "command": "flox.configureMcp",
         "category": "Flox",
         "title": "Configure Flox Agentic MCP Server"
+      },
+      {
+        "command": "flox.resetAutoActivate",
+        "category": "Flox",
+        "icon": "$(refresh)",
+        "title": "Reset Auto-Activate Preference"
       }
     ],
     "menus": {
@@ -239,6 +255,10 @@
         {
           "command": "flox.serviceLogs",
           "when": "flox.envActive && flox.hasServices"
+        },
+        {
+          "command": "flox.resetAutoActivate",
+          "when": "flox.isInstalled && flox.envExists && flox.hasAutoActivatePref"
         }
       ],
       "view/title": [
@@ -276,6 +296,11 @@
           "command": "flox.edit",
           "title": "Edit manifest.toml",
           "when": "(view == floxInfoView || view == floxInstallView || view == floxVarsView || view == floxServicesView) && flox.envExists"
+        },
+        {
+          "command": "flox.resetAutoActivate",
+          "title": "Reset Auto-Activate Preference",
+          "when": "view == floxInfoView && flox.hasAutoActivatePref"
         }
       ],
       "view/item/context": [
@@ -303,6 +328,11 @@
           "command": "flox.serviceLogs",
           "group": "inline",
           "when": "flox.envActive && view == floxServicesView && viewItem == service-running"
+        },
+        {
+          "command": "flox.resetAutoActivate",
+          "group": "inline",
+          "when": "view == floxSettingsView && (viewItem == settings-autoactivate-always || viewItem == settings-autoactivate-never)"
         }
       ]
     },

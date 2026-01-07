@@ -1,8 +1,51 @@
 import * as vscode from 'vscode';
 import * as os from 'os';
 import Env from './env';
-import { VarsView, InstallView, ServicesView, PackageItem, ServiceItem } from './view';
+import { VarsView, InstallView, ServicesView, SettingsView, PackageItem, ServiceItem } from './view';
 import { registerMcpProvider, FloxMcpProvider } from './mcp';
+
+/**
+ * Show auto-activate prompt and handle user selection
+ * Returns true if environment was activated, false otherwise
+ */
+async function showAutoActivatePrompt(
+  context: vscode.ExtensionContext,
+  output: vscode.OutputChannel,
+  env: Env
+): Promise<boolean> {
+  output.appendLine(`Showing activation prompt to user`);
+
+  const selection = await vscode.window.showInformationMessage(
+    'A Flox environment was detected in this workspace. Would you like to activate it?',
+    'Always Activate',
+    'Activate Once',
+    'Never Activate'
+  );
+
+  output.appendLine(`User selected: ${selection}`);
+
+  if (selection === 'Always Activate') {
+    await context.workspaceState.update('flox.autoActivate', true);
+    await env.updateAutoActivatePrefContext();
+    output.appendLine(`Activating (Always Activate)`);
+    await vscode.commands.executeCommand('flox.activate');
+    output.appendLine(`Activation command completed`);
+    return true;
+  } else if (selection === 'Activate Once') {
+    output.appendLine(`Activating (Activate Once)`);
+    await vscode.commands.executeCommand('flox.activate');
+    output.appendLine(`Activation command completed`);
+    return true;
+  } else if (selection === 'Never Activate') {
+    await context.workspaceState.update('flox.autoActivate', false);
+    await env.updateAutoActivatePrefContext();
+    output.appendLine(`User chose Never Activate`);
+    return false;
+  } else {
+    output.appendLine(`User dismissed prompt`);
+    return false;
+  }
+}
 
 export async function activate(context: vscode.ExtensionContext) {
 
@@ -21,6 +64,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const installView = new InstallView();
   const varsView = new VarsView();
   const servicesView = new ServicesView();
+  const settingsView = new SettingsView();
 
   const env = new Env(context, undefined, output);
 
@@ -53,6 +97,7 @@ export async function activate(context: vscode.ExtensionContext) {
   env.registerView('floxInstallView', installView);
   env.registerView('floxVarsView', varsView);
   env.registerView('floxServicesView', servicesView);
+  env.registerView('floxSettingsView', settingsView);
 
   // Check if we just activated and need to spawn the background process.
   const justActivated = context.workspaceState.get('flox.justActivated', false);
@@ -144,6 +189,9 @@ export async function activate(context: vscode.ExtensionContext) {
   } else {
     output.appendLine(`[STEP 3] Skipping reload (already done in post-activation flow)`);
   }
+
+  // Update auto-activate preference context key
+  await env.updateAutoActivatePrefContext();
 
   // Check for Flox updates (once per day, in background)
   const checkForUpdates = vscode.workspace.getConfiguration('flox').get<boolean>('checkForUpdates', true);
@@ -627,6 +675,30 @@ export async function activate(context: vscode.ExtensionContext) {
     }
   });
 
+  env.registerCommand('flox.resetAutoActivate', async () => {
+    output.appendLine('Reset auto-activate command invoked');
+
+    // Reset preference
+    await env.resetAutoActivatePreference();
+
+    // Refresh settings view to update UI
+    await settingsView.refresh();
+
+    // Show success message
+    vscode.window.showInformationMessage('Auto-activate preference reset. You will be prompted next time.');
+
+    output.appendLine('Auto-activate preference reset successfully');
+
+    // IMMEDIATELY show the prompt (user wants to make a new choice)
+    const envExists = context.workspaceState.get('flox.envExists', false);
+    const envActive = context.workspaceState.get('flox.envActive', false);
+
+    if (envExists && !envActive) {
+      output.appendLine('Showing auto-activate prompt after reset');
+      await showAutoActivatePrompt(context, output, env);
+    }
+  });
+
   /**
    * Auto-Activate and Prompt Feature (Issues #47, #141)
    *
@@ -676,34 +748,10 @@ export async function activate(context: vscode.ExtensionContext) {
     } else if (autoActivate === false) {
       // User previously chose "Never Activate" - skip silently
       output.appendLine(`[STEP 4] Skipping activation (user preference: Never Activate)`);
-      // Do nothing
     } else {
       // No preference (undefined) - show popup
-      output.appendLine(`[STEP 4] Showing activation prompt to user`);
-      const selection = await vscode.window.showInformationMessage(
-        'A Flox environment was detected in this workspace. Would you like to activate it?',
-        'Always Activate',
-        'Activate Once',
-        'Never Activate'
-      );
-      output.appendLine(`[STEP 4] User selected: ${selection}`);
-
-      if (selection === 'Always Activate') {
-        await context.workspaceState.update('flox.autoActivate', true);
-        output.appendLine(`[STEP 4] Activating (Always Activate)`);
-        await vscode.commands.executeCommand('flox.activate');
-        output.appendLine(`[STEP 4] Activation command completed`);
-      } else if (selection === 'Activate Once') {
-        output.appendLine(`[STEP 4] Activating (Activate Once)`);
-        await vscode.commands.executeCommand('flox.activate');
-        output.appendLine(`[STEP 4] Activation command completed`);
-      } else if (selection === 'Never Activate') {
-        await context.workspaceState.update('flox.autoActivate', false);
-        output.appendLine(`[STEP 4] User chose Never Activate`);
-      } else {
-        output.appendLine(`[STEP 4] User dismissed prompt`);
-      }
-      // Dismiss (undefined) - do nothing, popup will appear next time
+      output.appendLine(`[STEP 4] Showing activation prompt`);
+      await showAutoActivatePrompt(context, output, env);
     }
   } else {
     output.appendLine(`[STEP 4] Skipping auto-activate (conditions not met)`);

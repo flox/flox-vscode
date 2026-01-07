@@ -970,6 +970,26 @@ export default class Env implements vscode.Disposable {
   }
 
   /**
+   * Set flox.hasAutoActivatePref context key based on workspace state
+   */
+  async updateAutoActivatePrefContext() {
+    const autoActivate = this.context.workspaceState.get<boolean | undefined>('flox.autoActivate');
+    const hasPreference = autoActivate !== undefined;
+    await vscode.commands.executeCommand('setContext', 'flox.hasAutoActivatePref', hasPreference);
+    this.log(`Set flox.hasAutoActivatePref to ${hasPreference}`);
+  }
+
+  /**
+   * Reset auto-activate preference to undefined (will prompt next time)
+   */
+  async resetAutoActivatePreference() {
+    this.log('Resetting auto-activate preference');
+    await this.context.workspaceState.update('flox.autoActivate', undefined);
+    await this.updateAutoActivatePrefContext();
+    this.log('Auto-activate preference reset to undefined');
+  }
+
+  /**
    * Check if flox-mcp command is available in PATH.
    * This command is typically available when a Flox environment with flox-mcp package is active.
    * @returns true if flox-mcp is in PATH, false otherwise

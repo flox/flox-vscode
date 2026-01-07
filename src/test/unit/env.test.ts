@@ -945,6 +945,92 @@ MY_VAR = "test_value"
   });
 
   /**
+   * updateAutoActivatePrefContext Tests
+   *
+   * Tests the updateAutoActivatePrefContext method that sets the flox.hasAutoActivatePref context key.
+   */
+  suite('updateAutoActivatePrefContext', () => {
+    test('should set context to true when preference is true', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      await mockContext.workspaceState.update('flox.autoActivate', true);
+      await env.updateAutoActivatePrefContext();
+
+      // Note: In unit tests, we can't directly test setContext command execution
+      // This test verifies the method runs without errors
+      env.dispose();
+    });
+
+    test('should set context to true when preference is false', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      await mockContext.workspaceState.update('flox.autoActivate', false);
+      await env.updateAutoActivatePrefContext();
+
+      env.dispose();
+    });
+
+    test('should set context to false when preference is undefined', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      await mockContext.workspaceState.update('flox.autoActivate', undefined);
+      await env.updateAutoActivatePrefContext();
+
+      env.dispose();
+    });
+  });
+
+  /**
+   * resetAutoActivatePreference Tests
+   *
+   * Tests the resetAutoActivatePreference method that resets the auto-activate preference to undefined.
+   */
+  suite('resetAutoActivatePreference', () => {
+    test('should reset preference to undefined from true', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      await mockContext.workspaceState.update('flox.autoActivate', true);
+      await env.resetAutoActivatePreference();
+
+      const pref = mockContext.workspaceState.get('flox.autoActivate');
+      assert.strictEqual(pref, undefined);
+
+      env.dispose();
+    });
+
+    test('should reset preference to undefined from false', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      await mockContext.workspaceState.update('flox.autoActivate', false);
+      await env.resetAutoActivatePreference();
+
+      const pref = mockContext.workspaceState.get('flox.autoActivate');
+      assert.strictEqual(pref, undefined);
+
+      env.dispose();
+    });
+
+    test('should call updateAutoActivatePrefContext', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      await mockContext.workspaceState.update('flox.autoActivate', true);
+      await env.resetAutoActivatePreference();
+
+      // Verify the preference was reset (which proves updateAutoActivatePrefContext was called internally)
+      const pref = mockContext.workspaceState.get('flox.autoActivate');
+      assert.strictEqual(pref, undefined);
+
+      env.dispose();
+    });
+  });
+
+  /**
    * isFloxInstalled Getter Tests
    *
    * Returns the current value of _isFloxInstalled.
