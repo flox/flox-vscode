@@ -232,6 +232,52 @@ suite('View Unit Tests', () => {
       const item = new ServiceItem('myservice', '( Running )', 'Running', ItemState.ACTIVE);
       assert.strictEqual(item.label, 'myservice');
     });
+
+    /**
+     * Service Color Coding Tests (Issue #195)
+     *
+     * Services should have distinct colors based on their state:
+     * - PENDING: Yellow/warning color (list.warningForeground) - takes priority
+     * - Running: Green (terminal.ansiGreen)
+     * - Stopped: Red (terminal.ansiRed)
+     * - Not started: Red (terminal.ansiRed)
+     */
+    test('Running service should have green icon', () => {
+      const item = new ServiceItem('myservice', '( Running )', 'Running', ItemState.ACTIVE);
+      const icon = item.iconPath as vscode.ThemeIcon;
+      assert.ok(icon.color instanceof vscode.ThemeColor);
+      assert.strictEqual(icon.color.id, 'terminal.ansiGreen', 'Running service should have green color');
+    });
+
+    test('Stopped service should have red icon', () => {
+      const item = new ServiceItem('myservice', '( Stopped )', 'Stopped', ItemState.ACTIVE);
+      const icon = item.iconPath as vscode.ThemeIcon;
+      assert.ok(icon.color instanceof vscode.ThemeColor);
+      assert.strictEqual(icon.color.id, 'terminal.ansiRed', 'Stopped service should have red color');
+    });
+
+    test('Not started service should have red icon', () => {
+      const item = new ServiceItem('myservice', '( Not started )', 'Not started', ItemState.ACTIVE);
+      const icon = item.iconPath as vscode.ThemeIcon;
+      assert.ok(icon.color instanceof vscode.ThemeColor);
+      assert.strictEqual(icon.color.id, 'terminal.ansiRed', 'Not started service should have red color');
+    });
+
+    test('Pending service should have yellow icon (priority over running)', () => {
+      // Even if service is running, PENDING state takes priority
+      const item = new ServiceItem('myservice', '( Running )', 'Running', ItemState.PENDING);
+      const icon = item.iconPath as vscode.ThemeIcon;
+      assert.ok(icon.color instanceof vscode.ThemeColor);
+      assert.strictEqual(icon.color.id, 'list.warningForeground', 'Pending service should have yellow color, even if running');
+    });
+
+    test('Pending stopped service should have yellow icon', () => {
+      // PENDING state always takes priority
+      const item = new ServiceItem('myservice', '( Stopped )', 'Stopped', ItemState.PENDING);
+      const icon = item.iconPath as vscode.ThemeIcon;
+      assert.ok(icon.color instanceof vscode.ThemeColor);
+      assert.strictEqual(icon.color.id, 'list.warningForeground', 'Pending service should have yellow color');
+    });
   });
 
   /**

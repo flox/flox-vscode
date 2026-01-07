@@ -83,13 +83,27 @@ export class ServiceItem extends vscode.TreeItem {
     super(label);
     this.state = state;
 
+    // Color priority: PENDING (yellow) > Running (green) > Stopped (red)
     if (state === ItemState.PENDING) {
-      // Pending indicator: asterisk suffix + warning color
+      // Pending state takes priority - always yellow
       this.label = `${label} *`;
-      this.iconPath = new vscode.ThemeIcon('server-process', new vscode.ThemeColor('list.warningForeground'));
+      this.iconPath = new vscode.ThemeIcon('server-process',
+        new vscode.ThemeColor('list.warningForeground'));
       this.tooltip = 'Pending - changes not yet locked. Run "flox activate" to commit.';
+    } else if (status.toLowerCase() === "running") {
+      // Running service - green
+      this.iconPath = new vscode.ThemeIcon('server-process',
+        new vscode.ThemeColor('terminal.ansiGreen'));
+      this.tooltip = `Service is running (${description})`;
+    } else if (status.toLowerCase() === "stopped" || status.toLowerCase() === "not started") {
+      // Stopped service - red
+      this.iconPath = new vscode.ThemeIcon('server-process',
+        new vscode.ThemeColor('terminal.ansiRed'));
+      this.tooltip = `Service is stopped (${description})`;
     } else {
+      // Unknown status - no color
       this.iconPath = new vscode.ThemeIcon('server-process');
+      this.tooltip = description;
     }
 
     if (status.toLowerCase() === "running") {
