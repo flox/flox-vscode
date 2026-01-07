@@ -61,12 +61,12 @@
       },
       {
         "view": "floxInfoView",
-        "contents": "[Activate & Restart](command:flox.activate)",
+        "contents": "[Activate Environment](command:flox.activate)",
         "when": "flox.isInstalled && flox.envExists && !flox.envActive"
       },
       {
         "view": "floxInfoView",
-        "contents": "[Deactivate & Restart](command:flox.deactivate)",
+        "contents": "[Deactivate Environment](command:flox.deactivate)",
         "when": "flox.isInstalled && flox.envExists && flox.envActive"
       },
       {
