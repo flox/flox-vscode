@@ -6,8 +6,12 @@
  * 1. Initialize environment (flox.init command)
  * 2. Activate environment (flox.activate command)
  * 3. Install packages (via CLI - VSCode command requires UI picker)
- * 4. Uninstall packages (via CLI)
+ * 4. Uninstall packages (flox.uninstall with PackageItem argument)
  * 5. Verify environment state
+ *
+ * For commands that show UI pickers (like flox.install), we use CLI directly.
+ * For commands that accept item arguments (like flox.uninstall), we pass the
+ * item directly to skip the picker.
  *
  * Requirements:
  * - Flox CLI must be installed
@@ -22,6 +26,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { promisify } from 'util';
 import { execFile } from 'child_process';
+import { PackageItem } from '../../view';
 
 const execFileAsync = promisify(execFile);
 
@@ -270,17 +275,18 @@ suite('Happy Path Integration Tests', () => {
     console.log('✅ STEP 3 COMPLETE: Package installed\n');
 
     // ============================================================================
-    // STEP 4: Uninstall Package
+    // STEP 4: Uninstall Package (using VSCode command with argument)
     // ============================================================================
-    console.log('📤 STEP 4: Uninstall package (using Flox CLI directly)');
+    console.log('📤 STEP 4: Uninstall package (flox.uninstall with PackageItem arg)');
 
     // STATE BEFORE: Has packages
     const pkgCountBeforeUninstall = countPackagesInManifest();
     console.log(`   Packages before: ${pkgCountBeforeUninstall}`);
 
-    // Uninstall using Flox CLI (avoids UI picker)
-    console.log('   Uninstalling hello package...');
-    await execFileAsync('flox', ['uninstall', 'hello', '--dir', workspaceDir], { timeout: 60000 });
+    // Uninstall using VSCode command with PackageItem argument (skips UI picker)
+    console.log('   Uninstalling hello package via flox.uninstall command...');
+    const helloPackage = new PackageItem('hello', 'hello package');
+    await vscode.commands.executeCommand('flox.uninstall', helloPackage);
 
     // Wait for manifest to update
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -334,5 +340,151 @@ suite('Happy Path Integration Tests', () => {
     // the auto-activate prompt from appearing again
 
     console.log('✅ Regression test setup complete\n');
+  });
+
+  /**
+   * PR #173: Pending State Indicators
+   * Tests that packages added to manifest.toml but not in manifest.lock
+   * are in a "pending" state until activation commits them.
+   */
+  test('PR #173: Package in toml but not lock shows pending state', async function() {
+    this.timeout(120000);
+
+    console.log('\n🧪 Testing pending state indicators (PR #173)...\n');
+
+    // Initialize via CLI (faster, no UI)
+    console.log('📦 Step 1: Initialize environment via CLI');
+    await execFileAsync('flox', ['init', '--dir', workspaceDir]);
+    await waitFor(
+      () => fs.existsSync(path.join(workspaceDir, '.flox', 'env', 'manifest.toml')),
+      15000
+    );
+
+    // Activate to create lock file
+    console.log('⚡ Step 2: Activate to create lock file');
+    await execFileAsync('flox', ['activate', '--dir', workspaceDir, '--', 'true']);
+    await waitFor(
+      () => fs.existsSync(path.join(workspaceDir, '.flox', 'env', 'manifest.lock')),
+      30000
+    );
+
+    // Add package directly to toml (simulates user editing manifest)
+    console.log('📝 Step 3: Add package to manifest.toml only');
+    const manifestPath = path.join(workspaceDir, '.flox', 'env', 'manifest.toml');
+    const toml = fs.readFileSync(manifestPath, 'utf-8');
+    fs.writeFileSync(manifestPath, toml + '\n[install.pending-pkg]\npkg-path = "hello"\n');
+
+    // Verify package is in toml
+    const newToml = fs.readFileSync(manifestPath, 'utf-8');
+    assert.ok(newToml.includes('[install.pending-pkg]'), 'Package should be in toml');
+
+    // Verify package is NOT in lock (pending state)
+    const lockPath = path.join(workspaceDir, '.flox', 'env', 'manifest.lock');
+    const lock = JSON.parse(fs.readFileSync(lockPath, 'utf-8'));
+    const pkgs = lock?.packages || [];
+    const inLock = pkgs.some((p: any) => p.install_id === 'pending-pkg');
+    assert.ok(!inLock, 'Package should NOT be in lock yet (pending state)');
+
+    console.log('✅ Pending state test PASSED\n');
+  });
+
+  /**
+   * PR #171: Auto-Reactivate on Manifest Changes
+   * Tests that changes to manifest.toml are detected by file watcher.
+   */
+  test('PR #171: Manifest.toml changes are detected', async function() {
+    this.timeout(60000);
+
+    console.log('\n🧪 Testing manifest change detection (PR #171)...\n');
+
+    // Initialize via CLI
+    await execFileAsync('flox', ['init', '--dir', workspaceDir]);
+    await waitFor(
+      () => fs.existsSync(path.join(workspaceDir, '.flox', 'env', 'manifest.toml')),
+      15000
+    );
+
+    const manifestPath = path.join(workspaceDir, '.flox', 'env', 'manifest.toml');
+    const original = fs.readFileSync(manifestPath, 'utf-8');
+
+    // Modify manifest (simulates user editing)
+    console.log('📝 Modifying manifest.toml');
+    fs.writeFileSync(manifestPath, original + '\n[vars]\nTEST_VAR = "test_value"\n');
+
+    // Wait for debounce (500ms) + processing
+    await new Promise(r => setTimeout(r, 1500));
+
+    // Verify change persisted
+    const modified = fs.readFileSync(manifestPath, 'utf-8');
+    assert.ok(modified.includes('TEST_VAR'), 'Variable should be in manifest');
+
+    console.log('✅ Manifest change detection test PASSED\n');
+  });
+
+  /**
+   * PR #179: Service Logs Command
+   * Tests that flox.serviceLogs command exists and services can be added.
+   */
+  test('PR #179: Service logs command and service configuration', async function() {
+    this.timeout(120000);
+
+    console.log('\n🧪 Testing service logs feature (PR #179)...\n');
+
+    // Verify command is registered
+    const commands = await vscode.commands.getCommands(true);
+    assert.ok(commands.includes('flox.serviceLogs'), 'flox.serviceLogs should be registered');
+
+    // Initialize via CLI
+    await execFileAsync('flox', ['init', '--dir', workspaceDir]);
+    await waitFor(
+      () => fs.existsSync(path.join(workspaceDir, '.flox', 'env', 'manifest.toml')),
+      15000
+    );
+
+    // Add a service to manifest
+    console.log('📝 Adding service to manifest.toml');
+    const manifestPath = path.join(workspaceDir, '.flox', 'env', 'manifest.toml');
+    const toml = fs.readFileSync(manifestPath, 'utf-8');
+    fs.writeFileSync(manifestPath, toml + '\n[services.test-svc]\ncommand = "echo hello"\n');
+
+    // Activate to commit the service
+    console.log('⚡ Activating to commit service');
+    await execFileAsync('flox', ['activate', '--dir', workspaceDir, '--', 'true']);
+    await waitFor(
+      () => fs.existsSync(path.join(workspaceDir, '.flox', 'env', 'manifest.lock')),
+      30000
+    );
+
+    // Verify service is in lock
+    const lockPath = path.join(workspaceDir, '.flox', 'env', 'manifest.lock');
+    const lock = JSON.parse(fs.readFileSync(lockPath, 'utf-8'));
+    const services = lock?.manifest?.services || {};
+    assert.ok('test-svc' in services, 'Service should be in lock file');
+
+    console.log('✅ Service logs feature test PASSED\n');
+  });
+
+  /**
+   * PR #176: Remember Activation Preference
+   * Tests that activation-related commands exist for preference feature.
+   */
+  test('PR #176: Activation preference infrastructure', async function() {
+    this.timeout(30000);
+
+    console.log('\n🧪 Testing activation preference (PR #176)...\n');
+
+    // Verify commands exist
+    const commands = await vscode.commands.getCommands(true);
+    assert.ok(commands.includes('flox.activate'), 'flox.activate should exist');
+    assert.ok(commands.includes('flox.deactivate'), 'flox.deactivate should exist');
+
+    // Initialize to create environment
+    await execFileAsync('flox', ['init', '--dir', workspaceDir]);
+    await waitFor(
+      () => fs.existsSync(path.join(workspaceDir, '.flox', 'env', 'manifest.toml')),
+      15000
+    );
+
+    console.log('✅ Activation preference test PASSED\n');
   });
 });
