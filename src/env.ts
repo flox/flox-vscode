@@ -164,6 +164,14 @@ export default class Env implements vscode.Disposable {
   }
 
   /**
+   * Normalize a value for comparison (trim whitespace, convert to string).
+   * This prevents false differences when comparing toml vs lock values.
+   */
+  private normalizeValue(v: any): string {
+    return String(v).trim();
+  }
+
+  /**
    * Merge packages from lock file (ACTIVE) and toml file (PENDING).
    * Items only in toml are marked as PENDING.
    */
@@ -267,7 +275,8 @@ export default class Env implements vscode.Disposable {
     // Add vars from lock file (ACTIVE)
     for (const [name, value] of Object.entries(lockVars)) {
       const tomlValue = tomlVars[name];
-      const hasPendingChanges = tomlValue !== undefined && tomlValue !== value;
+      const hasPendingChanges = tomlValue !== undefined &&
+                                this.normalizeValue(tomlValue) !== this.normalizeValue(value);
 
       this.variables.set(name, {
         name,
@@ -282,10 +291,32 @@ export default class Env implements vscode.Disposable {
         this.variables.set(name, {
           name,
           value: value as string,
-          state: lockExists ? ItemState.PENDING : ItemState.ACTIVE,
+          state: ItemState.PENDING,  // Always PENDING if only in toml
         });
       }
     }
+  }
+
+  /**
+   * Deep equality check for services (property order independent).
+   * This prevents false differences when comparing toml vs lock services.
+   */
+  private servicesEqual(a: any, b: any): boolean {
+    if (a === b) {return true;}
+    if (typeof a !== 'object' || typeof b !== 'object') {return false;}
+    if (a === null || b === null) {return false;}
+
+    const keysA = Object.keys(a).sort();
+    const keysB = Object.keys(b).sort();
+
+    if (keysA.length !== keysB.length) {return false;}
+    if (JSON.stringify(keysA) !== JSON.stringify(keysB)) {return false;}
+
+    for (const key of keysA) {
+      if (!this.servicesEqual(a[key], b[key])) {return false;}
+    }
+
+    return true;
   }
 
   /**
@@ -299,15 +330,15 @@ export default class Env implements vscode.Disposable {
     const inToml = serviceName in tomlServices;
 
     if (!lockExists) {
-      // No lock file, everything is active (or pending if you prefer)
-      return ItemState.ACTIVE;
+      // No lock file: services in toml are PENDING
+      return inToml ? ItemState.PENDING : ItemState.ACTIVE;
     }
 
     if (inLock && inToml) {
       // In both - check if they differ
       const lockService = lockServices[serviceName];
       const tomlService = tomlServices[serviceName];
-      if (JSON.stringify(lockService) !== JSON.stringify(tomlService)) {
+      if (!this.servicesEqual(lockService, tomlService)) {
         return ItemState.PENDING;
       }
       return ItemState.ACTIVE;
@@ -776,6 +807,26 @@ export default class Env implements vscode.Disposable {
           this.log(`[SPAWN] Applying environment variables...`);
           // Apply environment variables to terminals
           this.applyEnvironmentVariables(msg.env);
+
+          this.log(`[SPAWN] Waiting for lock file to be updated...`);
+          // Wait for lock file modification (max 2 seconds)
+          const lockFile = vscode.Uri.joinPath(this.workspaceUri!, '.flox', 'env', 'manifest.lock');
+          const maxWait = 2000;
+          const startTime = Date.now();
+
+          while (Date.now() - startTime < maxWait) {
+            try {
+              const stat = await vscode.workspace.fs.stat(lockFile);
+              if (stat.mtime > startTime - 1000) {
+                // Lock file modified recently
+                this.log(`[SPAWN] Lock file updated (mtime: ${new Date(stat.mtime).toISOString()})`);
+                break;
+              }
+            } catch (e) {
+              // File doesn't exist yet, keep waiting
+            }
+            await new Promise(resolve => setTimeout(resolve, 50));
+          }
 
           this.log(`[SPAWN] Calling reload()...`);
           // Reload to get fresh data from lock file
