@@ -213,7 +213,14 @@ export async function activate(context: vscode.ExtensionContext) {
           const envExists = env.context.workspaceState.get('flox.envExists', false);
           output.appendLine(`[STEP 1] envExists: ${envExists}`);
           if (!envExists) {
-            env.displayError("Environment does not exist.");
+            const action = await vscode.window.showErrorMessage(
+              'No Flox environment found. Create one first.',
+              'Create Environment'
+            );
+
+            if (action === 'Create Environment') {
+              await vscode.commands.executeCommand('flox.init');
+            }
             reject();
             return;
           }
@@ -292,7 +299,7 @@ export async function activate(context: vscode.ExtensionContext) {
     }));
 
     if (selection === undefined || selection?.label === undefined) {
-      env.displayMsg("No package selected to be installed.");
+      // Silent - user intentionally dismissed the picker
       return;
     }
 
@@ -349,7 +356,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
       const selected = await vscode.window.showQuickPick(pkgs);
       if (selected === undefined || selected?.label === undefined) {
-        env.displayMsg("No package selected to be uninstalled.");
+        // Silent - user intentionally dismissed the picker
         return;
       }
 
@@ -396,7 +403,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
       const selected = await vscode.window.showQuickPick(services);
       if (selected === undefined || selected?.label === undefined) {
-        env.displayMsg("No service selected to be started.");
+        // Silent - user intentionally dismissed the picker
         return;
       }
 
@@ -415,7 +422,7 @@ export async function activate(context: vscode.ExtensionContext) {
         await env.reload();
         env.displayMsg(`Service '${service!.label}' started successfully.`);
       } catch (error) {
-        env.displayError(`Starting ${service!.label} service error: ${error}`);
+        env.displayError(`Error starting '${service!.label}': ${error}. Check service configuration and try again. View logs in terminal for details.`);
       }
     });
   });
@@ -443,7 +450,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
       const selected = await vscode.window.showQuickPick(services);
       if (selected === undefined || selected?.label === undefined) {
-        env.displayMsg("No service selected to be stopped.");
+        // Silent - user intentionally dismissed the picker
         return;
       }
 
@@ -462,7 +469,7 @@ export async function activate(context: vscode.ExtensionContext) {
         await env.reload();
         env.displayMsg(`Service '${service!.label}' stopped successfully.`);
       } catch (error) {
-        env.displayError(`Stopping ${service!.label} service error: ${error}`);
+        env.displayError(`Error stopping '${service!.label}': ${error}. Service may already be stopped. Try restarting manually. View logs in terminal for details.`);
       }
     });
   });
@@ -493,7 +500,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
       const selected = await vscode.window.showQuickPick(services);
       if (selected === undefined || selected?.label === undefined) {
-        env.displayMsg("No service selected to be restarted.");
+        // Silent - user intentionally dismissed the picker
         return;
       }
 
@@ -512,7 +519,7 @@ export async function activate(context: vscode.ExtensionContext) {
         await env.reload();
         env.displayMsg(`Service '${service!.label}' restarted successfully.`);
       } catch (error) {
-        env.displayError(`Restarting ${service!.label} service error: ${error}`);
+        env.displayError(`Error restarting '${service!.label}': ${error}. Check service configuration and logs for details.`);
       }
     });
   });
@@ -543,7 +550,7 @@ export async function activate(context: vscode.ExtensionContext) {
         placeHolder: 'Select a running service to show logs',
       });
       if (selected === undefined || selected?.label === undefined) {
-        env.displayMsg("No service selected.");
+        // Silent - user intentionally dismissed the picker
         return;
       }
 
@@ -565,13 +572,12 @@ export async function activate(context: vscode.ExtensionContext) {
     if (!env.workspaceUri) { return; }
 
     const manifestUri = vscode.Uri.joinPath(env.workspaceUri, ".flox", "env", "manifest.toml");
-    env.displayMsg("Opening manifest.toml");
 
     try {
       const doc = await vscode.workspace.openTextDocument(manifestUri);
       await vscode.window.showTextDocument(doc);
     } catch (error) {
-      env.displayError(`Something went wrong when opening manifest.toml: ${error}`);
+      env.displayError(`Failed to open manifest.toml. Ensure it exists and you have read permissions. See logs for details. You can edit it directly with: flox edit`);
     }
   });
 
@@ -591,7 +597,7 @@ export async function activate(context: vscode.ExtensionContext) {
     }));
 
     if (selection === undefined || selection?.label === undefined) {
-      env.displayMsg("No package selected.");
+      // Silent - user intentionally dismissed the picker
       return;
     }
 
@@ -646,9 +652,17 @@ export async function activate(context: vscode.ExtensionContext) {
         'Flox Agentic MCP server is configured! Use @flox in Copilot Chat to access Flox tools and resources.'
       );
     } else {
-      vscode.window.showErrorMessage(
-        'Failed to configure MCP server. This feature requires VSCode 1.102 or newer.'
+      const action = await vscode.window.showErrorMessage(
+        'Failed to configure MCP server. This requires VSCode 1.102 or newer.',
+        'Upgrade VSCode',
+        'Learn More'
       );
+
+      if (action === 'Upgrade VSCode') {
+        vscode.env.openExternal(vscode.Uri.parse('https://code.visualstudio.com/download'));
+      } else if (action === 'Learn More') {
+        vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs/tutorials/flox-agentic/'));
+      }
     }
   });
 
@@ -706,10 +720,10 @@ export async function activate(context: vscode.ExtensionContext) {
       // No preference (undefined) - show popup
       output.appendLine(`[STEP 4] Showing activation prompt to user`);
       const selection = await vscode.window.showInformationMessage(
-        'A Flox environment was detected in this workspace. Would you like to activate it?',
+        'A Flox environment was detected in this workspace. Would you like to activate it now?',
         'Always Activate',
         'Activate Once',
-        'Never Activate'
+        'Not Now'
       );
       output.appendLine(`[STEP 4] User selected: ${selection}`);
 
@@ -722,9 +736,8 @@ export async function activate(context: vscode.ExtensionContext) {
         output.appendLine(`[STEP 4] Activating (Activate Once)`);
         await vscode.commands.executeCommand('flox.activate');
         output.appendLine(`[STEP 4] Activation command completed`);
-      } else if (selection === 'Never Activate') {
-        await context.workspaceState.update('flox.autoActivate', false);
-        output.appendLine(`[STEP 4] User chose Never Activate`);
+      } else if (selection === 'Not Now') {
+        output.appendLine(`[STEP 4] User chose Not Now`);
       } else {
         output.appendLine(`[STEP 4] User dismissed prompt`);
       }
