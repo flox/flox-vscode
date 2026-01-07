@@ -267,7 +267,8 @@ export default class Env implements vscode.Disposable {
     this.variables = new Map();
 
     // Get vars from lock file (these are ACTIVE)
-    const lockVars = this.manifest?.manifest?.vars || {};
+    // When no lock exists, lockVars should be empty (not from tomlManifest)
+    const lockVars = lockExists ? (this.manifest?.manifest?.vars || {}) : {};
 
     // Get vars from toml file
     const tomlVars = this.tomlManifest?.vars || {};
