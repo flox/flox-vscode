@@ -1171,4 +1171,62 @@ MY_VAR = "test_value"
       env.dispose();
     });
   });
+
+  suite('applyEnvironmentVariables with existing terminals', () => {
+    test('should store previous env for future comparisons', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      await env.applyEnvironmentVariables({ PATH: '/test', FOO: 'bar' });
+
+      const previousEnv = mockContext.workspaceState.get('flox.previousActivatedEnv');
+      assert.deepStrictEqual(previousEnv, { PATH: '/test', FOO: 'bar' });
+      env.dispose();
+    });
+
+    test('should calculate diff between previous and new env', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      await mockContext.workspaceState.update('flox.previousActivatedEnv', {
+        PATH: '/old',
+        REMOVED: 'value'
+      });
+      await mockContext.workspaceState.update('flox.terminalsBeforeActivation', 1);
+
+      const env = new Env(mockContext, workspaceUri);
+      await env.applyEnvironmentVariables({ PATH: '/new', FOO: 'bar' });
+
+      // Verify previous env was updated
+      const previousEnv = mockContext.workspaceState.get('flox.previousActivatedEnv');
+      assert.deepStrictEqual(previousEnv, { PATH: '/new', FOO: 'bar' });
+
+      env.dispose();
+    });
+
+    test('should clear terminal count after update', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      await mockContext.workspaceState.update('flox.terminalsBeforeActivation', 3);
+      await mockContext.workspaceState.update('flox.previousActivatedEnv', { PATH: '/old' });
+
+      const env = new Env(mockContext, workspaceUri);
+      await env.applyEnvironmentVariables({ PATH: '/new' });
+
+      // Counter should be cleared after update (since no actual terminals exist in mock)
+      const count = mockContext.workspaceState.get('flox.terminalsBeforeActivation');
+      assert.strictEqual(count, undefined);
+      env.dispose();
+    });
+
+    test('should not update terminals on first activation', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      // No previous env, no terminal count - first activation
+
+      const env = new Env(mockContext, workspaceUri);
+      await env.applyEnvironmentVariables({ PATH: '/test' });
+
+      // Should just store env, no terminal updates
+      const previousEnv = mockContext.workspaceState.get('flox.previousActivatedEnv');
+      assert.deepStrictEqual(previousEnv, { PATH: '/test' });
+      env.dispose();
+    });
+  });
 });

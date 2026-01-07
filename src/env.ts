@@ -697,6 +697,77 @@ export default class Env implements vscode.Disposable {
 
     envCollection.description = 'Flox Environment';
     this.log(`Applied ${Object.keys(activatedEnv).length} environment variables to terminals`);
+
+    // Update existing terminals with new env vars
+    const terminalCountBeforeActivation = this.context.workspaceState.get<number>('flox.terminalsBeforeActivation', 0);
+
+    if (terminalCountBeforeActivation > 0 && vscode.window.terminals.length > 0) {
+      this.log(`[TERMINAL] Updating ${vscode.window.terminals.length} existing terminals`);
+
+      // Calculate diff between previous and new environment
+      const previousEnv = this.context.workspaceState.get<Record<string, string>>('flox.previousActivatedEnv', {});
+      const changedVars: string[] = [];
+      const removedVars: string[] = [];
+
+      // Find changed/added variables
+      for (const [key, value] of Object.entries(activatedEnv)) {
+        const prevValue = previousEnv[key];
+        if (prevValue !== value) {
+          changedVars.push(key);
+        }
+      }
+
+      // Find removed variables
+      for (const key of Object.keys(previousEnv)) {
+        if (!(key in activatedEnv)) {
+          removedVars.push(key);
+        }
+      }
+
+      this.log(`[TERMINAL] Changed: ${changedVars.length}, Removed: ${removedVars.length}`);
+
+      // Update each existing terminal
+      for (const terminal of vscode.window.terminals) {
+        // Skip if terminal is already disposed
+        if (terminal.exitStatus !== undefined) {
+          continue;
+        }
+
+        // Export changed/added variables
+        for (const key of changedVars) {
+          const value = activatedEnv[key];
+          // Escape double quotes in value for shell safety
+          const escapedValue = value.replace(/"/g, '\\"');
+          terminal.sendText(`export ${key}="${escapedValue}"`, false);
+        }
+
+        // Unset removed variables
+        for (const key of removedVars) {
+          terminal.sendText(`unset ${key}`, false);
+        }
+
+        this.log(`[TERMINAL] Updated terminal: ${terminal.name}`);
+      }
+
+      // Show success notification
+      const message = vscode.window.terminals.length === 1
+        ? 'Flox environment reactivated. Updated 1 existing terminal with new environment variables.'
+        : `Flox environment reactivated. Updated ${vscode.window.terminals.length} existing terminals with new environment variables.`;
+
+      vscode.window.showInformationMessage(message, 'Open New Terminal').then(action => {
+        if (action === 'Open New Terminal') {
+          vscode.commands.executeCommand('workbench.action.terminal.new');
+        }
+      });
+    }
+
+    // Store current env for next comparison (on first activation or reactivation)
+    await this.context.workspaceState.update('flox.previousActivatedEnv', activatedEnv);
+
+    // Clear the counter if it was set (reactivation case)
+    if (terminalCountBeforeActivation > 0) {
+      await this.context.workspaceState.update('flox.terminalsBeforeActivation', undefined);
+    }
   }
 
   async clearEnvironmentVariables() {
@@ -775,7 +846,7 @@ export default class Env implements vscode.Disposable {
 
           this.log(`[SPAWN] Applying environment variables...`);
           // Apply environment variables to terminals
-          this.applyEnvironmentVariables(msg.env);
+          await this.applyEnvironmentVariables(msg.env);
 
           this.log(`[SPAWN] Calling reload()...`);
           // Reload to get fresh data from lock file

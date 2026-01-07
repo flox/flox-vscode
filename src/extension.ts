@@ -83,6 +83,11 @@ export async function activate(context: vscode.ExtensionContext) {
     await context.workspaceState.update('flox.justActivated', false);
     output.appendLine(`[STEP 2] Cleared justActivated flag`);
 
+    // Track existing terminal count BEFORE spawning activate process
+    const existingTerminalCount = vscode.window.terminals.length;
+    output.appendLine(`[STEP 2] Found ${existingTerminalCount} existing terminals`);
+    await context.workspaceState.update('flox.terminalsBeforeActivation', existingTerminalCount);
+
     await vscode.window.withProgress({
       location: vscode.ProgressLocation.Notification,
       title: "Activating Flox environment... ",
