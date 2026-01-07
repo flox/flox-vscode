@@ -39,6 +39,13 @@ export type Variable = {
   state: ItemState,
 }
 
+export type SettingsItem = {
+  key: string,
+  label: string,
+  value: string | boolean | undefined,
+  contextValue: string,
+}
+
 export interface View {
   registerProvider(viewName: string): vscode.Disposable;
   refresh(): Promise<void>;
