@@ -1249,6 +1249,89 @@ export default class Env implements vscode.Disposable {
   }
 
   /**
+   * Offer to install Flox MCP server when not found.
+   * Only shows if:
+   * - MCP server not available
+   * - Flox environment exists
+   * - Environment is active
+   * - Prompt hasn't been shown before (one-time gate)
+   *
+   * @returns Promise<{ installed: boolean, mcpAvailable: boolean }>
+   */
+  async offerToInstallMcp(): Promise<{ installed: boolean, mcpAvailable: boolean }> {
+    // Check if we've already shown this prompt
+    const alreadyShown = this.context.workspaceState.get('flox.mcpInstallPromptShown', false);
+    if (alreadyShown) {
+      this.log('MCP install prompt already shown in this workspace');
+      return { installed: false, mcpAvailable: false };
+    }
+
+    // Check conditions: env must exist and be active
+    const envExists = this.context.workspaceState.get('flox.envExists', false);
+    const envActive = this.isEnvActive;
+
+    if (!envExists || !envActive) {
+      this.log(`MCP install prompt skipped: envExists=${envExists}, envActive=${envActive}`);
+      return { installed: false, mcpAvailable: false };
+    }
+
+    // Mark as shown BEFORE showing prompt (prevents duplicates)
+    await this.context.workspaceState.update('flox.mcpInstallPromptShown', true);
+
+    this.log('Showing MCP installation prompt');
+
+    // Show notification with action buttons
+    const action = await vscode.window.showInformationMessage(
+      'Flox MCP server not found. Would you like to install it to enable AI coding assistance with Copilot?',
+      'Install MCP Server',
+      'Learn More',
+      'Not Now'
+    );
+
+    if (action === 'Install MCP Server') {
+      // Install with progress notification
+      return await vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: 'Installing Flox MCP server...',
+        cancellable: false,
+      }, async (progress) => {
+        try {
+          progress.report({ message: 'Running flox install...', increment: 30 });
+
+          const result = await this.exec("flox", {
+            argv: ["install", "flox/flox-mcp-server", "--dir", this.workspaceUri?.fsPath || ""]
+          });
+
+          progress.report({ increment: 100 });
+
+          const stderr = result?.stderr?.toString() || '';
+          if (stderr && stderr.includes("installed to environment")) {
+            this.displayMsg('Flox MCP server installed successfully!');
+
+            // Re-check MCP availability
+            const mcpNowAvailable = await this.checkFloxMcpAvailable();
+            await this.setFloxMcpAvailable(mcpNowAvailable);
+
+            return { installed: true, mcpAvailable: mcpNowAvailable };
+          } else {
+            throw new Error(stderr || 'Installation failed');
+          }
+        } catch (error: any) {
+          this.displayError(`Failed to install MCP server: ${error.message}`);
+          // Reset the prompt flag so user can try again
+          await this.context.workspaceState.update('flox.mcpInstallPromptShown', false);
+          return { installed: false, mcpAvailable: false };
+        }
+      });
+    } else if (action === 'Learn More') {
+      vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs/tutorials/flox-agentic/'));
+    }
+
+    // User clicked "Not Now" or dismissed
+    return { installed: false, mcpAvailable: false };
+  }
+
+  /**
    * Get the currently installed Flox version.
    * @returns The version string (e.g., "1.3.1") or undefined if not available
    */
