@@ -358,10 +358,14 @@ export async function activate(context: vscode.ExtensionContext) {
       if (pkg?.name && pkg?.pname && pkg.name !== pkg.pname) {
         version = '(' + pkg.name.replace(`${pkg.pname}-`, '') + ') ';
       }
+      // Use pkg_path for display (shows catalog prefix like "flox/package-name")
+      // Fall back to attr_path for non-catalog packages
+      const displayName = pkg?.pkg_path || pkg?.attr_path;
       return {
-        label: pkg?.attr_path,
+        label: displayName,
         description: `${version}${pkg?.description || ''}`,
         id: pkg?.attr_path,
+        pkgPath: pkg?.pkg_path || pkg?.attr_path,
       };
     }));
 
@@ -388,7 +392,8 @@ export async function activate(context: vscode.ExtensionContext) {
         setTimeout(() => progress.report({ increment: 95 }), 50000);
         setTimeout(() => progress.report({ increment: 97 }), 60000);
 
-        const result = await env.exec("flox", { argv: ["install", "--dir", env.workspaceUri?.fsPath, "--id", selection.id, selection.label] });
+        // Use pkgPath for installation (includes catalog prefix for catalog packages)
+        const result = await env.exec("flox", { argv: ["install", "--dir", env.workspaceUri?.fsPath, selection.pkgPath] });
         progress.report({ increment: 100 });
         if (result?.stderr && result.stderr.includes(`'${selection.label}' installed to environment`)) {
           env.displayMsg(`Package '${selection?.label}' installed successfully.`);
@@ -656,10 +661,14 @@ export async function activate(context: vscode.ExtensionContext) {
       if (pkg?.name && pkg?.pname && pkg.name !== pkg.pname) {
         version = '(' + pkg.name.replace(`${pkg.pname}-`, '') + ') ';
       }
+      // Use pkg_path for display (shows catalog prefix like "flox/package-name")
+      // Fall back to attr_path for non-catalog packages
+      const displayName = pkg?.pkg_path || pkg?.attr_path;
       return {
-        label: pkg?.attr_path,
+        label: displayName,
         description: `${version}${pkg?.description || ''}`,
         id: pkg?.attr_path,
+        pkgPath: pkg?.pkg_path || pkg?.attr_path,
       };
     }));
 
@@ -668,7 +677,7 @@ export async function activate(context: vscode.ExtensionContext) {
       return;
     }
 
-    const command = `flox show ${selection.label}`;
+    const command = `flox show ${selection.pkgPath}`;
     const terminal = vscode.window.createTerminal({ name: command });
     terminal.show(false);
     terminal.sendText(command, true);
