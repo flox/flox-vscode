@@ -141,8 +141,9 @@ suite('Happy Path Integration Tests', () => {
 
     // Clean up any existing .flox directory from previous test runs
     const floxDir = path.join(workspaceDir, '.flox');
+    console.log(`🧹 Setup floxDir: ${floxDir}`);
     if (fs.existsSync(floxDir)) {
-      console.log('🧹 Cleaning up existing .flox directory');
+      console.log(`🧹 Cleaning up existing .flox directory at: ${floxDir}`);
       fs.rmSync(floxDir, { recursive: true, force: true });
     }
 
@@ -176,10 +177,11 @@ suite('Happy Path Integration Tests', () => {
 
     // Clean up .flox directory after test
     const floxDir = path.join(workspaceDir, '.flox');
+    console.log(`🗑️  Teardown floxDir: ${floxDir}`);
     try {
       if (fs.existsSync(floxDir)) {
         fs.rmSync(floxDir, { recursive: true, force: true });
-        console.log(`🗑️  Cleaned up .flox directory`);
+        console.log(`🗑️  Cleaned up .flox directory at: ${floxDir}`);
       }
     } catch (error) {
       console.error(`❌ Cleanup failed:`, error);
