@@ -176,14 +176,15 @@ export async function activate(context: vscode.ExtensionContext) {
     setTimeout(async () => {
       if (!env.workspaceUri) { return; }
       if (result?.stdout) {
-        const action = await vscode.window.showInformationMessage(
+        // Non-blocking notification - don't await, use .then() to avoid blocking tests
+        vscode.window.showInformationMessage(
           'Flox environment created successfully!',
           'Learn More'
-        );
-
-        if (action === 'Learn More') {
-          vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs'));
-        }
+        ).then((action) => {
+          if (action === 'Learn More') {
+            vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs'));
+          }
+        });
       }
       await env.exec("flox", { argv: ["activate", "--dir", env.workspaceUri.fsPath, "--", "true"] });
       await env.reload();
@@ -213,14 +214,15 @@ export async function activate(context: vscode.ExtensionContext) {
           const envExists = env.context.workspaceState.get('flox.envExists', false);
           output.appendLine(`[STEP 1] envExists: ${envExists}`);
           if (!envExists) {
-            const action = await vscode.window.showErrorMessage(
+            // Non-blocking notification - don't await to avoid blocking tests
+            vscode.window.showErrorMessage(
               'No Flox environment found. Create one first.',
               'Create Environment'
-            );
-
-            if (action === 'Create Environment') {
-              await vscode.commands.executeCommand('flox.init');
-            }
+            ).then((action) => {
+              if (action === 'Create Environment') {
+                vscode.commands.executeCommand('flox.init');
+              }
+            });
             reject();
             return;
           }
@@ -621,24 +623,28 @@ export async function activate(context: vscode.ExtensionContext) {
     }
 
     if (!mcpAvailable) {
-      const action = await vscode.window.showWarningMessage(
+      // Non-blocking notification
+      vscode.window.showWarningMessage(
         'flox-mcp command not found in PATH. Install it in your Flox environment first.',
         'Learn More'
-      );
-      if (action === 'Learn More') {
-        vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs/tutorials/flox-agentic/'));
-      }
+      ).then((action) => {
+        if (action === 'Learn More') {
+          vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs/tutorials/flox-agentic/'));
+        }
+      });
       return;
     }
 
     if (!copilotInstalled) {
-      const action = await vscode.window.showWarningMessage(
+      // Non-blocking notification
+      vscode.window.showWarningMessage(
         'GitHub Copilot extension is not installed. Install it to use MCP features.',
         'Install Copilot'
-      );
-      if (action === 'Install Copilot') {
-        vscode.env.openExternal(vscode.Uri.parse('https://marketplace.visualstudio.com/items?itemName=GitHub.copilot'));
-      }
+      ).then((action) => {
+        if (action === 'Install Copilot') {
+          vscode.env.openExternal(vscode.Uri.parse('https://marketplace.visualstudio.com/items?itemName=GitHub.copilot'));
+        }
+      });
       return;
     }
 
@@ -652,17 +658,18 @@ export async function activate(context: vscode.ExtensionContext) {
         'Flox Agentic MCP server is configured! Use @flox in Copilot Chat to access Flox tools and resources.'
       );
     } else {
-      const action = await vscode.window.showErrorMessage(
+      // Non-blocking notification
+      vscode.window.showErrorMessage(
         'Failed to configure MCP server. This requires VSCode 1.102 or newer.',
         'Upgrade VSCode',
         'Learn More'
-      );
-
-      if (action === 'Upgrade VSCode') {
-        vscode.env.openExternal(vscode.Uri.parse('https://code.visualstudio.com/download'));
-      } else if (action === 'Learn More') {
-        vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs/tutorials/flox-agentic/'));
-      }
+      ).then((action) => {
+        if (action === 'Upgrade VSCode') {
+          vscode.env.openExternal(vscode.Uri.parse('https://code.visualstudio.com/download'));
+        } else if (action === 'Learn More') {
+          vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs/tutorials/flox-agentic/'));
+        }
+      });
     }
   });
 
@@ -717,31 +724,32 @@ export async function activate(context: vscode.ExtensionContext) {
       output.appendLine(`[STEP 4] Skipping activation (user preference: Never Activate)`);
       // Do nothing
     } else {
-      // No preference (undefined) - show popup
+      // No preference (undefined) - show popup (non-blocking)
       output.appendLine(`[STEP 4] Showing activation prompt to user`);
-      const selection = await vscode.window.showInformationMessage(
+      vscode.window.showInformationMessage(
         'A Flox environment was detected in this workspace. Would you like to activate it now?',
         'Always Activate',
         'Activate Once',
         'Not Now'
-      );
-      output.appendLine(`[STEP 4] User selected: ${selection}`);
+      ).then(async (selection) => {
+        output.appendLine(`[STEP 4] User selected: ${selection}`);
 
-      if (selection === 'Always Activate') {
-        await context.workspaceState.update('flox.autoActivate', true);
-        output.appendLine(`[STEP 4] Activating (Always Activate)`);
-        await vscode.commands.executeCommand('flox.activate');
-        output.appendLine(`[STEP 4] Activation command completed`);
-      } else if (selection === 'Activate Once') {
-        output.appendLine(`[STEP 4] Activating (Activate Once)`);
-        await vscode.commands.executeCommand('flox.activate');
-        output.appendLine(`[STEP 4] Activation command completed`);
-      } else if (selection === 'Not Now') {
-        output.appendLine(`[STEP 4] User chose Not Now`);
-      } else {
-        output.appendLine(`[STEP 4] User dismissed prompt`);
-      }
-      // Dismiss (undefined) - do nothing, popup will appear next time
+        if (selection === 'Always Activate') {
+          await context.workspaceState.update('flox.autoActivate', true);
+          output.appendLine(`[STEP 4] Activating (Always Activate)`);
+          await vscode.commands.executeCommand('flox.activate');
+          output.appendLine(`[STEP 4] Activation command completed`);
+        } else if (selection === 'Activate Once') {
+          output.appendLine(`[STEP 4] Activating (Activate Once)`);
+          await vscode.commands.executeCommand('flox.activate');
+          output.appendLine(`[STEP 4] Activation command completed`);
+        } else if (selection === 'Not Now') {
+          output.appendLine(`[STEP 4] User chose Not Now`);
+        } else {
+          output.appendLine(`[STEP 4] User dismissed prompt`);
+        }
+        // Dismiss (undefined) - do nothing, popup will appear next time
+      });
     }
   } else {
     output.appendLine(`[STEP 4] Skipping auto-activate (conditions not met)`);
