@@ -326,6 +326,13 @@ export async function activate(context: vscode.ExtensionContext) {
           progress.report({ message: 'Reloading VS Code to apply environment...', increment: 90 });
 
           // Now, reload the window or restart the extension host to apply the environment.
+          // Skip restart in test mode to avoid killing test runner
+          if (env.context.extensionMode === vscode.ExtensionMode.Test) {
+            output.appendLine(`[STEP 1] Skipping restart in test mode`);
+            resolve();
+            return;
+          }
+
           if (vscode.env.remoteName === undefined) {
             // For local environments, restarting the extension host is generally faster
             // and less disruptive than reloading the whole window.
