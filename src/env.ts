@@ -94,14 +94,8 @@ export default class Env implements vscode.Disposable {
         // Validate manifest first
         await this.validateManifest();
 
-        if (this.isEnvActive) {
-          // Active: full reactivation to capture new env vars
-          await this.reactivateEnvironment();
-        } else {
-          // Inactive: just refresh UI
-          await this.exec("flox", { argv: ["activate", "--dir", this.workspaceUri?.fsPath || '', "--", "true"] });
-          await this.reload();
-        }
+        // Refresh UI to show pending state (no auto-reactivation)
+        await this.reload();
       }, 500);
     });
 
@@ -187,21 +181,28 @@ export default class Env implements vscode.Disposable {
    */
   private mergePackages(lockExists: boolean) {
     this.packages = new Map();
+    this.log(`[MERGE] Starting package merge, lockExists=${lockExists}`);
 
-    // Get install IDs from lock file (these are ACTIVE)
+    // Get lock file's manifest.install section (the toml snapshot at lock time)
+    const lockManifestInstall = this.manifest?.manifest?.install || {};
+    this.log(`[MERGE] Lock manifest.install has ${Object.keys(lockManifestInstall).length} packages`);
+
+    // Get install IDs from lock file's resolved packages
     const lockInstallIds = new Set<string>();
     if (this.manifest?.packages) {
       for (const p of this.manifest.packages) {
         lockInstallIds.add(p.install_id);
       }
+      this.log(`[MERGE] Lock file has ${this.manifest.packages.length} resolved packages, ${lockInstallIds.size} unique install IDs`);
     }
 
-    // Get install IDs from toml file
+    // Get install IDs from current toml file
     const tomlInstallIds = new Set<string>();
     if (this.tomlManifest?.install) {
       for (const key of Object.keys(this.tomlManifest.install)) {
         tomlInstallIds.add(key);
       }
+      this.log(`[MERGE] Current TOML has ${tomlInstallIds.size} install IDs: ${[...tomlInstallIds].join(', ')}`);
     }
 
     // Build packages map for each system
@@ -209,13 +210,17 @@ export default class Env implements vscode.Disposable {
       const systemValue = System[system as keyof typeof System];
       const pkgsForSystem: Map<string, Package> = new Map();
 
-      // Add packages from lock file (ACTIVE)
+      // Add packages from lock file's resolved packages
       if (this.manifest?.packages) {
         for (const p of this.manifest.packages) {
           if (p.system === systemValue) {
-            // Check if this package has pending changes in toml
+            // Check if current toml differs from lock's manifest.install
             const tomlPkg = this.tomlManifest?.install?.[p.install_id];
-            const hasPendingChanges = tomlPkg && this.packageHasChanges(p, tomlPkg);
+            const hasPendingChanges = tomlPkg && this.packageHasChanges(p.install_id, tomlPkg, lockManifestInstall);
+
+            if (systemValue === this.system) {
+              this.log(`[MERGE] Package ${p.install_id}: hasPendingChanges=${hasPendingChanges}, state=${hasPendingChanges ? 'PENDING' : 'ACTIVE'}`);
+            }
 
             pkgsForSystem.set(p.install_id, {
               install_id: p.install_id,
@@ -231,11 +236,14 @@ export default class Env implements vscode.Disposable {
         }
       }
 
-      // Add packages only in toml (PENDING)
+      // Add packages only in current toml (not in lock) - these are new/pending
       if (this.tomlManifest?.install) {
         for (const [installId, tomlPkg] of Object.entries(this.tomlManifest.install)) {
           if (!lockInstallIds.has(installId)) {
             const pkg = tomlPkg as any;
+            if (systemValue === this.system) {
+              this.log(`[MERGE] Package ${installId} only in TOML (not in lock), marking PENDING`);
+            }
             pkgsForSystem.set(installId, {
               install_id: installId,
               system: systemValue,
@@ -252,20 +260,54 @@ export default class Env implements vscode.Disposable {
 
       this.packages.set(systemValue, pkgsForSystem);
     }
+
+    // Log final state for current system
+    const currentSystemPkgs = this.packages.get(this.system!);
+    if (currentSystemPkgs) {
+      this.log(`[MERGE] Final: ${currentSystemPkgs.size} packages for ${this.system}`);
+      for (const [id, pkg] of currentSystemPkgs) {
+        this.log(`[MERGE]   ${id}: ${pkg.state}`);
+      }
+    }
   }
 
   /**
-   * Check if a package has changes between lock and toml.
+   * Compare current toml install entry against lock file's manifest.install entry.
+   * This compares what the user has now vs what was locked at activation time.
    */
-  private packageHasChanges(lockPkg: any, tomlPkg: any): boolean {
-    // Compare pkg-path if specified in toml
-    if (tomlPkg['pkg-path'] && tomlPkg['pkg-path'] !== lockPkg.attr_path) {
+  private packageHasChanges(installId: string, tomlPkg: any, lockManifestInstall: any): boolean {
+    const lockPkg = lockManifestInstall?.[installId];
+
+    // If package doesn't exist in lock's manifest.install, it's new (pending)
+    if (!lockPkg) {
+      this.log(`[CHANGES] ${installId}: not in lock manifest.install, marking pending`);
       return true;
     }
-    // Compare version if specified in toml
-    if (tomlPkg.version && tomlPkg.version !== lockPkg.version) {
+
+    // Compare pkg-path
+    const tomlPkgPath = tomlPkg['pkg-path'];
+    const lockPkgPath = lockPkg['pkg-path'];
+    if (tomlPkgPath !== lockPkgPath) {
+      this.log(`[CHANGES] ${installId}: pkg-path differs: toml="${tomlPkgPath}" vs lock="${lockPkgPath}"`);
       return true;
     }
+
+    // Compare version
+    const tomlVersion = tomlPkg.version;
+    const lockVersion = lockPkg.version;
+    if (tomlVersion !== lockVersion) {
+      this.log(`[CHANGES] ${installId}: version differs: toml="${tomlVersion}" vs lock="${lockVersion}"`);
+      return true;
+    }
+
+    // Compare pkg-group
+    const tomlGroup = tomlPkg['pkg-group'];
+    const lockGroup = lockPkg['pkg-group'];
+    if (tomlGroup !== lockGroup) {
+      this.log(`[CHANGES] ${installId}: pkg-group differs: toml="${tomlGroup}" vs lock="${lockGroup}"`);
+      return true;
+    }
+
     return false;
   }
 
@@ -505,20 +547,23 @@ export default class Env implements vscode.Disposable {
     this.updateActivityBadge();
 
     // Check for services status
+    // IMPORTANT: Call flox services status directly, NOT through exec().
+    // exec() wraps commands in "flox activate --" when active, which would
+    // update the lock file if manifest.toml has changed - hiding pending state!
     if (hasServices === true) {
       this.log(`[RELOAD] Checking services status...`);
-      const result = await this.exec(
-        "flox",
-        { argv: ["services", "status", "--json", "--dir", this.workspaceUri?.fsPath || ''] },
-        (error) => {
-          // XXX: This is a hack to avoid showing an error message when the services are not started
-          //      Remove once this will be fixed in Flox cli
-          if (error?.message && error.message.includes("ERROR: Services not started or quit unexpectedly.")) {
-            return false;
-          }
-          return true;
-        },
-      );
+      let result: { stdout: string | Buffer; stderr: string | Buffer } | null = null;
+      try {
+        result = await promisify(execFile)('flox',
+          ['services', 'status', '--json', '--dir', this.workspaceUri?.fsPath || ''],
+          { cwd: this.workspaceUri?.fsPath }
+        );
+      } catch (error: any) {
+        // Silently ignore "services not started" error (expected state)
+        if (!error?.message?.includes("ERROR: Services not started or quit unexpectedly.")) {
+          this.logError('Failed to check services status', error);
+        }
+      }
       this.servicesStatus = new Map();
       if (result?.stdout) {
         const servicesJson = typeof result.stdout === 'string' ? result.stdout : result.stdout.toString();
@@ -797,26 +842,10 @@ export default class Env implements vscode.Disposable {
 
   /**
    * Update badge on all TreeViews based on environment active state.
-   * Shows a green checkmark when environment is active.
+   * Currently disabled - status bar shows environment state instead.
    */
   private updateActivityBadge() {
-    if (this.treeViews.length === 0) {
-      this.log('No TreeViews registered, skipping badge update');
-      return;
-    }
-
-    const badge: vscode.ViewBadge | undefined = this.isEnvActive
-      ? {
-        tooltip: 'Flox environment is active',
-        value: 1  // Show "1" to indicate active
-      }
-      : undefined;  // No badge when inactive
-
-    for (const treeView of this.treeViews) {
-      treeView.badge = badge;
-    }
-
-    this.log(`Activity badge ${this.isEnvActive ? 'set' : 'cleared'}`);
+    // Badge disabled - we use status bar to show environment state
   }
 
   public async exec(command: string, options: CommandExecOptions, handleError?: (error: any) => boolean) {

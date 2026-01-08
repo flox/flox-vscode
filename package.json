@@ -102,11 +102,6 @@
       },
       {
         "view": "floxInfoView",
-        "contents": "Your environment is active!",
-        "when": "flox.isInstalled && flox.envActive"
-      },
-      {
-        "view": "floxInfoView",
         "contents": "[Install a package](command:flox.install)\n[Edit manifest.toml](command:flox.edit)",
         "when": "flox.isInstalled && flox.envExists"
       },

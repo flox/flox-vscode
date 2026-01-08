@@ -1261,7 +1261,7 @@ MY_VAR = "test_value"
       ];
     });
 
-    test('should set badge when environment becomes active', () => {
+    test('should not set badge (disabled - using status bar instead)', () => {
       const workspaceUri = vscode.Uri.file(tempDir);
       const env = new Env(mockContext, workspaceUri);
       env.registerTreeViews(mockTreeViews);
@@ -1269,29 +1269,26 @@ MY_VAR = "test_value"
       env.isEnvActive = true;
       env['updateActivityBadge']();  // Call private method
 
+      // Badge is disabled - should remain undefined (status bar shows state now)
       for (const treeView of mockTreeViews) {
-        assert.ok(treeView.badge);
-        assert.strictEqual(treeView.badge.value, 1);
-        assert.strictEqual(treeView.badge.tooltip, 'Flox environment is active');
+        assert.strictEqual(treeView.badge, undefined);
       }
 
       env.dispose();
     });
 
-    test('should clear badge when environment is deactivated', () => {
+    test('should not change badge on deactivate (disabled - using status bar instead)', () => {
       const workspaceUri = vscode.Uri.file(tempDir);
       const env = new Env(mockContext, workspaceUri);
       env.registerTreeViews(mockTreeViews);
 
-      // Set active first
       env.isEnvActive = true;
       env['updateActivityBadge']();
-      assert.ok(mockTreeViews[0].badge);
 
-      // Then deactivate
       env.isEnvActive = false;
       env['updateActivityBadge']();
 
+      // Badge is disabled - should remain undefined
       for (const treeView of mockTreeViews) {
         assert.strictEqual(treeView.badge, undefined);
       }
