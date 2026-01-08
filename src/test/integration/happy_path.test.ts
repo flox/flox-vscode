@@ -232,8 +232,8 @@ suite('Happy Path Integration Tests', () => {
     const lockPath = path.join(workspaceDir, '.flox', 'env', 'manifest.lock');
 
     // Execute flox.activate command
-    // NOTE: In test environment, this won't restart the extension host
-    // but it will spawn the activation process
+    // NOTE: In test mode (extensionMode === Test), the extension skips the
+    // restart/reload step to avoid killing the test runner
     await vscode.commands.executeCommand('flox.activate');
 
     // Wait for manifest.lock to be created (activation creates this)
