@@ -226,6 +226,11 @@ export async function activate(context: vscode.ExtensionContext) {
     output.appendLine(`[STEP 3] Skipping reload (already done in post-activation flow)`);
   }
 
+  // Validate manifest.toml on initial load
+  output.appendLine(`[STEP 3] Validating manifest.toml`);
+  await env.validateManifest();
+  output.appendLine(`[STEP 3] Validation complete`);
+
   // Update auto-activate preference context key
   await env.updateAutoActivatePrefContext();
 
