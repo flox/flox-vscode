@@ -604,6 +604,16 @@ export default class Env implements vscode.Disposable {
     }
 
     // Layer 2: Schema Validation (Flox CLI)
+    // Check if env.json exists (required for valid Flox environment)
+    // This prevents validation from running on incomplete/corrupted environments
+    const envJsonFile = vscode.Uri.joinPath(this.workspaceUri, '.flox', 'env.json');
+    if (!(await this.fileExists(envJsonFile))) {
+      // Environment is incomplete/corrupted - skip validation silently
+      this.log(`[VALIDATION] Skipping - env.json not found (incomplete environment)`);
+      this.diagnosticCollection.clear();
+      return;
+    }
+
     // Run "flox list" to validate the manifest against Flox's schema
     try {
       const result = await promisify(execFile)('flox',
