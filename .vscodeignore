@@ -16,4 +16,12 @@ scripts/**
 assets/**
 !assets/icon.png
 !assets/icon.svg
+!assets/flox-icons.woff2
+.claude/**
+.fantasticonrc.json
+.mocharc-ui.json
+test-fixtures/**
+TEST_PLAN.md
+out/test/**
+doc/**
 w/**

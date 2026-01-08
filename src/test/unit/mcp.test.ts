@@ -30,7 +30,7 @@ suite('MCP Unit Tests', () => {
       const definitions = await provider.provideMcpServerDefinitions(token);
 
       assert.strictEqual(definitions.length, 1);
-      assert.strictEqual(definitions[0].label, 'Flox Agentic');
+      assert.strictEqual(definitions[0].label, 'Flox MCP');
       assert.strictEqual(definitions[0].command, 'flox-mcp');
       assert.ok(Array.isArray(definitions[0].args));
       assert.strictEqual(definitions[0].args.length, 0);

@@ -102,7 +102,7 @@ Access these via Command Palette (Cmd+Shift+P / Ctrl+Shift+P):
 - `Flox: Edit` - Open manifest in editor
 - `Flox: Search` - Search for packages in Flox catalog
 - `Flox: Show service logs` - Open terminal with live service logs
-- `Flox: Configure Flox Agentic MCP Server` - Set up MCP for Copilot
+- `Flox: Configure Flox MCP Server` - Set up MCP for Copilot
 - `Flox: Install Flox` - Open installation page (shown when Flox not installed)
 - `Flox: Upgrade Flox` - Open upgrade instructions (shown when update available)
 
@@ -132,7 +132,7 @@ The extension integrates with GitHub Copilot via the Model Context Protocol (MCP
 1. Activate your Flox environment
 2. If `flox-mcp` is detected, a notification will appear
 3. Click "Configure MCP" to enable the integration
-4. Or run Command Palette → "Flox: Configure Flox Agentic MCP Server"
+4. Or run Command Palette → "Flox: Configure Flox MCP Server"
 
 ### What You Get
 - Flox-specific tools available in Copilot Chat agent mode

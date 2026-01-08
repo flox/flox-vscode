@@ -49,6 +49,9 @@ export default class Env implements vscode.Disposable {
   private _isFloxInstalled: boolean = false;
   private diagnosticCollection: vscode.DiagnosticCollection;
 
+  // Status bar update function (set from extension.ts)
+  updateStatusBar?: () => void;
+
   constructor(
     ctx: vscode.ExtensionContext,
     workspaceUri?: vscode.Uri,
@@ -378,6 +381,39 @@ export default class Env implements vscode.Disposable {
     return Array.from(serviceNames);
   }
 
+  /**
+   * Check if there are any pending changes (packages, variables, or services).
+   * Returns true if any item has PENDING state.
+   */
+  hasPendingChanges(): boolean {
+    // Check packages
+    if (this.packages) {
+      const systemPkgs = this.packages.get(this.system!) || new Map();
+      for (const [, pkg] of systemPkgs) {
+        if (pkg.state === ItemState.PENDING) {
+          return true;
+        }
+      }
+    }
+
+    // Check variables
+    for (const [, variable] of this.variables) {
+      if (variable.state === ItemState.PENDING) {
+        return true;
+      }
+    }
+
+    // Check services
+    const serviceNames = this.getMergedServiceNames();
+    for (const name of serviceNames) {
+      if (this.getServiceState(name, this.lockExists) === ItemState.PENDING) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   // initialize Flox environment
   async reload() {
     this.log('Reloading environment...');
@@ -553,6 +589,12 @@ export default class Env implements vscode.Disposable {
     } else {
       this.log(`[RELOAD] No manifest, skipping view refresh`);
     }
+
+    // Update status bar
+    if (this.updateStatusBar) {
+      this.updateStatusBar();
+    }
+
     this.log(`[RELOAD] Reload complete!`);
   }
 
@@ -1344,7 +1386,7 @@ export default class Env implements vscode.Disposable {
 
     // Show notification with action button
     const action = await vscode.window.showInformationMessage(
-      'Flox Agentic MCP server is available! Configure it to enhance AI coding with Copilot.',
+      'Flox MCP server is available! Configure it to enhance AI coding with Copilot.',
       'Configure MCP',
       'Learn More'
     );
@@ -1393,12 +1435,12 @@ export default class Env implements vscode.Disposable {
     // Show notification with action buttons
     const action = await vscode.window.showInformationMessage(
       'Flox MCP server not found. Would you like to install it to enable AI coding assistance with Copilot?',
-      'Install MCP Server',
+      'Install Flox MCP Server',
       'Learn More',
       'Not Now'
     );
 
-    if (action === 'Install MCP Server') {
+    if (action === 'Install Flox MCP Server') {
       // Install with progress notification
       return await vscode.window.withProgress({
         location: vscode.ProgressLocation.Notification,
@@ -1415,7 +1457,8 @@ export default class Env implements vscode.Disposable {
           progress.report({ increment: 100 });
 
           const stderr = result?.stderr?.toString() || '';
-          if (stderr && stderr.includes("installed to environment")) {
+          // Check for success - either "installed to environment" or warning (⚠️ means it worked with warning)
+          if (stderr && (stderr.includes("installed to environment") || stderr.includes("⚠️"))) {
             this.displayMsg('Flox MCP server installed successfully!');
 
             // Re-check MCP availability
@@ -1427,6 +1470,19 @@ export default class Env implements vscode.Disposable {
             throw new Error(stderr || 'Installation failed');
           }
         } catch (error: any) {
+          // Check if this is actually a success with a warning (non-zero exit but package installed)
+          // Flox CLI uses ⚠️ emoji for warnings vs errors
+          const errorMsg = error.message || '';
+          if (errorMsg.includes("⚠️")) {
+            this.displayMsg('Flox MCP server installed successfully!');
+
+            // Re-check MCP availability
+            const mcpNowAvailable = await this.checkFloxMcpAvailable();
+            await this.setFloxMcpAvailable(mcpNowAvailable);
+
+            return { installed: true, mcpAvailable: mcpNowAvailable };
+          }
+
           this.displayError(`Failed to install MCP server: ${error.message}`);
           // Reset the prompt flag so user can try again
           await this.context.workspaceState.update('flox.mcpInstallPromptShown', false);

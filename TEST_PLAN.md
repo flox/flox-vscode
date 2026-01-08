@@ -128,6 +128,34 @@ This document contains manual test cases to verify after each release. Run throu
 - [ ] Sidebar shows "Activate" button (not "Activate & Restart")
 - [ ] New terminals don't have Flox environment variables
 
+### TEST-054: Status Bar Indicator
+**Prerequisites:** Workspace with Flox environment
+
+- [ ] Status bar shows Flox logo icon
+- [ ] When environment NOT activated: shows "Not Activated" (no background color)
+- [ ] Activate environment
+- [ ] Status bar shows "Activated" with green background
+- [ ] Edit `manifest.toml` to add a new package (without reactivating)
+- [ ] Status bar shows "Pending" with yellow/warning background
+- [ ] Tooltip explains pending changes need reactivation
+- [ ] Click status bar item → Flox sidebar opens/focuses
+- [ ] Reactivate environment → status returns to "Activated"
+
+### TEST-055: Status Bar Visibility
+**Prerequisites:** Various workspace states
+
+- [ ] Workspace WITHOUT `.flox/` directory: status bar hidden
+- [ ] Workspace WITH `.flox/` directory: status bar visible
+- [ ] Initialize new environment → status bar appears
+
+### TEST-056: Deactivate Resets Always-Activate Preference
+**Prerequisites:** Workspace with "Always Activate" preference set
+
+- [ ] Set "Always Activate" preference (click it when prompted)
+- [ ] Run "Flox: Deactivate" command
+- [ ] Close and reopen workspace
+- [ ] Activation prompt appears again (preference was reset)
+
 ---
 
 ## 4. Environment Initialization
@@ -352,7 +380,7 @@ This document contains manual test cases to verify after each release. Run throu
 **Prerequisites:** VSCode 1.102+, GitHub Copilot installed, `flox-mcp` in PATH
 
 - [ ] Activate Flox environment
-- [ ] Notification appears: "Flox Agentic MCP server is available!"
+- [ ] Notification appears: "Flox MCP server is available!"
 - [ ] "Configure MCP" and "Learn More" buttons visible
 
 ### TEST-036: Configure MCP
@@ -541,7 +569,7 @@ This document contains manual test cases to verify after each release. Run throu
 |----------|-------|------|------|
 | Installation Detection | 2 | | |
 | Version Update Check | 2 | | |
-| Activation Flow | 9 | | |
+| Activation Flow | 12 | | |
 | Environment Init | 1 | | |
 | Package Management | 4 | | |
 | Environment Variables | 3 | | |
@@ -554,7 +582,7 @@ This document contains manual test cases to verify after each release. Run throu
 | Manifest Validation | 4 | | |
 | Notification Quality | 2 | | |
 | Edge Cases | 3 | | |
-| **TOTAL** | **54** | | |
+| **TOTAL** | **57** | | |
 
 ---
 

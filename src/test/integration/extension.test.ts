@@ -170,7 +170,7 @@ suite('Extension Integration Tests', () => {
     });
 
     test('flox.configureMcp command should be registered', async () => {
-      // Configures Flox Agentic MCP server
+      // Configures Flox MCP server
       const exists = await commandExists('flox.configureMcp');
       assert.ok(exists, 'flox.configureMcp command should be registered');
     });

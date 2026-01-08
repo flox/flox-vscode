@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 /**
- * MCP Server Definition Provider for Flox Agentic.
+ * MCP Server Definition Provider for Flox.
  *
  * This provider tells VSCode how to start the flox-mcp server.
  * When Copilot needs to use the server, VSCode calls provideMcpServerDefinitions().
@@ -23,7 +23,7 @@ export class FloxMcpProvider implements vscode.McpServerDefinitionProvider<any> 
     // flox-mcp communicates via stdin/stdout
     // Using any type since MCP API types may not be fully available in current vscode types
     return [{
-      label: 'Flox Agentic',
+      label: 'Flox MCP',
       command: 'flox-mcp',
       args: [],
       cwd: this.workspaceUri,

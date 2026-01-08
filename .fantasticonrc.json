@@ -1,0 +1,14 @@
+{
+  "inputDir": "./assets/icons",
+  "outputDir": "./assets",
+  "name": "flox-icons",
+  "fontTypes": ["woff2"],
+  "assetTypes": ["json"],
+  "normalize": true,
+  "fontHeight": 1000,
+  "descent": 0,
+  "prefix": "flox",
+  "codepoints": {
+    "flox": 57344
+  }
+}
