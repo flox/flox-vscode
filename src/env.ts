@@ -47,6 +47,7 @@ export default class Env implements vscode.Disposable {
   private manifestChangeTimeout: NodeJS.Timeout | undefined;
   private isReactivating: boolean = false;
   private _isFloxInstalled: boolean = false;
+  private diagnosticCollection: vscode.DiagnosticCollection;
 
   constructor(
     ctx: vscode.ExtensionContext,
@@ -55,6 +56,7 @@ export default class Env implements vscode.Disposable {
   ) {
     this.context = ctx;
     this.output = output;
+    this.diagnosticCollection = vscode.languages.createDiagnosticCollection('flox');
     this.error.event((e) => this.onError(e));
     if (!workspaceUri && vscode.workspace.workspaceFolders) {
       this.workspaceUri = vscode.workspace.workspaceFolders[0].uri;
@@ -66,11 +68,13 @@ export default class Env implements vscode.Disposable {
     this.manifestWatcher = vscode.workspace.createFileSystemWatcher("**/.flox/env/manifest.toml", false, false, false);
     this.manifestWatcher.onDidDelete(async _ => {
       this.log('manifest.toml file deleted');
+      this.diagnosticCollection.clear();
       await this.reload();
     });
     this.manifestWatcher.onDidCreate(async _ => {
       this.log('manifest.toml file created');
       await this.reload();
+      await this.validateManifest();
     });
     this.manifestWatcher.onDidChange(async _ => {
       this.log('manifest.toml file changed');
@@ -83,6 +87,9 @@ export default class Env implements vscode.Disposable {
       // Debounce: wait 500ms after last change
       this.manifestChangeTimeout = setTimeout(async () => {
         this.manifestChangeTimeout = undefined;
+
+        // Validate manifest first
+        await this.validateManifest();
 
         if (this.isEnvActive) {
           // Active: full reactivation to capture new env vars
@@ -549,6 +556,90 @@ export default class Env implements vscode.Disposable {
     this.log(`[RELOAD] Reload complete!`);
   }
 
+  /**
+   * Validate manifest.toml file using two-layer approach:
+   * 1. TOML syntax validation (smol-toml) - provides line/column numbers
+   * 2. Schema validation (Flox CLI) - validates Flox-specific rules
+   */
+  async validateManifest() {
+    if (!this.workspaceUri) {
+      return;
+    }
+
+    const manifestFile = vscode.Uri.joinPath(this.workspaceUri, '.flox', 'env', 'manifest.toml');
+
+    // Check if file exists
+    if (!(await this.fileExists(manifestFile))) {
+      // No manifest file, clear any existing diagnostics
+      this.diagnosticCollection.clear();
+      return;
+    }
+
+    const diagnostics: vscode.Diagnostic[] = [];
+
+    // Layer 1: TOML Syntax Validation (smol-toml)
+    try {
+      const data = await fs.readFile(manifestFile.fsPath, 'utf-8');
+      let TOML = await import('smol-toml');
+      TOML.parse(data);
+    } catch (e: any) {
+      // smol-toml provides line, column, and message for syntax errors
+      if (e.line && e.column && e.message) {
+        const line = e.line - 1; // Convert to 0-based
+        const column = e.column - 1; // Convert to 0-based
+        const range = new vscode.Range(line, column, line, column + 10);
+        const diagnostic = new vscode.Diagnostic(
+          range,
+          `TOML syntax error: ${e.message}`,
+          vscode.DiagnosticSeverity.Error
+        );
+        diagnostic.source = 'Flox (TOML)';
+        diagnostics.push(diagnostic);
+
+        // Set diagnostics and return early (no point validating schema if syntax is broken)
+        this.diagnosticCollection.set(manifestFile, diagnostics);
+        this.log(`[VALIDATION] TOML syntax error at line ${e.line}, column ${e.column}: ${e.message}`);
+        return;
+      }
+    }
+
+    // Layer 2: Schema Validation (Flox CLI)
+    // Run "flox list" to validate the manifest against Flox's schema
+    try {
+      const result = await promisify(execFile)('flox',
+        ['list', '--dir', this.workspaceUri.fsPath],
+        { cwd: this.workspaceUri.fsPath }
+      );
+      // Success - manifest is valid!
+      this.diagnosticCollection.clear();
+      this.log(`[VALIDATION] Manifest is valid`);
+    } catch (error: any) {
+      // Flox CLI found a schema error
+      const stderr = error.stderr?.toString() || error.message;
+
+      // Extract the actual error message (remove "❌ ERROR: Failed to parse manifest:" prefix)
+      let errorMessage = stderr;
+      const errorPrefix = '❌ ERROR: Failed to parse manifest:';
+      if (stderr.includes(errorPrefix)) {
+        errorMessage = stderr.split(errorPrefix)[1]?.trim() || stderr;
+      }
+
+      // Create diagnostic at the top of the file (line 0)
+      // We don't have line numbers from flox, so we point to the beginning
+      const range = new vscode.Range(0, 0, 0, 100);
+      const diagnostic = new vscode.Diagnostic(
+        range,
+        `Flox schema error: ${errorMessage}`,
+        vscode.DiagnosticSeverity.Error
+      );
+      diagnostic.source = 'Flox (Schema)';
+      diagnostics.push(diagnostic);
+
+      this.diagnosticCollection.set(manifestFile, diagnostics);
+      this.log(`[VALIDATION] Schema validation failed: ${errorMessage}`);
+    }
+  }
+
   dispose() {
     // Clear any pending reactivation timer
     if (this.manifestChangeTimeout) {
@@ -557,6 +648,7 @@ export default class Env implements vscode.Disposable {
     }
     this.manifestWatcher.dispose();
     this.manifestLockWatcher.dispose();
+    this.diagnosticCollection.dispose();
     // Kill the activate process to prevent orphaned sleep processes
     this.killActivateProcess(true);
   }
