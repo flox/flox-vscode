@@ -117,6 +117,49 @@ export async function activate(context: vscode.ExtensionContext) {
   // Add to subscriptions for cleanup
   context.subscriptions.push(installTreeView, varsTreeView, servicesTreeView);
 
+  // Create status bar item for environment state
+  const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+  statusBarItem.command = 'workbench.view.extension.flox'; // Focus Flox sidebar
+  context.subscriptions.push(statusBarItem);
+
+  /**
+   * Update status bar based on environment state.
+   * States:
+   * - Not Activated: env exists but not activated (gray)
+   * - Active: env activated, no pending changes (green)
+   * - Pending: active but has pending changes (yellow)
+   */
+  function updateStatusBar() {
+    const envExists = context.workspaceState.get('flox.envExists', false);
+
+    if (!envExists) {
+      statusBarItem.hide();
+      return;
+    }
+
+    const envActive = env.isEnvActive;
+    const hasPending = env.hasPendingChanges();
+
+    if (!envActive) {
+      statusBarItem.text = '$(flox-logo) Not Activated';
+      statusBarItem.backgroundColor = undefined;
+      statusBarItem.tooltip = 'Flox environment detected but not activated. Click to open Flox sidebar.';
+    } else if (hasPending) {
+      statusBarItem.text = '$(flox-logo) Pending';
+      statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+      statusBarItem.tooltip = 'Flox environment has pending changes. Reactivate to apply changes.';
+    } else {
+      statusBarItem.text = '$(flox-logo) Activated';
+      statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.prominentBackground');
+      statusBarItem.tooltip = 'Flox environment is activated. Click to open Flox sidebar.';
+    }
+
+    statusBarItem.show();
+  }
+
+  // Store updateStatusBar function in env for access from other parts
+  env.updateStatusBar = updateStatusBar;
+
   // Check if we just activated and need to spawn the background process.
   const justActivated = context.workspaceState.get('flox.justActivated', false);
   output.appendLine(`[STEP 2] Checking justActivated flag: ${justActivated}`);
@@ -362,6 +405,15 @@ export async function activate(context: vscode.ExtensionContext) {
   });
 
   env.registerCommand('flox.deactivate', async () => {
+    // If auto-activate is "Always", reset it so the prompt shows again
+    // (user explicitly deactivated, so they probably don't want auto-activate)
+    const autoActivate = context.workspaceState.get('flox.autoActivate');
+    if (autoActivate === true) {
+      await context.workspaceState.update('flox.autoActivate', undefined);
+      await env.updateAutoActivatePrefContext();
+      output.appendLine('Reset auto-activate preference (user explicitly deactivated)');
+    }
+
     // Terminate the background activation process.
     await env.killActivateProcess();
 
@@ -722,15 +774,56 @@ export async function activate(context: vscode.ExtensionContext) {
     }
 
     if (!mcpAvailable) {
-      // Non-blocking notification
-      vscode.window.showWarningMessage(
-        'flox-mcp command not found in PATH. Install it in your Flox environment first.',
+      // Offer to install MCP server
+      const action = await vscode.window.showWarningMessage(
+        'Flox MCP server not found. Would you like to install it?',
+        'Install Flox MCP Server',
         'Learn More'
-      ).then((action) => {
-        if (action === 'Learn More') {
-          vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs/tutorials/flox-agentic/'));
-        }
-      });
+      );
+
+      if (action === 'Install Flox MCP Server') {
+        // Install with progress notification
+        await vscode.window.withProgress({
+          location: vscode.ProgressLocation.Notification,
+          title: 'Installing Flox MCP server...',
+          cancellable: false,
+        }, async (progress) => {
+          try {
+            progress.report({ message: 'Running flox install...', increment: 30 });
+
+            const result = await env.exec("flox", {
+              argv: ["install", "flox/flox-mcp-server", "--dir", env.workspaceUri?.fsPath || ""]
+            });
+
+            progress.report({ increment: 100 });
+
+            const stderr = result?.stderr?.toString() || '';
+            // Check for success - either "installed to environment" or warning (⚠️ means it worked with warning)
+            if (stderr && (stderr.includes("installed to environment") || stderr.includes("⚠️"))) {
+              vscode.window.showInformationMessage('Flox MCP server installed successfully! Run this command again to configure it.');
+              // Update MCP availability
+              const mcpNowAvailable = await env.checkFloxMcpAvailable();
+              await env.setFloxMcpAvailable(mcpNowAvailable);
+            } else {
+              throw new Error(stderr || 'Installation failed');
+            }
+          } catch (error: any) {
+            // Check if this is actually a success with a warning (non-zero exit but package installed)
+            // Flox CLI uses ⚠️ emoji for warnings vs errors
+            const errorMsg = error.message || '';
+            if (errorMsg.includes("⚠️")) {
+              vscode.window.showInformationMessage('Flox MCP server installed successfully! Run this command again to configure it.');
+              // Update MCP availability
+              const mcpNowAvailable = await env.checkFloxMcpAvailable();
+              await env.setFloxMcpAvailable(mcpNowAvailable);
+            } else {
+              vscode.window.showErrorMessage(`Failed to install MCP server: ${error.message}`);
+            }
+          }
+        });
+      } else if (action === 'Learn More') {
+        vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs/tutorials/flox-agentic/'));
+      }
       return;
     }
 
@@ -754,7 +847,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
     if (mcpProvider) {
       vscode.window.showInformationMessage(
-        'Flox Agentic MCP server is configured! Use @flox in Copilot Chat to access Flox tools and resources.'
+        'Flox MCP server is configured! Use @flox in Copilot Chat to access Flox tools and resources.'
       );
     } else {
       // Non-blocking notification

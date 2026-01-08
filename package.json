@@ -39,12 +39,27 @@
     }
   },
   "contributes": {
+    "icons": {
+      "flox-logo": {
+        "description": "Flox logo icon",
+        "default": {
+          "fontPath": "assets/flox-icons.woff2",
+          "fontCharacter": ""
+        }
+      }
+    },
     "languages": [
       {
         "id": "toml",
-        "aliases": ["TOML"],
-        "extensions": [".toml"],
-        "filenames": ["manifest.toml"],
+        "aliases": [
+          "TOML"
+        ],
+        "extensions": [
+          ".toml"
+        ],
+        "filenames": [
+          "manifest.toml"
+        ],
         "configuration": "./language-configuration.json"
       }
     ],
@@ -92,7 +107,7 @@
       },
       {
         "view": "floxInfoView",
-        "contents": "Find and install a package.\n[Install a package](command:flox.install)",
+        "contents": "Find and install a package.\n[Install a package](command:flox.install)\n[Edit manifest.toml](command:flox.edit)",
         "when": "flox.isInstalled && flox.envExists"
       },
       {
@@ -117,7 +132,7 @@
       },
       {
         "view": "floxInfoView",
-        "contents": "Enhance AI coding with Flox Agentic integration.\n\n[Configure MCP Server](command:flox.configureMcp)",
+        "contents": "Enhance AI coding with Flox MCP integration.\n\n[Configure MCP Server](command:flox.configureMcp)",
         "when": "flox.isInstalled && flox.envActive && flox.copilotInstalled && flox.mcpAvailable"
       },
       {
@@ -136,7 +151,7 @@
       "flox": [
         {
           "id": "floxInfoView",
-          "name": "Search & Install packages"
+          "name": "Commands"
         },
         {
           "id": "floxInstallView",
@@ -249,7 +264,7 @@
       {
         "command": "flox.configureMcp",
         "category": "Flox",
-        "title": "Configure Flox Agentic MCP Server"
+        "title": "Configure Flox MCP Server"
       },
       {
         "command": "flox.resetAutoActivate",
@@ -408,6 +423,7 @@
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.7.1",
     "eslint": "^9.39.2",
+    "fantasticon": "^4.1.0",
     "ovsx": "^0.10.7",
     "typescript": "^5.9.3",
     "vscode-extension-tester": "^8.19.0"
