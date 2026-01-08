@@ -617,6 +617,14 @@ export default class Env implements vscode.Disposable {
       // Flox CLI found a schema error
       const stderr = error.stderr?.toString() || error.message;
 
+      // Skip validation if environment is corrupted/incomplete (test artifact)
+      // This can happen during test cleanup when .flox dir is partially deleted
+      if (stderr.includes('unable to locate') || stderr.includes('corrupt environment')) {
+        this.log(`[VALIDATION] Skipping validation - environment incomplete or corrupt`);
+        this.diagnosticCollection.clear();
+        return;
+      }
+
       // Extract the actual error message (remove "❌ ERROR: Failed to parse manifest:" prefix)
       let errorMessage = stderr;
       const errorPrefix = '❌ ERROR: Failed to parse manifest:';
