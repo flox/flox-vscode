@@ -107,7 +107,7 @@
       },
       {
         "view": "floxInfoView",
-        "contents": "Find and install a package.\n[Install a package](command:flox.install)\n[Edit manifest.toml](command:flox.edit)",
+        "contents": "[Install a package](command:flox.install)\n[Edit manifest.toml](command:flox.edit)",
         "when": "flox.isInstalled && flox.envExists"
       },
       {
