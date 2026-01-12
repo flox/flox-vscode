@@ -412,16 +412,16 @@
   "devDependencies": {
     "@types/node": "25.x",
     "@types/vscode": "*",
-    "@typescript-eslint/eslint-plugin": "^8.50.1",
+    "@typescript-eslint/eslint-plugin": "^8.52.0",
     "@typescript-eslint/parser": "^8.32.1",
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.7.1",
     "eslint": "^9.39.2",
     "fantasticon": "^4.1.0",
-    "ovsx": "^0.10.7",
+    "ovsx": "^0.10.8",
     "typescript": "^5.9.3",
-    "vscode-extension-tester": "^8.19.0"
+    "vscode-extension-tester": "^8.21.0"
   },
   "dependencies": {
     "smol-toml": "^1.6.0"
