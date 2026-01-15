@@ -14,6 +14,8 @@
 
 ## Features
 
+🌐 **Remote Development** - Works with Remote SSH, Dev Containers, and WSL
+🤖 **AI Integration** - MCP server for GitHub Copilot and AI assistants
 ✨ **Sidebar UI** - Manage your Flox environment directly from VSCode's sidebar
 📦 **Package Management** - Install, upgrade, and remove packages with one click
 🔧 **Environment Variables** - View and manage environment variables
@@ -25,8 +27,9 @@
 🔄 **Auto-Reactivate** - Environment refreshes when manifest.toml changes
 📋 **Service Logs** - View real-time logs for running services
 🐛 **Debug Output** - Detailed logs in the Output panel for troubleshooting
-🤖 **MCP Integration** - AI-powered tools for GitHub Copilot users
 ✅ **Update Checks** - Notifies when newer Flox versions are available
+🎨 **Status Bar** - Shows active environment with custom Flox icon
+📝 **TOML Support** - Syntax highlighting and validation for manifest.toml
 
 ## Installation
 
@@ -34,7 +37,7 @@
 - **Flox**: Install from [flox.dev/docs/install-flox](https://flox.dev/docs/install-flox/)
 - **VSCode**: Version 1.87.0 or higher
 
-> **Note:** If Flox is not installed, the extension will display a message with a link to the installation guide. Once Flox is installed, reload VSCode to start using the extension.
+> **Note:** If Flox is not installed, the extension will display a message with a link to the installation guide.
 
 ### From VSCode Marketplace
 1. Open VSCode
@@ -71,7 +74,7 @@ flox install nodejs python3 git
 1. Open a project with a Flox environment (`.flox/` directory)
 2. Open Command Palette (Cmd+Shift+P / Ctrl+Shift+P)
 3. Run `Flox: Activate`
-4. VSCode will reload with the environment active
+4. Environment activates in background and terminals get environment variables
 
 **Installing Packages:**
 1. Open the Flox sidebar view
@@ -94,7 +97,7 @@ flox install nodejs python3 git
 Access these via Command Palette (Cmd+Shift+P / Ctrl+Shift+P):
 
 - `Flox: Init` - Create a new Flox environment in current workspace
-- `Flox: Activate` - Activate the Flox environment (reloads VSCode)
+- `Flox: Activate` - Activate the Flox environment
 - `Flox: Deactivate` - Deactivate the current environment
 - `Flox: Install` - Install a package
 - `Flox: Uninstall` - Remove a package
@@ -141,13 +144,16 @@ The extension integrates with GitHub Copilot via the Model Context Protocol (MCP
 
 ## FAQ
 
-### Why do you need to restart VSCode when activating Flox environment?
+### How does environment activation work?
 
-This is needed to ensure the Flox environment is loaded first and software from the Flox environment will be in the `$PATH` for other VSCode extensions to use.
+The extension uses a background process for activation (no VSCode restart required!). This enables:
+- **Remote SSH** - Works with remote servers
+- **Dev Containers** - Works inside containers
+- **WSL** - Works with Windows Subsystem for Linux
 
 The extension:
 1. Spawns a background `flox activate` process
-2. Captures all environment variables
+2. Captures all environment variables via IPC
 3. Applies them to VSCode's integrated terminal
 4. Ensures tools like Node.js, Python, etc. are available to other extensions
 
