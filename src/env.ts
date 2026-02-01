@@ -5,6 +5,25 @@ import { promisify } from 'util';
 import { spawn, execFile, ExecOptions, ChildProcess } from 'child_process';
 import { View, System, Packages, Package, Services, ItemState, Variable } from './config';
 
+/** Append an invocation source tag, preserving any existing sources. */
+function appendInvocationSource(
+  existing: string | undefined,
+  source: string
+): string {
+  return existing ? `${existing},${source}` : source;
+}
+
+/** Build env for flox subprocess calls with invocation source set. */
+function floxInvocationEnv(): NodeJS.ProcessEnv {
+  return {
+    ...process.env,
+    FLOX_INVOCATION_SOURCE: appendInvocationSource(
+      process.env.FLOX_INVOCATION_SOURCE,
+      'vscode.plugin'
+    ),
+  };
+}
+
 const EDITORS: { [key: string]: string } = {
   "vscodium": "codium",
   "visual studio code": "code",
@@ -556,7 +575,7 @@ export default class Env implements vscode.Disposable {
       try {
         result = await promisify(execFile)('flox',
           ['services', 'status', '--json', '--dir', this.workspaceUri?.fsPath || ''],
-          { cwd: this.workspaceUri?.fsPath }
+          { env: floxInvocationEnv(), cwd: this.workspaceUri?.fsPath }
         );
       } catch (error: any) {
         // Silently ignore "services not started" error (expected state)
@@ -705,7 +724,7 @@ export default class Env implements vscode.Disposable {
     try {
       const result = await promisify(execFile)('flox',
         ['list', '--dir', this.workspaceUri.fsPath],
-        { cwd: this.workspaceUri.fsPath }
+        { env: floxInvocationEnv(), cwd: this.workspaceUri.fsPath }
       );
       // Success - manifest is valid!
       this.diagnosticCollection.clear();
@@ -849,7 +868,7 @@ export default class Env implements vscode.Disposable {
   }
 
   public async exec(command: string, options: CommandExecOptions, handleError?: (error: any) => boolean) {
-    let execOptions: ExecOptions = {};
+    let execOptions: ExecOptions = { env: floxInvocationEnv() };
     if (options.cwd === null || options.cwd) {
       execOptions.cwd = this.workspaceUri?.fsPath;
     }
@@ -1007,6 +1026,7 @@ export default class Env implements vscode.Disposable {
     this.log(`Starting flox activate process...`);
 
     this.floxActivateProcess = spawn('flox', ['activate', '--dir', this.workspaceUri?.fsPath || '', '--', activateScript.fsPath], {
+      env: floxInvocationEnv(),
       cwd: this.workspaceUri?.fsPath || '',
       stdio: ['pipe', 'pipe', 'pipe', 'ipc'],
       detached: false, // Keep as child process so it dies with the parent
@@ -1303,7 +1323,7 @@ export default class Env implements vscode.Disposable {
 
   async checkFloxInstalled(): Promise<boolean> {
     try {
-      await promisify(execFile)('flox', ['--version'], { timeout: 5000 }); // 5 second timeout
+      await promisify(execFile)('flox', ['--version'], { env: floxInvocationEnv(), timeout: 5000 }); // 5 second timeout
       return true;
     } catch {
       return false;
