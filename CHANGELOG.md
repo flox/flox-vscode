@@ -8,13 +8,14 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ### Fixed
 
-- **Terminal export pollution** - Removed `sendText` calls that dumped
-  visible `export` statements into terminals on environment reactivation
+- **Terminal export pollution** - Removed automatic environment reactivation
+  in existing terminals which caused `export` statements to be printed. Now warns
+  when terminals need to be re-opened.
 
 ### Added
 
 - **CLI telemetry source** - Set `FLOX_INVOCATION_SOURCE=vscode.plugin`
-  so the Flox CLI can distinguish extension-triggered invocations
+  so the Flox CLI can distinguish extension-triggered invocations when telemetry is enabled
 
 ### Changed
 
