@@ -5,3 +5,4 @@ node_modules
 *.vsix
 /w
 test-fixtures/workspace/.flox
+.worktrees/
