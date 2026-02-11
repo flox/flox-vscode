@@ -939,35 +939,12 @@ export default class Env implements vscode.Disposable {
 
       this.log(`[TERMINAL] Changed: ${changedVars.length}, Removed: ${removedVars.length}`);
 
-      // Update each existing terminal
-      for (const terminal of vscode.window.terminals) {
-        // Skip if terminal is already disposed
-        if (terminal.exitStatus !== undefined) {
-          continue;
-        }
-
-        // Export changed/added variables
-        for (const key of changedVars) {
-          const value = activatedEnv[key];
-          // Escape double quotes in value for shell safety
-          const escapedValue = value.replace(/"/g, '\\"');
-          terminal.sendText(`export ${key}="${escapedValue}"`, false);
-        }
-
-        // Unset removed variables
-        for (const key of removedVars) {
-          terminal.sendText(`unset ${key}`, false);
-        }
-
-        this.log(`[TERMINAL] Updated terminal: ${terminal.name}`);
-      }
-
-      // Show success notification
-      const message = vscode.window.terminals.length === 1
-        ? 'Flox environment reactivated. Updated 1 existing terminal with new environment variables.'
-        : `Flox environment reactivated. Updated ${vscode.window.terminals.length} existing terminals with new environment variables.`;
-
-      vscode.window.showInformationMessage(message, 'Open New Terminal').then(action => {
+      // Show success notification - existing terminals need to be reopened
+      // to pick up the new environment variables from the collection
+      vscode.window.showInformationMessage(
+        'Flox environment reactivated. Open a new terminal to use the updated environment.',
+        'Open New Terminal'
+      ).then(action => {
         if (action === 'Open New Terminal') {
           vscode.commands.executeCommand('workbench.action.terminal.new');
         }
