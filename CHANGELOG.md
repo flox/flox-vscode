@@ -4,6 +4,23 @@ All notable changes to the "flox" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [1.0.1] - 2026-02-11
+
+### Fixed
+
+- **Terminal export pollution** - Removed `sendText` calls that dumped
+  visible `export` statements into terminals on environment reactivation
+
+### Added
+
+- **CLI telemetry source** - Set `FLOX_INVOCATION_SOURCE=vscode.plugin`
+  so the Flox CLI can distinguish extension-triggered invocations
+
+### Changed
+
+- **README features formatting** - Features section now renders as a
+  proper bulleted list instead of a single paragraph
+
 ## [1.0.0] - 2025-01-15
 
 This is a major release with significant new features, improved UX, and AI integration capabilities.
