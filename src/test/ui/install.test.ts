@@ -194,7 +194,7 @@ describe('Flox Extension UI Tests', function() {
         } catch (e) {
           // Section might not have actions
         }
-        if (clicked) break;
+        if (clicked) { break; }
       }
 
       // If we couldn't click sidebar button, use command palette
