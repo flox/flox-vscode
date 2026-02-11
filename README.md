@@ -14,22 +14,22 @@
 
 ## Features
 
-🌐 **Remote Development** - Works with Remote SSH, Dev Containers, and WSL
-🤖 **AI Integration** - MCP server for GitHub Copilot and AI assistants
-✨ **Sidebar UI** - Manage your Flox environment directly from VSCode's sidebar
-📦 **Package Management** - Install, upgrade, and remove packages with one click
-🔧 **Environment Variables** - View and manage environment variables
-🚀 **Services** - Monitor and control background services
-🔄 **Auto-sync** - Automatic refresh when manifest files change
-💻 **Integrated Terminal** - Environment variables automatically applied to terminals
-🔔 **Auto-Activation** - Prompts to activate environment with remember preference
-📌 **Pending Indicators** - Visual markers for uncommitted manifest changes
-🔄 **Auto-Reactivate** - Environment refreshes when manifest.toml changes
-📋 **Service Logs** - View real-time logs for running services
-🐛 **Debug Output** - Detailed logs in the Output panel for troubleshooting
-✅ **Update Checks** - Notifies when newer Flox versions are available
-🎨 **Status Bar** - Shows active environment with custom Flox icon
-📝 **TOML Support** - Syntax highlighting and validation for manifest.toml
+- 🌐 **Remote Development** - Works with Remote SSH, Dev Containers, and WSL
+- 🤖 **AI Integration** - MCP server for GitHub Copilot and AI assistants
+- ✨ **Sidebar UI** - Manage your Flox environment directly from VSCode's sidebar
+- 📦 **Package Management** - Install, upgrade, and remove packages with one click
+- 🔧 **Environment Variables** - View and manage environment variables
+- 🚀 **Services** - Monitor and control background services
+- 🔄 **Auto-sync** - Automatic refresh when manifest files change
+- 💻 **Integrated Terminal** - Environment variables automatically applied to terminals
+- 🔔 **Auto-Activation** - Prompts to activate environment with remember preference
+- 📌 **Pending Indicators** - Visual markers for uncommitted manifest changes
+- 🔄 **Auto-Reactivate** - Environment refreshes when manifest.toml changes
+- 📋 **Service Logs** - View real-time logs for running services
+- 🐛 **Debug Output** - Detailed logs in the Output panel for troubleshooting
+- ✅ **Update Checks** - Notifies when newer Flox versions are available
+- 🎨 **Status Bar** - Shows active environment with custom Flox icon
+- 📝 **TOML Support** - Syntax highlighting and validation for manifest.toml
 
 ## Installation
 
