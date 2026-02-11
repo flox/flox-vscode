@@ -61,6 +61,24 @@ export async function activate(context: vscode.ExtensionContext) {
     output.appendLine(`[${timestamp}] Workspace: ${vscode.workspace.workspaceFolders[0].uri.fsPath}`);
   }
 
+  // === Early cached env var restoration ===
+  // Read workspace state synchronously (no await) to apply cached env vars
+  // BEFORE any other extension has a chance to check PATH.
+  // This wins the race against git, python, etc. that run `which` on startup.
+  const justActivated = context.workspaceState.get('flox.justActivated', false);
+  const autoActivate = context.workspaceState.get<boolean | undefined>('flox.autoActivate');
+  const cachedEnv = context.workspaceState.get<Record<string, string>>('flox.previousActivatedEnv');
+
+  if (cachedEnv && Object.keys(cachedEnv).length > 0 && (justActivated || autoActivate === true)) {
+    // Apply cached env vars to process.env synchronously
+    for (const [key, value] of Object.entries(cachedEnv)) {
+      process.env[key] = value;
+    }
+    output.appendLine(`[EARLY] Restored ${Object.keys(cachedEnv).length} cached env vars to process.env (justActivated=${justActivated}, autoActivate=${autoActivate})`);
+  } else {
+    output.appendLine(`[EARLY] Skipped cached env restoration (cachedEnv=${!!cachedEnv}, justActivated=${justActivated}, autoActivate=${autoActivate})`);
+  }
+
   const installView = new InstallView();
   const varsView = new VarsView();
   const servicesView = new ServicesView();
@@ -72,7 +90,27 @@ export async function activate(context: vscode.ExtensionContext) {
   let mcpProvider: FloxMcpProvider | undefined;
 
   // Check if Flox CLI is installed
-  const isFloxInstalled = await env.checkFloxInstalled();
+  // Skip when justActivated (we know it's installed) or when we have cached env
+  // (optimistically assume installed, verify in background)
+  let isFloxInstalled: boolean;
+  if (justActivated) {
+    // We just activated - flox is definitely installed, skip the slow check
+    isFloxInstalled = true;
+    output.appendLine(`[EARLY] Skipping checkFloxInstalled (justActivated=true)`);
+  } else if (autoActivate === true && cachedEnv && Object.keys(cachedEnv).length > 0) {
+    // Auto-activate with cached env - optimistically assume installed,
+    // verify in background (non-blocking)
+    isFloxInstalled = true;
+    output.appendLine(`[EARLY] Optimistically assuming flox installed (autoActivate=true, cachedEnv exists)`);
+    env.checkFloxInstalled().then(async (actuallyInstalled) => {
+      if (!actuallyInstalled) {
+        output.appendLine(`[EARLY] Background check: flox NOT installed, updating state`);
+        await env.setFloxInstalled(false);
+      }
+    });
+  } else {
+    isFloxInstalled = await env.checkFloxInstalled();
+  }
   await env.setFloxInstalled(isFloxInstalled);
 
   // Check if GitHub Copilot is installed
@@ -161,7 +199,7 @@ export async function activate(context: vscode.ExtensionContext) {
   env.updateStatusBar = updateStatusBar;
 
   // Check if we just activated and need to spawn the background process.
-  const justActivated = context.workspaceState.get('flox.justActivated', false);
+  // (justActivated was already read at the top of activate() for early env restoration)
   output.appendLine(`[STEP 2] Checking justActivated flag: ${justActivated}`);
 
   if (justActivated) {
@@ -269,10 +307,14 @@ export async function activate(context: vscode.ExtensionContext) {
     output.appendLine(`[STEP 3] Skipping reload (already done in post-activation flow)`);
   }
 
-  // Validate manifest.toml on initial load
-  output.appendLine(`[STEP 3] Validating manifest.toml`);
-  await env.validateManifest();
-  output.appendLine(`[STEP 3] Validation complete`);
+  // Validate manifest.toml on initial load (fire-and-forget, non-blocking)
+  // validateManifest runs `flox list` which is slow - don't block activation
+  output.appendLine(`[STEP 3] Starting manifest validation (non-blocking)`);
+  env.validateManifest().then(() => {
+    output.appendLine(`[STEP 3] Validation complete`);
+  }).catch((error) => {
+    output.appendLine(`[STEP 3] Validation error: ${error}`);
+  });
 
   // Update auto-activate preference context key
   await env.updateAutoActivatePrefContext();

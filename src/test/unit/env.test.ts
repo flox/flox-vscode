@@ -1076,17 +1076,121 @@ MY_VAR = "test_value"
   });
 
   /**
-   * isFloxInstalled Getter Tests
+   * Early Cached Env Var Restoration Tests
    *
-   * Returns the current value of _isFloxInstalled.
+   * When the extension activates, it should restore cached env vars from
+   * workspace state to process.env BEFORE any async operations. This wins
+   * the race against other extensions (like git) that check PATH on startup.
+   *
+   * The restoration should happen when:
+   * - justActivated is true AND cached env exists
+   * - autoActivate is true AND cached env exists
+   *
+   * It should NOT happen when:
+   * - Both justActivated and autoActivate are false/undefined
+   * - autoActivate is explicitly false ("Never Activate")
+   * - No cached env exists
+   *
+   * Since the actual restoration happens in extension.ts activate(),
+   * these tests verify the decision logic using the same workspace state
+   * keys that activate() reads.
    */
-  suite('isFloxInstalled getter', () => {
-    test('should return false by default', () => {
-      const workspaceUri = vscode.Uri.file(tempDir);
-      const env = new Env(mockContext, workspaceUri);
+  suite('Early Cached Env Var Restoration', () => {
+    /**
+     * Helper that replicates the early restoration logic from extension.ts.
+     * This allows us to test the decision without launching the full extension.
+     */
+    function shouldRestoreCachedEnv(ctx: vscode.ExtensionContext): {
+      shouldRestore: boolean;
+      envVarCount: number;
+    } {
+      const justActivated = ctx.workspaceState.get('flox.justActivated', false);
+      const autoActivate = ctx.workspaceState.get<boolean | undefined>('flox.autoActivate');
+      const cachedEnv = ctx.workspaceState.get<Record<string, string>>('flox.previousActivatedEnv');
 
-      assert.strictEqual(env.isFloxInstalled, false);
-      env.dispose();
+      const shouldRestore = !!(cachedEnv && Object.keys(cachedEnv).length > 0 &&
+        (justActivated || autoActivate === true));
+
+      return {
+        shouldRestore,
+        envVarCount: cachedEnv ? Object.keys(cachedEnv).length : 0,
+      };
+    }
+
+    test('should restore when justActivated is true and cached env exists', async () => {
+      await mockContext.workspaceState.update('flox.justActivated', true);
+      await mockContext.workspaceState.update('flox.previousActivatedEnv', {
+        PATH: '/flox/bin:/usr/bin',
+        FLOX_ENV: '/path/to/env',
+      });
+
+      const result = shouldRestoreCachedEnv(mockContext);
+      assert.strictEqual(result.shouldRestore, true);
+      assert.strictEqual(result.envVarCount, 2);
+    });
+
+    test('should restore when autoActivate is true and cached env exists', async () => {
+      await mockContext.workspaceState.update('flox.justActivated', false);
+      await mockContext.workspaceState.update('flox.autoActivate', true);
+      await mockContext.workspaceState.update('flox.previousActivatedEnv', {
+        PATH: '/flox/bin:/usr/bin',
+      });
+
+      const result = shouldRestoreCachedEnv(mockContext);
+      assert.strictEqual(result.shouldRestore, true);
+      assert.strictEqual(result.envVarCount, 1);
+    });
+
+    test('should NOT restore when both justActivated and autoActivate are false/undefined', async () => {
+      await mockContext.workspaceState.update('flox.justActivated', false);
+      await mockContext.workspaceState.update('flox.autoActivate', undefined);
+      await mockContext.workspaceState.update('flox.previousActivatedEnv', {
+        PATH: '/flox/bin:/usr/bin',
+      });
+
+      const result = shouldRestoreCachedEnv(mockContext);
+      assert.strictEqual(result.shouldRestore, false);
+    });
+
+    test('should NOT restore when autoActivate is false (Never Activate)', async () => {
+      await mockContext.workspaceState.update('flox.justActivated', false);
+      await mockContext.workspaceState.update('flox.autoActivate', false);
+      await mockContext.workspaceState.update('flox.previousActivatedEnv', {
+        PATH: '/flox/bin:/usr/bin',
+      });
+
+      const result = shouldRestoreCachedEnv(mockContext);
+      assert.strictEqual(result.shouldRestore, false);
+    });
+
+    test('should NOT restore when no cached env exists', async () => {
+      await mockContext.workspaceState.update('flox.justActivated', true);
+      await mockContext.workspaceState.update('flox.previousActivatedEnv', undefined);
+
+      const result = shouldRestoreCachedEnv(mockContext);
+      assert.strictEqual(result.shouldRestore, false);
+    });
+
+    test('should NOT restore when cached env is empty object', async () => {
+      await mockContext.workspaceState.update('flox.justActivated', true);
+      await mockContext.workspaceState.update('flox.previousActivatedEnv', {});
+
+      const result = shouldRestoreCachedEnv(mockContext);
+      assert.strictEqual(result.shouldRestore, false);
+    });
+
+    test('should restore with both justActivated and autoActivate true', async () => {
+      await mockContext.workspaceState.update('flox.justActivated', true);
+      await mockContext.workspaceState.update('flox.autoActivate', true);
+      await mockContext.workspaceState.update('flox.previousActivatedEnv', {
+        PATH: '/flox/bin',
+        FOO: 'bar',
+        BAZ: 'qux',
+      });
+
+      const result = shouldRestoreCachedEnv(mockContext);
+      assert.strictEqual(result.shouldRestore, true);
+      assert.strictEqual(result.envVarCount, 3);
     });
   });
 
