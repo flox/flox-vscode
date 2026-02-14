@@ -47,6 +47,49 @@ async function showAutoActivatePrompt(
   }
 }
 
+/**
+ * Offer to restart the extension host after integration settings changed.
+ * Skips in test mode. Skips if no changes were made.
+ */
+export async function offerIntegrationRestart(
+  context: vscode.ExtensionContext,
+  output: vscode.OutputChannel,
+  changedCount: number,
+): Promise<void> {
+  if (context.extensionMode === vscode.ExtensionMode.Test) {
+    return;
+  }
+  if (changedCount === 0) {
+    return;
+  }
+
+  output.appendLine(
+    `[INTEGRATIONS] ${changedCount} setting(s) changed, offering restart`
+  );
+
+  const action = await vscode.window.showInformationMessage(
+    `Updated ${changedCount} VS Code setting(s) for Flox-provided tools. ` +
+    'Restart the extension host so target extensions pick up the new paths?',
+    'Restart Now',
+    'Later',
+  );
+
+  if (action === 'Restart Now') {
+    output.appendLine('[INTEGRATIONS] User chose Restart Now');
+    if (vscode.env.remoteName === undefined) {
+      await vscode.commands.executeCommand(
+        'workbench.action.restartExtensionHost'
+      );
+    } else {
+      await vscode.commands.executeCommand(
+        'workbench.action.reloadWindow'
+      );
+    }
+  } else {
+    output.appendLine('[INTEGRATIONS] User chose Later or dismissed');
+  }
+}
+
 export async function activate(context: vscode.ExtensionContext) {
 
   const output = vscode.window.createOutputChannel('Flox');
