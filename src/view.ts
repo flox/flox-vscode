@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import Env from './env';
 import { View, ItemState } from './config';
+import { INTEGRATIONS } from './integrations';
 
 
 export class PackageItem extends vscode.TreeItem {
@@ -68,6 +69,22 @@ export class SettingsItem extends vscode.TreeItem {
     } else {
       this.contextValue = 'settings-autoactivate-notset';
     }
+  }
+}
+
+export class IntegrationItem extends vscode.TreeItem {
+  constructor(
+    label: string,
+    description: string,
+    public readonly integrationId: string,
+    public readonly enabled: boolean,
+  ) {
+    super(label);
+    this.iconPath = new vscode.ThemeIcon('extensions');
+    this.description = description;
+    this.contextValue = enabled
+      ? 'integration-enabled'
+      : 'integration-disabled';
   }
 }
 
@@ -258,12 +275,12 @@ export class ServicesView implements View, vscode.TreeDataProvider<PackageItem> 
   }
 }
 
-export class SettingsView implements View, vscode.TreeDataProvider<SettingsItem> {
+export class SettingsView implements View, vscode.TreeDataProvider<vscode.TreeItem> {
 
   env?: Env;
 
-  private _onDidChangeTreeData: vscode.EventEmitter<SettingsItem | undefined | null | void> = new vscode.EventEmitter<SettingsItem | undefined | null | void>();
-  readonly onDidChangeTreeData: vscode.Event<SettingsItem | undefined | null | void> = this._onDidChangeTreeData.event;
+  private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined | null | void> = new vscode.EventEmitter<vscode.TreeItem | undefined | null | void>();
+  readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
   async refresh() {
     this._onDidChangeTreeData.fire();
@@ -273,17 +290,19 @@ export class SettingsView implements View, vscode.TreeDataProvider<SettingsItem>
     return vscode.window.registerTreeDataProvider(viewName, this);
   }
 
-  getTreeItem(item: SettingsItem): vscode.TreeItem {
+  getTreeItem(item: vscode.TreeItem): vscode.TreeItem {
     return item;
   }
 
-  async getChildren(item?: SettingsItem): Promise<SettingsItem[]> {
+  async getChildren(item?: vscode.TreeItem): Promise<vscode.TreeItem[]> {
     const envExists = this.env?.context.workspaceState.get('flox.envExists', false);
     if (!envExists || item) {
       return [];
     }
 
-    // Get current auto-activate preference
+    const items: vscode.TreeItem[] = [];
+
+    // Auto-activate setting
     const autoActivate = this.env?.context.workspaceState.get<boolean | undefined>('flox.autoActivate');
 
     let description: string;
@@ -295,9 +314,23 @@ export class SettingsView implements View, vscode.TreeDataProvider<SettingsItem>
       description = 'Not Set';
     }
 
-    return [
-      new SettingsItem('Auto-Activate', description, autoActivate)
-    ];
+    items.push(new SettingsItem('Auto-Activate', description, autoActivate));
+
+    // Integration items
+    const integrations = this.env?.context.workspaceState
+      .get<Record<string, boolean>>('flox.integrations') || {};
+
+    for (const [id, enabled] of Object.entries(integrations)) {
+      const label = INTEGRATIONS.find(i => i.id === id)?.label || id;
+      items.push(new IntegrationItem(
+        label,
+        enabled ? 'On' : 'Off',
+        id,
+        enabled,
+      ));
+    }
+
+    return items;
   }
 }
 

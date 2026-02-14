@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
 import * as os from 'os';
 import Env from './env';
-import { VarsView, InstallView, ServicesView, SettingsView, PackageItem, ServiceItem } from './view';
+import { VarsView, InstallView, ServicesView, SettingsView, PackageItem, ServiceItem, IntegrationItem } from './view';
 import { registerMcpProvider, FloxMcpProvider } from './mcp';
+import { IntegrationManager } from './integrations';
 
 /**
  * Show auto-activate prompt and handle user selection
@@ -88,6 +89,9 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // MCP provider instance
   let mcpProvider: FloxMcpProvider | undefined;
+
+  // Integration manager instance
+  let integrationManager: IntegrationManager | undefined;
 
   // Check if Flox CLI is installed
   // Skip when justActivated (we know it's installed) or when we have cached env
@@ -198,6 +202,18 @@ export async function activate(context: vscode.ExtensionContext) {
   // Store updateStatusBar function in env for access from other parts
   env.updateStatusBar = updateStatusBar;
 
+  // Re-scan integrations after each reload (lock file changes, new packages)
+  env.onReload = () => {
+    if (integrationManager) {
+      integrationManager.applyApproved();
+      const available = integrationManager.scan();
+      if (available.length > 0) {
+        integrationManager.promptForNew(available)
+          .then(() => settingsView.refresh());
+      }
+    }
+  };
+
   // Check if we just activated and need to spawn the background process.
   // (justActivated was already read at the top of activate() for early env restoration)
   output.appendLine(`[STEP 2] Checking justActivated flag: ${justActivated}`);
@@ -279,6 +295,15 @@ export async function activate(context: vscode.ExtensionContext) {
           }).catch((error) => {
             output.appendLine(`[STEP 2] MCP check error: ${error}`);
           });
+
+          // Scan for VS Code integrations (non-blocking, same pattern as MCP check)
+          integrationManager = new IntegrationManager(context, env.workspaceUri, output);
+          integrationManager.applyApproved();
+          const available = integrationManager.scan();
+          if (available.length > 0) {
+            integrationManager.promptForNew(available)
+              .then(() => settingsView.refresh());
+          }
 
           output.appendLine(`[STEP 2] Post-activation complete (MCP check running in background)`);
         },
@@ -454,6 +479,11 @@ export async function activate(context: vscode.ExtensionContext) {
       await context.workspaceState.update('flox.autoActivate', undefined);
       await env.updateAutoActivatePrefContext();
       output.appendLine('Reset auto-activate preference (user explicitly deactivated)');
+    }
+
+    // Revert VS Code integration settings before deactivating
+    if (integrationManager) {
+      await integrationManager.revert();
     }
 
     // Terminate the background activation process.
@@ -904,6 +934,20 @@ export async function activate(context: vscode.ExtensionContext) {
           vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs/tutorials/flox-agentic/'));
         }
       });
+    }
+  });
+
+  env.registerCommand('flox.enableIntegration', async (item: IntegrationItem) => {
+    if (integrationManager) {
+      await integrationManager.toggle(item.integrationId, true);
+      await settingsView.refresh();
+    }
+  });
+
+  env.registerCommand('flox.disableIntegration', async (item: IntegrationItem) => {
+    if (integrationManager) {
+      await integrationManager.toggle(item.integrationId, false);
+      await settingsView.refresh();
     }
   });
 
