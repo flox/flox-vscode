@@ -71,6 +71,9 @@ export default class Env implements vscode.Disposable {
   // Status bar update function (set from extension.ts)
   updateStatusBar?: () => void;
 
+  // Callback invoked after reload completes (set from extension.ts)
+  onReload?: () => void;
+
   constructor(
     ctx: vscode.ExtensionContext,
     workspaceUri?: vscode.Uri,
@@ -657,6 +660,11 @@ export default class Env implements vscode.Disposable {
     // Update status bar
     if (this.updateStatusBar) {
       this.updateStatusBar();
+    }
+
+    // Notify listeners that reload completed
+    if (this.onReload) {
+      this.onReload();
     }
 
     this.log(`[RELOAD] Reload complete!`);

@@ -266,6 +266,18 @@
         "category": "Flox",
         "icon": "$(refresh)",
         "title": "Reset Auto-Activate Preference"
+      },
+      {
+        "command": "flox.enableIntegration",
+        "category": "Flox",
+        "icon": "$(check)",
+        "title": "Enable Integration"
+      },
+      {
+        "command": "flox.disableIntegration",
+        "category": "Flox",
+        "icon": "$(close)",
+        "title": "Disable Integration"
       }
     ],
     "menus": {
@@ -374,6 +386,16 @@
           "command": "flox.resetAutoActivate",
           "group": "inline",
           "when": "view == floxSettingsView && (viewItem == settings-autoactivate-always || viewItem == settings-autoactivate-never)"
+        },
+        {
+          "command": "flox.disableIntegration",
+          "group": "inline",
+          "when": "view == floxSettingsView && viewItem == integration-enabled"
+        },
+        {
+          "command": "flox.enableIntegration",
+          "group": "inline",
+          "when": "view == floxSettingsView && viewItem == integration-disabled"
         }
       ]
     },
