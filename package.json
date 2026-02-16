@@ -417,7 +417,7 @@
     "@vscode/test-cli": "^0.0.12",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.7.1",
-    "eslint": "^10.0.0",
+    "eslint": "^9.39.2",
     "fantasticon": "^4.1.0",
     "ovsx": "^0.10.9",
     "typescript": "^5.9.3",
