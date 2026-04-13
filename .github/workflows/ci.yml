@@ -56,19 +56,19 @@ jobs:
             ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}-
 
       - name: "Install"
-        uses: flox/activate-action@d2c0d305d166520ed1cc2485bf10cd83cd859674 # main
+        uses: flox/activate-action@6ab4a3d38cfd06f31910d0a5fe7e57ffa76ad750 # main
 
         with:
           command: "npm ci"
 
       - name: "Lint"
-        uses: flox/activate-action@d2c0d305d166520ed1cc2485bf10cd83cd859674 # main
+        uses: flox/activate-action@6ab4a3d38cfd06f31910d0a5fe7e57ffa76ad750 # main
 
         with:
           command: "npm run lint"
 
       - name: "Build"
-        uses: flox/activate-action@d2c0d305d166520ed1cc2485bf10cd83cd859674 # main
+        uses: flox/activate-action@6ab4a3d38cfd06f31910d0a5fe7e57ffa76ad750 # main
 
         with:
           command: "npm run compile"
@@ -85,13 +85,13 @@ jobs:
 
       - name: "Package"
         id: "package"
-        uses: flox/activate-action@d2c0d305d166520ed1cc2485bf10cd83cd859674 # main
+        uses: flox/activate-action@6ab4a3d38cfd06f31910d0a5fe7e57ffa76ad750 # main
 
         with:
           command: "npm run package -- --out flox-latest.vsix"
 
       - name: "Upload vscode extention as artifact"
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
 
         with:
           name: "flox-latest-${{ matrix.os }}.vsix"
@@ -131,7 +131,7 @@ jobs:
             ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}-
 
       - name: "Install"
-        uses: flox/activate-action@d2c0d305d166520ed1cc2485bf10cd83cd859674 # main
+        uses: flox/activate-action@6ab4a3d38cfd06f31910d0a5fe7e57ffa76ad750 # main
 
         with:
           command: "npm ci"
@@ -143,7 +143,7 @@ jobs:
           name: "flox-latest-ubuntu-latest.vsix"
 
       - name: "Publish to Visual Studio Marketplace"
-        uses: flox/activate-action@d2c0d305d166520ed1cc2485bf10cd83cd859674 # main
+        uses: flox/activate-action@6ab4a3d38cfd06f31910d0a5fe7e57ffa76ad750 # main
 
         with:
           command: |
@@ -152,7 +152,7 @@ jobs:
               --allow-star-activation
 
       - name: "Publish to Open-VSX.org"
-        uses: flox/activate-action@d2c0d305d166520ed1cc2485bf10cd83cd859674 # main
+        uses: flox/activate-action@6ab4a3d38cfd06f31910d0a5fe7e57ffa76ad750 # main
 
         with:
           command: |
