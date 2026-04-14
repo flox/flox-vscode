@@ -734,7 +734,9 @@ MY_VAR = "test_value"
       const workspaceUri = vscode.Uri.file(tempDir);
       const env = new Env(mockContext, workspaceUri);
 
-      // Should not throw even if network is unavailable
+      env.getFloxVersion = async () => '1.3.1';
+      env.getLatestFloxVersion = async () => '1.3.1';
+
       await env.checkForFloxUpdate();
       env.dispose();
     });
@@ -758,6 +760,9 @@ MY_VAR = "test_value"
       const mockOutput = new MockOutputChannel('Flox');
       const env = new Env(mockContext, workspaceUri, mockOutput);
 
+      env.getFloxVersion = async () => '1.3.1';
+      env.getLatestFloxVersion = async () => '1.3.1';
+
       // Set last check to 1 hour ago (within 24hr window)
       const oneHourAgo = Date.now() - (60 * 60 * 1000);
       await mockContext.globalState.update('flox.lastUpdateCheck', oneHourAgo);
@@ -778,6 +783,9 @@ MY_VAR = "test_value"
       const workspaceUri = vscode.Uri.file(tempDir);
       const mockOutput = new MockOutputChannel('Flox');
       const env = new Env(mockContext, workspaceUri, mockOutput);
+
+      env.getFloxVersion = async () => '1.3.1';
+      env.getLatestFloxVersion = async () => '1.3.1';
 
       // Set last check to now
       await mockContext.globalState.update('flox.lastUpdateCheck', Date.now());
