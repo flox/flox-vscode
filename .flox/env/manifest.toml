@@ -1,4 +1,4 @@
-version = 1
+schema-version = "1.11.0"
 
 [install]
 nodejs.pkg-path = "nodejs"
@@ -6,6 +6,7 @@ nodejs.pkg-path = "nodejs"
 # helper tools
 gum.pkg-path = "gum"
 coreutils.pkg-path = "coreutils"
+coreutils.outputs = "all"
 typescript-language-server.pkg-path = "typescript-language-server"
 
 [hook]
