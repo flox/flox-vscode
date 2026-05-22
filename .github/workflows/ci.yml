@@ -42,7 +42,7 @@ jobs:
           fetch-depth: 0
 
       - name: "Install Flox"
-        uses: flox/install-flox-action@c94e7e1ab56ae14fe98bae4fd84384fd135f0c2a # main
+        uses: flox/install-flox-action@6e70b2624cea62b0f11ea4a28e719fe1c86c028b # main
 
 
       - name: "Restore npm cache"
@@ -56,19 +56,19 @@ jobs:
             ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}-
 
       - name: "Install"
-        uses: flox/activate-action@6ab4a3d38cfd06f31910d0a5fe7e57ffa76ad750 # main
+        uses: flox/activate-action@7065dcbe5583b7b015f07a8ebd49d7266e3053e8 # main
 
         with:
           command: "npm ci"
 
       - name: "Lint"
-        uses: flox/activate-action@6ab4a3d38cfd06f31910d0a5fe7e57ffa76ad750 # main
+        uses: flox/activate-action@7065dcbe5583b7b015f07a8ebd49d7266e3053e8 # main
 
         with:
           command: "npm run lint"
 
       - name: "Build"
-        uses: flox/activate-action@6ab4a3d38cfd06f31910d0a5fe7e57ffa76ad750 # main
+        uses: flox/activate-action@7065dcbe5583b7b015f07a8ebd49d7266e3053e8 # main
 
         with:
           command: "npm run compile"
@@ -85,7 +85,7 @@ jobs:
 
       - name: "Package"
         id: "package"
-        uses: flox/activate-action@6ab4a3d38cfd06f31910d0a5fe7e57ffa76ad750 # main
+        uses: flox/activate-action@7065dcbe5583b7b015f07a8ebd49d7266e3053e8 # main
 
         with:
           command: "npm run package -- --out flox-latest.vsix"
@@ -117,7 +117,7 @@ jobs:
           fetch-depth: 0
 
       - name: "Install Flox"
-        uses: flox/install-flox-action@c94e7e1ab56ae14fe98bae4fd84384fd135f0c2a # main
+        uses: flox/install-flox-action@6e70b2624cea62b0f11ea4a28e719fe1c86c028b # main
 
 
       - name: "Restore npm cache"
@@ -131,7 +131,7 @@ jobs:
             ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}-
 
       - name: "Install"
-        uses: flox/activate-action@6ab4a3d38cfd06f31910d0a5fe7e57ffa76ad750 # main
+        uses: flox/activate-action@7065dcbe5583b7b015f07a8ebd49d7266e3053e8 # main
 
         with:
           command: "npm ci"
@@ -143,7 +143,7 @@ jobs:
           name: "flox-latest-ubuntu-latest.vsix"
 
       - name: "Publish to Visual Studio Marketplace"
-        uses: flox/activate-action@6ab4a3d38cfd06f31910d0a5fe7e57ffa76ad750 # main
+        uses: flox/activate-action@7065dcbe5583b7b015f07a8ebd49d7266e3053e8 # main
 
         with:
           command: |
@@ -152,7 +152,7 @@ jobs:
               --allow-star-activation
 
       - name: "Publish to Open-VSX.org"
-        uses: flox/activate-action@6ab4a3d38cfd06f31910d0a5fe7e57ffa76ad750 # main
+        uses: flox/activate-action@7065dcbe5583b7b015f07a8ebd49d7266e3053e8 # main
 
         with:
           command: |
