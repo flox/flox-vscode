@@ -1,0 +1,74 @@
+name: "Renovate"
+
+# Self-hosted Renovate via GitHub Actions.
+# All variable inputs are either workflow_dispatch choice fields (validated
+# against a fixed option list) or the static github.repository slug, passed
+# to the action via env: per GitHub's workflow-injection guidance.
+
+on:
+  schedule:
+    - cron: "0 */4 * * *"
+  workflow_dispatch:
+    inputs:
+      logLevel:
+        description: "Renovate log level"
+        required: false
+        default: "info"
+        type: choice
+        options:
+          - "debug"
+          - "info"
+          - "warn"
+      dryRun:
+        description: "Override renovate.json dryRun (blank = use file value)"
+        required: false
+        default: ""
+        type: choice
+        options:
+          - ""
+          - "lookup"
+          - "extract"
+          - "full"
+
+concurrency:
+  group: "renovate"
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  renovate:
+    name: "Renovate"
+    runs-on: "ubuntu-latest"
+    timeout-minutes: 30
+
+    steps:
+      - name: "Mint installation token from Renovate GitHub App"
+        id: "app-token"
+        uses: "actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1" # v3.2.0
+        with:
+          app-id: "${{ secrets.RENOVATE_APP_ID }}"
+          private-key: "${{ secrets.RENOVATE_APP_PRIVATE_KEY }}"
+
+      - name: "Checkout"
+        uses: "actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd" # v6
+        with:
+          persist-credentials: false
+          show-progress: false
+
+      - name: "Self-hosted Renovate"
+        uses: "renovatebot/github-action@693b9ef15eec82123529a37c782242f091365961" # v46.1.14
+        env:
+          LOG_LEVEL: "${{ inputs.logLevel || 'info' }}"
+          RENOVATE_PLATFORM: "github"
+          RENOVATE_AUTODISCOVER: "false"
+          RENOVATE_REPOSITORIES: "${{ github.repository }}"
+          RENOVATE_ONBOARDING: "false"
+          RENOVATE_REQUIRE_CONFIG: "required"
+          # Safety net: any run NOT on main is forced into full dry-run.
+          # Prevents stray branch runs from opening real PRs/issues.
+          RENOVATE_DRY_RUN: "${{ github.ref != 'refs/heads/main' && 'full' || inputs.dryRun }}"
+          RENOVATE_PERSIST_REPO_DATA: "true"
+        with:
+          configurationFile: "renovate.json"
+          token: "${{ steps.app-token.outputs.token }}"
