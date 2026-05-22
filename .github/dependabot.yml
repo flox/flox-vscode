@@ -1,28 +1,6 @@
 version: 2
-updates:
-
-- package-ecosystem: github-actions
-  directory: "/"
-  schedule:
-    interval: weekly
-  open-pull-requests-limit: 1
-  commit-message:
-      prefix: "chore"
-      include: "scope"
-  groups:
-    all:
-      patterns:
-        - "*"
-
-- package-ecosystem: npm
-  directory: '/'
-  schedule:
-    interval: weekly
-  open-pull-requests-limit: 1
-  commit-message:
-      prefix: "chore"
-      include: "scope"
-  groups:
-    all:
-      patterns:
-        - "*"
+# Dependabot version updates are disabled — Renovate handles all
+# remediation PRs (see .github/workflows/renovate.yml + renovate.json).
+# Dependabot ALERTS remain enabled in repo settings and continue to
+# feed the GitHub Security tab; only PR creation is migrated.
+updates: []
