@@ -7,7 +7,15 @@ name: "Renovate"
 
 on:
   schedule:
-    - cron: "0 */4 * * *"
+    # Daily at 12:00 UTC. The 7-day minimumReleaseAge cooldown in
+    # renovate.json dominates the latency for routine updates, so more
+    # frequent runs add cost (Actions minutes) and noise (transient
+    # GitHub-API failures) without faster outcomes. Vulnerability
+    # alerts use a 1-day cooldown, so CVE-patch PRs open within ~24h
+    # of the cooldown clearing — fine for a dev tool. Production-class
+    # repos should override this to a more frequent cadence in their
+    # per-repo renovate.yml.
+    - cron: "0 12 * * *"
   workflow_dispatch:
     inputs:
       logLevel:
