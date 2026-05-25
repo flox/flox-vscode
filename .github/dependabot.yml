@@ -1,6 +1,0 @@
-version: 2
-# Dependabot version updates are disabled — Renovate handles all
-# remediation PRs (see .github/workflows/renovate.yml + renovate.json).
-# Dependabot ALERTS remain enabled in repo settings and continue to
-# feed the GitHub Security tab; only PR creation is migrated.
-updates: []
