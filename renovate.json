@@ -7,8 +7,8 @@
     ":semanticCommitTypeAll(chore)"
   ],
   "timezone": "UTC",
-  "prConcurrentLimit": 0,
-  "prHourlyLimit": 0,
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 4,
   "branchConcurrentLimit": 0,
   "automerge": false,
   "rebaseWhen": "behind-base-branch",
