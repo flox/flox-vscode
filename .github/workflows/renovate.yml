@@ -78,5 +78,5 @@ jobs:
           RENOVATE_DRY_RUN: "${{ github.ref != 'refs/heads/main' && 'full' || inputs.dryRun }}"
           RENOVATE_PERSIST_REPO_DATA: "true"
         with:
-          configurationFile: "renovate.json"
+          configurationFile: ".github/renovate.json"
           token: "${{ steps.app-token.outputs.token }}"
