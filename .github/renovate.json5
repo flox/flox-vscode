@@ -1,0 +1,68 @@
+{
+  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+
+  // COMMON BASE — keep identical across all flox repos.
+  extends: [
+    "config:recommended",
+    "group:allNonMajor", // one PR for all non-major updates (low noise)
+    "helpers:pinGitHubActionDigests", // pin Actions to SHAs (supply chain)
+    "docker:pinDigests", // pin Docker image digests (inert if no Dockerfile)
+    "abandonments:recommended", // flag unmaintained packages
+    ":configMigration", // auto-PR Renovate config migrations
+    ":semanticCommitTypeAll(chore)", // all dep commits use the chore type
+  ],
+
+  timezone: "UTC",
+  automerge: false, // every update is reviewed by a human
+  rebaseWhen: "behind-base-branch",
+  minimumReleaseAge: "7 days", // don't adopt a release until it's a week old
+  constraintsFiltering: "strict", // skip updates incompatible with declared runtimes
+  // Update lockfiles in place; only edit a manifest when a version goes out of
+  // range. Manager-agnostic — applies to whatever lockfile-based managers a repo
+  // has (npm, cargo, terraform, uv…) and is ignored by the rest.
+  rangeStrategy: "update-lockfile",
+  prConcurrentLimit: 10,
+  prHourlyLimit: 4,
+  dependencyDashboard: true,
+  dependencyDashboardTitle: "Renovate dependency dashboard",
+
+  // Refresh lockfiles (npm/cargo/uv/terraform) weekly. Note: flake.lock is NOT
+  // covered — Renovate's nix manager is off by default; use a dedicated
+  // update-flake-lock workflow for that.
+  lockFileMaintenance: {
+    enabled: true,
+    schedule: ["* 0-6 * * 1"],
+  },
+
+  // Security fixes bypass the 7-day cooldown and the normal schedule.
+  vulnerabilityAlerts: {
+    enabled: true,
+    labels: ["security"],
+    minimumReleaseAge: "1 day",
+    schedule: ["at any time"],
+  },
+  osvVulnerabilityAlerts: true,
+
+  packageRules: [
+    // --- common rules (keep identical across repos) ---
+    {
+      description: "Label all major updates so they're easy to review",
+      matchUpdateTypes: ["major"],
+      labels: ["major-upgrade"],
+    },
+
+    // CUSTOM (flox-vscode only) — edit this section per repo.
+    // @types/node's major tracks the Node version bundled in the VSCode
+    // extension host (via engines.vscode / Electron). Letting Renovate
+    // bump it to a new major would type-check against Node APIs the host
+    // doesn't actually have. Hold the major; revisit when raising the
+    // minimum engines.vscode. Minor/patch within the current major still
+    // flow through normally.
+    {
+      description: "CUSTOM(flox-vscode): hold @types/node / node at current major",
+      matchPackageNames: ["@types/node", "node"],
+      matchUpdateTypes: ["major"],
+      enabled: false,
+    },
+  ],
+}
