@@ -8,7 +8,7 @@ name: "Renovate"
 on:
   schedule:
     # Daily at 12:00 UTC. The 7-day minimumReleaseAge cooldown in
-    # renovate.json dominates the latency for routine updates, so more
+    # renovate.json5 dominates the latency for routine updates, so more
     # frequent runs add cost (Actions minutes) and noise (transient
     # GitHub-API failures) without faster outcomes. Vulnerability
     # alerts use a 1-day cooldown, so CVE-patch PRs open within ~24h
@@ -28,7 +28,7 @@ on:
           - "info"
           - "warn"
       dryRun:
-        description: "Override renovate.json dryRun (blank = use file value)"
+        description: "Override renovate.json5 dryRun (blank = use file value)"
         required: false
         default: ""
         type: choice
@@ -78,5 +78,5 @@ jobs:
           RENOVATE_DRY_RUN: "${{ github.ref != 'refs/heads/main' && 'full' || inputs.dryRun }}"
           RENOVATE_PERSIST_REPO_DATA: "true"
         with:
-          configurationFile: ".github/renovate.json"
+          configurationFile: ".github/renovate.json5"
           token: "${{ steps.app-token.outputs.token }}"
