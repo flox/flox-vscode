@@ -419,7 +419,7 @@
     "@vscode/vsce": "^3.8.0",
     "eslint": "^10.2.0",
     "fantasticon": "^4.1.0",
-    "ovsx": "^0.10.11",
+    "ovsx": "^1.0.0",
     "typescript": "^6.0.2",
     "vscode-extension-tester": "^8.23.0"
   },
