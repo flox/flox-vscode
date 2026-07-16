@@ -420,7 +420,7 @@
     "eslint": "^10.2.0",
     "fantasticon": "^4.1.0",
     "ovsx": "^0.10.11",
-    "typescript": "^6.0.2",
+    "typescript": "^7.0.0",
     "vscode-extension-tester": "^8.23.0"
   },
   "dependencies": {
