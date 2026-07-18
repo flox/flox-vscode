@@ -435,14 +435,24 @@ export default class Env implements vscode.Disposable {
     const lockServices = this.manifest?.manifest?.services || {};
     const tomlServices = this.tomlManifest?.services || {};
 
+    const isServiceEntry = (v: unknown) =>
+      typeof v === 'object' && v !== null && !Array.isArray(v);
+
     const serviceNames = new Set<string>();
-    for (const name of Object.keys(lockServices)) {
-      serviceNames.add(name);
+    for (const [name, value] of Object.entries(lockServices)) {
+      if (isServiceEntry(value)) { serviceNames.add(name); }
     }
-    for (const name of Object.keys(tomlServices)) {
-      serviceNames.add(name);
+    for (const [name, value] of Object.entries(tomlServices)) {
+      if (isServiceEntry(value)) { serviceNames.add(name); }
     }
     return Array.from(serviceNames);
+  }
+
+  getAutoStartEnabled(): boolean {
+    return !!(
+      this.tomlManifest?.services?.['auto-start'] ??
+      this.manifest?.manifest?.services?.['auto-start']
+    );
   }
 
   /**

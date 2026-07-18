@@ -206,12 +206,12 @@ export class VarsView implements View, vscode.TreeDataProvider<PackageItem> {
   }
 }
 
-export class ServicesView implements View, vscode.TreeDataProvider<PackageItem> {
+export class ServicesView implements View, vscode.TreeDataProvider<vscode.TreeItem> {
 
   env?: Env;
 
-  private _onDidChangeTreeData: vscode.EventEmitter<PackageItem | undefined | null | void> = new vscode.EventEmitter<PackageItem | undefined | null | void>();
-  readonly onDidChangeTreeData: vscode.Event<PackageItem | undefined | null | void> = this._onDidChangeTreeData.event;
+  private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined | null | void> = new vscode.EventEmitter<vscode.TreeItem | undefined | null | void>();
+  readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
   async refresh() {
     this._onDidChangeTreeData.fire();
@@ -221,19 +221,21 @@ export class ServicesView implements View, vscode.TreeDataProvider<PackageItem> 
     return vscode.window.registerTreeDataProvider(viewName, this);
   }
 
-  getTreeItem(service: ServiceItem): vscode.TreeItem {
-    return service;
+  getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
+    return element;
   }
 
-  async getChildren(service?: ServiceItem): Promise<ServiceItem[]> {
+  async getChildren(element?: vscode.TreeItem): Promise<vscode.TreeItem[]> {
     const envExists = this.env?.context.workspaceState.get('flox.envExists', false);
     if (!envExists) {
       return [];
     }
 
-    if (!service) {
+    if (!element) {
       const serviceNames = this.env?.getMergedServiceNames() || [];
-      if (serviceNames.length === 0) {
+      const autoStart = this.env?.getAutoStartEnabled?.() ?? false;
+
+      if (serviceNames.length === 0 && !autoStart) {
         return [];
       }
 
@@ -248,10 +250,20 @@ export class ServicesView implements View, vscode.TreeDataProvider<PackageItem> 
       });
 
       // Sort: active items first, then pending
-      return result.sort((a, b) => {
+      const sorted = result.sort((a, b) => {
         if (a.state === b.state) { return 0; }
         return a.state === ItemState.ACTIVE ? -1 : 1;
       });
+
+      if (autoStart) {
+        const indicator = new vscode.TreeItem('Auto-start on activate');
+        indicator.iconPath = new vscode.ThemeIcon('play-circle');
+        indicator.tooltip = 'Services will start automatically on flox activate';
+        indicator.contextValue = 'auto-start-setting';
+        return [indicator, ...sorted];
+      }
+
+      return sorted;
     }
 
     return [];

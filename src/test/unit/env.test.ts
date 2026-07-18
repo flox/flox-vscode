@@ -1719,6 +1719,62 @@ myservice.command = "sleep 1000"
       assert.strictEqual(state, 'active', 'Service with same properties (different order) should be ACTIVE');
       env.dispose();
     });
+
+    test('should not include auto-start key as a service name', async () => {
+      const floxDir = path.join(tempDir, '.flox', 'env');
+      fs.mkdirSync(floxDir, { recursive: true });
+
+      fs.writeFileSync(path.join(floxDir, 'manifest.toml'), `
+[services]
+auto-start = true
+
+[services.myservice]
+command = "sleep 1000"
+`);
+
+      const env = new Env(mockContext, vscode.Uri.file(tempDir));
+      await env.reload();
+
+      const names = env.getMergedServiceNames();
+      assert.ok(!names.includes('auto-start'), 'auto-start should not appear as a service name');
+      assert.ok(names.includes('myservice'), 'myservice should appear as a service name');
+      env.dispose();
+    });
+
+    test('should report getAutoStartEnabled() true when auto-start = true in toml', async () => {
+      const floxDir = path.join(tempDir, '.flox', 'env');
+      fs.mkdirSync(floxDir, { recursive: true });
+
+      fs.writeFileSync(path.join(floxDir, 'manifest.toml'), `
+[services]
+auto-start = true
+
+[services.myservice]
+command = "sleep 1000"
+`);
+
+      const env = new Env(mockContext, vscode.Uri.file(tempDir));
+      await env.reload();
+
+      assert.strictEqual(env.getAutoStartEnabled(), true, 'getAutoStartEnabled should return true');
+      env.dispose();
+    });
+
+    test('should report getAutoStartEnabled() false when auto-start not set', async () => {
+      const floxDir = path.join(tempDir, '.flox', 'env');
+      fs.mkdirSync(floxDir, { recursive: true });
+
+      fs.writeFileSync(path.join(floxDir, 'manifest.toml'), `
+[services.myservice]
+command = "sleep 1000"
+`);
+
+      const env = new Env(mockContext, vscode.Uri.file(tempDir));
+      await env.reload();
+
+      assert.strictEqual(env.getAutoStartEnabled(), false, 'getAutoStartEnabled should return false when not set');
+      env.dispose();
+    });
   });
 
   /**
