@@ -1,7 +1,7 @@
 {
   "lockfile-version": 1,
   "manifest": {
-    "schema-version": "1.10.0",
+    "schema-version": "1.11.0",
     "install": {
       "coreutils": {
         "pkg-path": "coreutils",
@@ -33,28 +33,33 @@
     {
       "attr_path": "coreutils",
       "broken": false,
-      "derivation": "/nix/store/446c9pv8y7435xcjxqm4wg40id87pa72-coreutils-9.10.drv",
+      "derivation": "/nix/store/6qj2zcxknmx7m89xp3var5rvh8c4bpx1-coreutils-9.11.drv",
       "description": "GNU Core Utilities",
       "install_id": "coreutils",
       "license": "GPL-3.0-or-later",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "name": "coreutils-9.10",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=d407951447dcd00442e97087bf374aad70c04cea",
+      "name": "coreutils-9.11",
       "pname": "coreutils",
-      "rev": "c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "rev_count": 962836,
-      "rev_date": "2026-03-13T08:19:52Z",
-      "scrape_date": "2026-03-15T04:41:40.865659Z",
+      "rev": "d407951447dcd00442e97087bf374aad70c04cea",
+      "rev_count": 1027867,
+      "rev_date": "2026-07-05T04:06:12Z",
+      "scrape_date": "2026-07-06T03:12:55.258386Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "9.10",
+      "version": "9.11",
       "outputs_to_install": [
+        "out",
+        "out",
+        "out",
+        "out",
         "out"
       ],
       "outputs": {
-        "info": "/nix/store/ii63jgwmxd4l9nyyaqh8vbynsf2z8yms-coreutils-9.10-info",
-        "out": "/nix/store/chdj76m79c3lbwdn6bflwlqa2n2igx02-coreutils-9.10"
+        "info": "/nix/store/lv9640g9czilp4h0bzvaaa1pybkk7jjg-coreutils-9.11-info",
+        "out": "/nix/store/2pj9qd6qs9b5rk4xzbsj9l2nmm07cdaf-coreutils-9.11"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -63,31 +68,33 @@
     {
       "attr_path": "coreutils",
       "broken": false,
-      "derivation": "/nix/store/jm5r3lsz9yhsj37xah2c4xljf7dqd4vi-coreutils-9.10.drv",
+      "derivation": "/nix/store/y7adjxihg95hrq74jjqxarkr3h2r7vz5-coreutils-9.11.drv",
       "description": "GNU Core Utilities",
       "install_id": "coreutils",
       "license": "GPL-3.0-or-later",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "name": "coreutils-9.10",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=d407951447dcd00442e97087bf374aad70c04cea",
+      "name": "coreutils-9.11",
       "pname": "coreutils",
-      "rev": "c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "rev_count": 962836,
-      "rev_date": "2026-03-13T08:19:52Z",
-      "scrape_date": "2026-03-15T05:15:05.317498Z",
+      "rev": "d407951447dcd00442e97087bf374aad70c04cea",
+      "rev_count": 1027867,
+      "rev_date": "2026-07-05T04:06:12Z",
+      "scrape_date": "2026-07-06T03:41:21.925224Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "9.10",
+      "version": "9.11",
       "outputs_to_install": [
+        "out",
         "out",
         "out",
         "out"
       ],
       "outputs": {
-        "debug": "/nix/store/lz1kz2f87h7nk72m6nbpj9hvdhm6n9kx-coreutils-9.10-debug",
-        "info": "/nix/store/1gxsl7ihgazpmjzyx1x8g1s7nqnlyq8l-coreutils-9.10-info",
-        "out": "/nix/store/jp7xqawrs8pjdn3v2qxrgrn6cc7siij2-coreutils-9.10"
+        "debug": "/nix/store/c9i9h5zarcllbifym9n5iqkz03pvdcbp-coreutils-9.11-debug",
+        "info": "/nix/store/jbj9dg06bmdr8jpg8i2r2kpczh81h7vk-coreutils-9.11-info",
+        "out": "/nix/store/xapdnwj438nw0drpnxpbr1yds0yqhngi-coreutils-9.11"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -96,28 +103,29 @@
     {
       "attr_path": "coreutils",
       "broken": false,
-      "derivation": "/nix/store/81lq2j7wzvj45gnp254dx4661wrp9j6d-coreutils-9.10.drv",
+      "derivation": "/nix/store/a0dp57smwj4jgd90ak4kz3ciazrdxb0v-coreutils-9.11.drv",
       "description": "GNU Core Utilities",
       "install_id": "coreutils",
       "license": "GPL-3.0-or-later",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "name": "coreutils-9.10",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=d407951447dcd00442e97087bf374aad70c04cea",
+      "name": "coreutils-9.11",
       "pname": "coreutils",
-      "rev": "c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "rev_count": 962836,
-      "rev_date": "2026-03-13T08:19:52Z",
-      "scrape_date": "2026-03-15T05:44:48.186848Z",
+      "rev": "d407951447dcd00442e97087bf374aad70c04cea",
+      "rev_count": 1027867,
+      "rev_date": "2026-07-05T04:06:12Z",
+      "scrape_date": "2026-07-06T04:09:00.643516Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "9.10",
+      "version": "9.11",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "info": "/nix/store/1b97xw6piazc1frnkrzalfc4g7n87ncs-coreutils-9.10-info",
-        "out": "/nix/store/xfwwgxfk71g0vkl2k2ggki8s5mgc4ki4-coreutils-9.10"
+        "info": "/nix/store/8jc9262zif5m5gh6h5n1kbs5yrv594xn-coreutils-9.11-info",
+        "out": "/nix/store/rg42k0h3hj1mwldhywll29n7m0kcpxq2-coreutils-9.11"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -126,23 +134,25 @@
     {
       "attr_path": "coreutils",
       "broken": false,
-      "derivation": "/nix/store/bl552s9nw613lkzc4rmw3svpdwp1ib68-coreutils-9.10.drv",
+      "derivation": "/nix/store/yzawmmja3azkam2gyf3b0z5a8aafja9m-coreutils-9.11.drv",
       "description": "GNU Core Utilities",
       "install_id": "coreutils",
       "license": "GPL-3.0-or-later",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "name": "coreutils-9.10",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=d407951447dcd00442e97087bf374aad70c04cea",
+      "name": "coreutils-9.11",
       "pname": "coreutils",
-      "rev": "c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "rev_count": 962836,
-      "rev_date": "2026-03-13T08:19:52Z",
-      "scrape_date": "2026-03-15T06:19:33.410017Z",
+      "rev": "d407951447dcd00442e97087bf374aad70c04cea",
+      "rev_count": 1027867,
+      "rev_date": "2026-07-05T04:06:12Z",
+      "scrape_date": "2026-07-06T04:40:24.577683Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "9.10",
+      "version": "9.11",
       "outputs_to_install": [
+        "out",
         "out",
         "out",
         "out",
@@ -150,9 +160,9 @@
         "out"
       ],
       "outputs": {
-        "debug": "/nix/store/8mcpc2yx37lqpp3id4966iarglcb7z42-coreutils-9.10-debug",
-        "info": "/nix/store/m4v3w2kchwa6wkv1sdnqqji096byxxkp-coreutils-9.10-info",
-        "out": "/nix/store/hlxw2q9qansq7bn52xvlb5badw3z1v8s-coreutils-9.10"
+        "debug": "/nix/store/wifadx5v4ps5nvf23cr22lswn3q70s6f-coreutils-9.11-debug",
+        "info": "/nix/store/zs5bzwnkhgzka1ccvzkhx0xzf1mlah2j-coreutils-9.11-info",
+        "out": "/nix/store/sr26flm2nkfa12dkrwj2630kqsfakky4-coreutils-9.11"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -161,18 +171,19 @@
     {
       "attr_path": "gum",
       "broken": false,
-      "derivation": "/nix/store/0q3saf0py9fifyx6h6jwzjvg7y707x8a-gum-0.17.0.drv",
+      "derivation": "/nix/store/ncv12x2sfb3pnxc4z7rlspgc0vf0zvbc-gum-0.17.0.drv",
       "description": "Tasty Bubble Gum for your shell",
       "install_id": "gum",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=c06b4ae3d6599a672a6210b7021d699c351eebda",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=d407951447dcd00442e97087bf374aad70c04cea",
       "name": "gum-0.17.0",
       "pname": "gum",
-      "rev": "c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "rev_count": 962836,
-      "rev_date": "2026-03-13T08:19:52Z",
-      "scrape_date": "2026-03-15T04:41:41.932137Z",
+      "rev": "d407951447dcd00442e97087bf374aad70c04cea",
+      "rev_count": 1027867,
+      "rev_date": "2026-07-05T04:06:12Z",
+      "scrape_date": "2026-07-06T03:12:56.472327Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -181,7 +192,7 @@
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/x5ngj85sp5paq6la0g60qrx7p6z6h9iz-gum-0.17.0"
+        "out": "/nix/store/55h6jsvhnhilka36s9jkld0k0d55c174-gum-0.17.0"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -190,18 +201,19 @@
     {
       "attr_path": "gum",
       "broken": false,
-      "derivation": "/nix/store/nrc9wm1wydfjsch8hxbwqs78fw5r0640-gum-0.17.0.drv",
+      "derivation": "/nix/store/4lqcj3v44pcscjmnjip8ggm99hrpilxr-gum-0.17.0.drv",
       "description": "Tasty Bubble Gum for your shell",
       "install_id": "gum",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=c06b4ae3d6599a672a6210b7021d699c351eebda",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=d407951447dcd00442e97087bf374aad70c04cea",
       "name": "gum-0.17.0",
       "pname": "gum",
-      "rev": "c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "rev_count": 962836,
-      "rev_date": "2026-03-13T08:19:52Z",
-      "scrape_date": "2026-03-15T05:15:07.698898Z",
+      "rev": "d407951447dcd00442e97087bf374aad70c04cea",
+      "rev_count": 1027867,
+      "rev_date": "2026-07-05T04:06:12Z",
+      "scrape_date": "2026-07-06T03:41:24.298504Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -210,7 +222,7 @@
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/8492ypc20ys8kghyq4c9n8bfip85rg0n-gum-0.17.0"
+        "out": "/nix/store/51vn4xsrgzfl9g3s00byydpx6jgjgrnd-gum-0.17.0"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -219,18 +231,19 @@
     {
       "attr_path": "gum",
       "broken": false,
-      "derivation": "/nix/store/lbvrps681bf8vb41v42xxwcvx0n2k7r0-gum-0.17.0.drv",
+      "derivation": "/nix/store/w01nbfjmxqjr3w9sycd0jliiamnljij2-gum-0.17.0.drv",
       "description": "Tasty Bubble Gum for your shell",
       "install_id": "gum",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=c06b4ae3d6599a672a6210b7021d699c351eebda",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=d407951447dcd00442e97087bf374aad70c04cea",
       "name": "gum-0.17.0",
       "pname": "gum",
-      "rev": "c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "rev_count": 962836,
-      "rev_date": "2026-03-13T08:19:52Z",
-      "scrape_date": "2026-03-15T05:44:49.292132Z",
+      "rev": "d407951447dcd00442e97087bf374aad70c04cea",
+      "rev_count": 1027867,
+      "rev_date": "2026-07-05T04:06:12Z",
+      "scrape_date": "2026-07-06T04:09:02.122815Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -239,7 +252,7 @@
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/948mlcmz4vhy43ij44iw86gcazb6j7bq-gum-0.17.0"
+        "out": "/nix/store/m2wks8knnsfgjl0ikhbi0vv7bqn53385-gum-0.17.0"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -248,18 +261,19 @@
     {
       "attr_path": "gum",
       "broken": false,
-      "derivation": "/nix/store/6zn2267d9ynz2jnbvfcz035sfbpql4r1-gum-0.17.0.drv",
+      "derivation": "/nix/store/468b0lgb2p00hyfj24xb44yj24r33hy4-gum-0.17.0.drv",
       "description": "Tasty Bubble Gum for your shell",
       "install_id": "gum",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=c06b4ae3d6599a672a6210b7021d699c351eebda",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=d407951447dcd00442e97087bf374aad70c04cea",
       "name": "gum-0.17.0",
       "pname": "gum",
-      "rev": "c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "rev_count": 962836,
-      "rev_date": "2026-03-13T08:19:52Z",
-      "scrape_date": "2026-03-15T06:19:36.119708Z",
+      "rev": "d407951447dcd00442e97087bf374aad70c04cea",
+      "rev_count": 1027867,
+      "rev_date": "2026-07-05T04:06:12Z",
+      "scrape_date": "2026-07-06T04:40:27.139900Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
@@ -268,7 +282,7 @@
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/x5bn6qhx5qr16w5nz0mh5bh9ww4530h8-gum-0.17.0"
+        "out": "/nix/store/w3h6fxv7jmapwcm3rxxwp83q16rnskm2-gum-0.17.0"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -277,28 +291,28 @@
     {
       "attr_path": "nodejs",
       "broken": false,
-      "derivation": "/nix/store/15casabz8n6il3myv53c3gwmazcjwjxf-nodejs-24.13.0.drv",
+      "derivation": "/nix/store/1a0cn85p1mwixhwy16db7v2652pz7l8g-nodejs-24.16.0.drv",
       "description": "Event-driven I/O framework for the V8 JavaScript engine",
       "install_id": "nodejs",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "name": "nodejs-24.13.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=d407951447dcd00442e97087bf374aad70c04cea",
+      "name": "nodejs-24.16.0",
       "pname": "nodejs",
-      "rev": "c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "rev_count": 962836,
-      "rev_date": "2026-03-13T08:19:52Z",
-      "scrape_date": "2026-03-15T04:42:05.050457Z",
+      "rev": "d407951447dcd00442e97087bf374aad70c04cea",
+      "rev_count": 1027867,
+      "rev_date": "2026-07-05T04:06:12Z",
+      "scrape_date": "2026-07-06T03:13:20.493760Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "24.13.0",
+      "version": "24.16.0",
       "outputs_to_install": [
-        "out",
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/cx0jd5mwhn7ihryyv0qp9d33f8s1iwb7-nodejs-24.13.0"
+        "out": "/nix/store/1zm1xb652wk1kscxbcvbryq8y45b0gy5-nodejs-24.16.0"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -307,28 +321,28 @@
     {
       "attr_path": "nodejs",
       "broken": false,
-      "derivation": "/nix/store/w9vyyxzm4d1y0y3qyazdcfnvp3yjx9rb-nodejs-24.13.0.drv",
+      "derivation": "/nix/store/aay2n9r5ljwfvlva807p9f0p1vpwg7mb-nodejs-24.16.0.drv",
       "description": "Event-driven I/O framework for the V8 JavaScript engine",
       "install_id": "nodejs",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "name": "nodejs-24.13.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=d407951447dcd00442e97087bf374aad70c04cea",
+      "name": "nodejs-24.16.0",
       "pname": "nodejs",
-      "rev": "c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "rev_count": 962836,
-      "rev_date": "2026-03-13T08:19:52Z",
-      "scrape_date": "2026-03-15T05:15:43.460060Z",
+      "rev": "d407951447dcd00442e97087bf374aad70c04cea",
+      "rev_count": 1027867,
+      "rev_date": "2026-07-05T04:06:12Z",
+      "scrape_date": "2026-07-06T03:42:00.460042Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "24.13.0",
+      "version": "24.16.0",
       "outputs_to_install": [
-        "out",
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/8dsjz52869ygjd6xdvibgk3ysl3fg6zp-nodejs-24.13.0"
+        "out": "/nix/store/60vys190zxlx4k1jz0kyvk4vydzr7qml-nodejs-24.16.0"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -337,28 +351,28 @@
     {
       "attr_path": "nodejs",
       "broken": false,
-      "derivation": "/nix/store/2g4jab428j25rirdw7k5j8hwwfxp5x9v-nodejs-24.13.0.drv",
+      "derivation": "/nix/store/yc1bpd21mkkawwxkq2zskmkqjmzwgv54-nodejs-24.16.0.drv",
       "description": "Event-driven I/O framework for the V8 JavaScript engine",
       "install_id": "nodejs",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "name": "nodejs-24.13.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=d407951447dcd00442e97087bf374aad70c04cea",
+      "name": "nodejs-24.16.0",
       "pname": "nodejs",
-      "rev": "c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "rev_count": 962836,
-      "rev_date": "2026-03-13T08:19:52Z",
-      "scrape_date": "2026-03-15T05:45:12.860965Z",
+      "rev": "d407951447dcd00442e97087bf374aad70c04cea",
+      "rev_count": 1027867,
+      "rev_date": "2026-07-05T04:06:12Z",
+      "scrape_date": "2026-07-06T04:09:32.244433Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "24.13.0",
+      "version": "24.16.0",
       "outputs_to_install": [
-        "out",
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/i9bak02hsrywwba0apxdn7ldvkf9jl6a-nodejs-24.13.0"
+        "out": "/nix/store/v04l0kjhdvbzkzrnw6ryf43dp8v0qapv-nodejs-24.16.0"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -367,28 +381,28 @@
     {
       "attr_path": "nodejs",
       "broken": false,
-      "derivation": "/nix/store/gr41mppcarfhwk10hv2g6rdmgr2yq3hz-nodejs-24.13.0.drv",
+      "derivation": "/nix/store/k9jn43g1p70zs7l9vgxh57aarg2s2jkv-nodejs-24.16.0.drv",
       "description": "Event-driven I/O framework for the V8 JavaScript engine",
       "install_id": "nodejs",
       "license": "MIT",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "name": "nodejs-24.13.0",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=d407951447dcd00442e97087bf374aad70c04cea",
+      "name": "nodejs-24.16.0",
       "pname": "nodejs",
-      "rev": "c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "rev_count": 962836,
-      "rev_date": "2026-03-13T08:19:52Z",
-      "scrape_date": "2026-03-15T06:20:21.459573Z",
+      "rev": "d407951447dcd00442e97087bf374aad70c04cea",
+      "rev_count": 1027867,
+      "rev_date": "2026-07-05T04:06:12Z",
+      "scrape_date": "2026-07-06T04:41:05.911622Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "24.13.0",
+      "version": "24.16.0",
       "outputs_to_install": [
-        "out",
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/sy0c7j0npsq33d9zhnnzvjnzc52f4y0p-nodejs-24.13.0"
+        "out": "/nix/store/zvj0hl7rhh0ccr5vkcg3ijs3xm3sgyac-nodejs-24.16.0"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
@@ -397,27 +411,28 @@
     {
       "attr_path": "typescript-language-server",
       "broken": false,
-      "derivation": "/nix/store/g6z41qjrhid1n432gklycf6x54gsnkgq-typescript-language-server-5.1.3.drv",
+      "derivation": "/nix/store/8785krsq4s9679n1754h1kgj1s6b9yas-typescript-language-server-5.3.0.drv",
       "description": "Language Server Protocol implementation for TypeScript using tsserver",
       "install_id": "typescript-language-server",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "name": "typescript-language-server-5.1.3",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=d407951447dcd00442e97087bf374aad70c04cea",
+      "name": "typescript-language-server-5.3.0",
       "pname": "typescript-language-server",
-      "rev": "c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "rev_count": 962836,
-      "rev_date": "2026-03-13T08:19:52Z",
-      "scrape_date": "2026-03-15T04:43:52.176683Z",
+      "rev": "d407951447dcd00442e97087bf374aad70c04cea",
+      "rev_count": 1027867,
+      "rev_date": "2026-07-05T04:06:12Z",
+      "scrape_date": "2026-07-06T03:15:19.013062Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "5.1.3",
+      "version": "5.3.0",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/2yh9w0akj40xp3jlp9wbj2vqagim8bgz-typescript-language-server-5.1.3"
+        "out": "/nix/store/jpsqmh9ldvmlx4jlnpb70rcxa4g85wck-typescript-language-server-5.3.0"
       },
       "system": "aarch64-darwin",
       "group": "toplevel",
@@ -426,27 +441,28 @@
     {
       "attr_path": "typescript-language-server",
       "broken": false,
-      "derivation": "/nix/store/7nw893y8x47dhrypasxkrgsy7wfhz0fx-typescript-language-server-5.1.3.drv",
+      "derivation": "/nix/store/d17nqi7hza9zpzljmq390vg2kwlyw2zb-typescript-language-server-5.3.0.drv",
       "description": "Language Server Protocol implementation for TypeScript using tsserver",
       "install_id": "typescript-language-server",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "name": "typescript-language-server-5.1.3",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=d407951447dcd00442e97087bf374aad70c04cea",
+      "name": "typescript-language-server-5.3.0",
       "pname": "typescript-language-server",
-      "rev": "c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "rev_count": 962836,
-      "rev_date": "2026-03-13T08:19:52Z",
-      "scrape_date": "2026-03-15T05:18:03.376406Z",
+      "rev": "d407951447dcd00442e97087bf374aad70c04cea",
+      "rev_count": 1027867,
+      "rev_date": "2026-07-05T04:06:12Z",
+      "scrape_date": "2026-07-06T03:44:26.616512Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "5.1.3",
+      "version": "5.3.0",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/35w01h86br1nr9s2svsmpacazismmvdm-typescript-language-server-5.1.3"
+        "out": "/nix/store/ij60hvzcjq04f06k5m47dpr0hqvkngmi-typescript-language-server-5.3.0"
       },
       "system": "aarch64-linux",
       "group": "toplevel",
@@ -455,27 +471,28 @@
     {
       "attr_path": "typescript-language-server",
       "broken": false,
-      "derivation": "/nix/store/c7imf7vkk0pd1kpa978hy3xsb3pvnf0r-typescript-language-server-5.1.3.drv",
+      "derivation": "/nix/store/bqxiicarighr0va0f7jn5bag1npvlrfl-typescript-language-server-5.3.0.drv",
       "description": "Language Server Protocol implementation for TypeScript using tsserver",
       "install_id": "typescript-language-server",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "name": "typescript-language-server-5.1.3",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=d407951447dcd00442e97087bf374aad70c04cea",
+      "name": "typescript-language-server-5.3.0",
       "pname": "typescript-language-server",
-      "rev": "c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "rev_count": 962836,
-      "rev_date": "2026-03-13T08:19:52Z",
-      "scrape_date": "2026-03-15T05:46:56.861222Z",
+      "rev": "d407951447dcd00442e97087bf374aad70c04cea",
+      "rev_count": 1027867,
+      "rev_date": "2026-07-05T04:06:12Z",
+      "scrape_date": "2026-07-06T04:11:58.121364Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "5.1.3",
+      "version": "5.3.0",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/nn29whhvpczwms4hjjh97qn9xj4lh56h-typescript-language-server-5.1.3"
+        "out": "/nix/store/6w64xys9f3hdihnh91lgq60l67jgzw8p-typescript-language-server-5.3.0"
       },
       "system": "x86_64-darwin",
       "group": "toplevel",
@@ -484,27 +501,28 @@
     {
       "attr_path": "typescript-language-server",
       "broken": false,
-      "derivation": "/nix/store/1c4c7hy4xblhb47z6jpk1szzq661h6f2-typescript-language-server-5.1.3.drv",
+      "derivation": "/nix/store/9rjh6a1xgv23v69jaj3n8jsy12nxin46-typescript-language-server-5.3.0.drv",
       "description": "Language Server Protocol implementation for TypeScript using tsserver",
       "install_id": "typescript-language-server",
       "license": "[ Apache-2.0, MIT ]",
-      "locked_url": "https://github.com/flox/nixpkgs?rev=c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "name": "typescript-language-server-5.1.3",
+      "locked_url": "https://github.com/flox/nixpkgs?rev=d407951447dcd00442e97087bf374aad70c04cea",
+      "name": "typescript-language-server-5.3.0",
       "pname": "typescript-language-server",
-      "rev": "c06b4ae3d6599a672a6210b7021d699c351eebda",
-      "rev_count": 962836,
-      "rev_date": "2026-03-13T08:19:52Z",
-      "scrape_date": "2026-03-15T06:23:11.017206Z",
+      "rev": "d407951447dcd00442e97087bf374aad70c04cea",
+      "rev_count": 1027867,
+      "rev_date": "2026-07-05T04:06:12Z",
+      "scrape_date": "2026-07-06T04:43:45.996319Z",
       "stabilities": [
+        "staging",
         "unstable"
       ],
       "unfree": false,
-      "version": "5.1.3",
+      "version": "5.3.0",
       "outputs_to_install": [
         "out"
       ],
       "outputs": {
-        "out": "/nix/store/jn9wngbhqmijdw4m2czilnhl4pw4jcdp-typescript-language-server-5.1.3"
+        "out": "/nix/store/kx8jj7rp0ix22782ln81y9m6ix92i48c-typescript-language-server-5.3.0"
       },
       "system": "x86_64-linux",
       "group": "toplevel",
