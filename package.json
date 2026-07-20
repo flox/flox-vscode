@@ -414,7 +414,7 @@
     "@types/vscode": "*",
     "@typescript-eslint/eslint-plugin": "^8.58.2",
     "@typescript-eslint/parser": "^8.32.1",
-    "@vscode/test-cli": "^0.0.12",
+    "@vscode/test-cli": "^0.0.15",
     "@vscode/test-electron": "^3.0.0",
     "@vscode/vsce": "^3.8.0",
     "eslint": "^10.2.0",
