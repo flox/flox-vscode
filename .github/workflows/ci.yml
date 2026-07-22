@@ -36,17 +36,17 @@ jobs:
 
     steps:
       - name: "Checkout"
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
         with:
           fetch-depth: 0
 
       - name: "Install Flox"
-        uses: flox/install-flox-action@487395e72d571d87896a602afa0f12fd7b376b77 # main
+        uses: flox/install-flox-action@3b80351ae97bbe063f264dc88fbd505507054963 # main
 
 
       - name: "Restore npm cache"
-        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
 
         with:
           path: |
@@ -111,17 +111,17 @@ jobs:
     steps:
 
       - name: "Checkout"
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
 
         with:
           fetch-depth: 0
 
       - name: "Install Flox"
-        uses: flox/install-flox-action@487395e72d571d87896a602afa0f12fd7b376b77 # main
+        uses: flox/install-flox-action@3b80351ae97bbe063f264dc88fbd505507054963 # main
 
 
       - name: "Restore npm cache"
-        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6
 
         with:
           path: |
