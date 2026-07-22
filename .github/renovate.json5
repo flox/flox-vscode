@@ -64,5 +64,17 @@
       matchUpdateTypes: ["major"],
       enabled: false,
     },
+
+    // TypeScript 7.0 is the new native (Go) compiler. @typescript-eslint has
+    // no release that supports it yet — its stable peer range still caps at
+    // `typescript < 6.1.0`, so bumping to 7.x keeps tsc working but crashes
+    // eslint (typescript-estree reads TS internals the native build dropped).
+    // Hold the major; revisit once @typescript-eslint ships TS7 support.
+    {
+      description: "CUSTOM(flox-vscode): hold typescript at current major (TS7 unsupported by @typescript-eslint)",
+      matchPackageNames: ["typescript"],
+      matchUpdateTypes: ["major"],
+      enabled: false,
+    },
   ],
 }
