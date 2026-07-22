@@ -415,11 +415,11 @@
     "@typescript-eslint/eslint-plugin": "^8.58.2",
     "@typescript-eslint/parser": "^8.32.1",
     "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^2.5.2",
+    "@vscode/test-electron": "^3.0.0",
     "@vscode/vsce": "^3.8.0",
     "eslint": "^10.2.0",
     "fantasticon": "^4.1.0",
-    "ovsx": "^0.10.11",
+    "ovsx": "^1.0.0",
     "typescript": "^6.0.2",
     "vscode-extension-tester": "^8.23.0"
   },
