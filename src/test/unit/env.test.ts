@@ -266,6 +266,31 @@ MY_VAR = "test_value"
       assert.strictEqual(result, undefined, 'Should return undefined for invalid JSON');
       env.dispose();
     });
+
+    test('should parse manifest with [plugins] section without error', async () => {
+      const testFilePath = path.join(tempDir, 'manifest-plugins.toml');
+      fs.writeFileSync(testFilePath, `
+[install]
+nodejs = {}
+
+[plugins.my-plugin]
+some_config = "some-value"
+
+[plugins.other-plugin]
+key = "value"
+nested = { a = "1", b = "2" }
+`);
+
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+
+      const result = await env.loadFile(vscode.Uri.file(testFilePath));
+      assert.ok(result, 'Should return parsed object — plugins section does not crash parser');
+      assert.ok(result.plugins, 'Should preserve plugins key in parsed object');
+      assert.ok(result.plugins['my-plugin'], 'Should parse plugin subtable');
+      assert.strictEqual(result.plugins['my-plugin'].some_config, 'some-value');
+      env.dispose();
+    });
   });
 
   /**
