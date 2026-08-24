@@ -12,7 +12,7 @@ send() {
 json_escape() {
     local input="$1"
     local output=""
-    local i char
+    local i char code hex_code
 
     for ((i=0; i<${#input}; i++)); do
         char="${input:$i:1}"
@@ -24,7 +24,17 @@ json_escape() {
             $'\n') output+='\n' ;;
             $'\r') output+='\r' ;;
             $'\t') output+='\t' ;;
-            *)    output+="$char" ;;
+            *)
+                # RFC 8259: control characters (< 0x20) must be escaped,
+                # e.g. ANSI color codes in PS1/LS_COLORS (issue #293)
+                printf -v code '%d' "'$char"
+                if (( code >= 0 && code < 32 )); then
+                    printf -v hex_code '\\u%04x' "$code"
+                    output+="$hex_code"
+                else
+                    output+="$char"
+                fi
+                ;;
         esac
     done
 
