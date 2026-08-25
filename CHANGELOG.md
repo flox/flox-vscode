@@ -4,6 +4,27 @@ All notable changes to the "flox" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [1.1.0] - 2026-08-25
+
+### Added
+
+- **Extension host restart helper** - New restart helper and `onReload`
+  callback for smoother reload handling
+
+### Fixed
+
+- **Control character escaping** - `json_escape` in the activation script
+  now escapes ASCII control characters, preventing malformed IPC messages
+- **PATH race on activation** - Cached environment variables are restored
+  before async operations so the correct PATH wins on startup
+- **Service list parsing** - The services view no longer shows the
+  auto-start setting as a service name
+
+### Changed
+
+- **Dependency updates** - Routine dependency and CI updates, including
+  security bumps and a switch from Dependabot to Renovate
+
 ## [1.0.1] - 2026-02-11
 
 ### Fixed
