@@ -65,7 +65,7 @@ jobs:
           show-progress: false
 
       - name: "Self-hosted Renovate"
-        uses: "renovatebot/github-action@22e0a16091fc706b04affe6ae53d5e3358ac4023" # v46.1.19
+        uses: "renovatebot/github-action@39b914146caeff8cd512e61c8992f1d5913af85c" # v46.2.5
         env:
           LOG_LEVEL: "${{ inputs.logLevel || 'info' }}"
           RENOVATE_PLATFORM: "github"
