@@ -29,6 +29,14 @@
   // Refresh lockfiles (npm/cargo/uv/terraform) weekly. Note: flake.lock is NOT
   // covered — Renovate's nix manager is off by default; use a dedicated
   // update-flake-lock workflow for that.
+  //
+  // This is what actually drains transitive CVEs. The large majority of open
+  // Dependabot alerts across these repos sit on TRANSITIVE packages (undici,
+  // @xmldom/xmldom, fast-uri, js-yaml, brace-expansion…), which no
+  // manifest-level rule can match — only a lockfile refresh moves them, and
+  // it is the gap that made Dependabot version-updates insufficient here.
+  // Left NOT automerged on purpose: a refresh re-resolves runtime
+  // dependencies too, which is outside the automerge boundary below.
   lockFileMaintenance: {
     enabled: true,
     schedule: ["* 0-6 * * 1"],
@@ -49,6 +57,32 @@
       description: "Label all major updates so they're easy to review",
       matchUpdateTypes: ["major"],
       labels: ["major-upgrade"],
+    },
+
+    // Dev tooling (linters, test runners, type stubs, bundlers) is never
+    // shipped to users — it only has to keep the build and test suite green,
+    // which CI already proves on the PR. Split non-major devDependency bumps
+    // out of the `group:allNonMajor` PR so they can carry their own automerge
+    // flag, and let them land unattended.
+    //
+    // Deliberately NOT automerged:
+    //   - major bumps (matchUpdateTypes omits "major"), which is what keeps
+    //     vitest 4.x / astro 7.x / brace-expansion 5.x-class jumps in front of
+    //     a human;
+    //   - anything in `dependencies`, which ships.
+    //
+    // SAFETY PRECONDITION: automerge relies on GitHub's auto-merge, which only
+    // waits for status checks that branch protection marks REQUIRED. On a
+    // branch with no required checks, `--auto` degrades to an immediate merge
+    // and the PR lands while CI is still running. Confirm required checks on
+    // main before enabling this.
+    {
+      description: "Automerge non-major devDependency updates",
+      matchDepTypes: ["devDependencies"],
+      matchUpdateTypes: ["patch", "minor"],
+      groupName: "dev-dependencies (non-major)",
+      automerge: true,
+      automergeType: "pr",
     },
 
     // CUSTOM (flox-vscode only) — edit this section per repo.

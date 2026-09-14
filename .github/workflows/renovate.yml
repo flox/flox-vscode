@@ -28,12 +28,16 @@ on:
           - "info"
           - "warn"
       dryRun:
-        description: "Override renovate.json5 dryRun (blank = use file value)"
+        description: "Override renovate.json5 dryRun"
         required: false
-        default: ""
+        default: "off"
         type: choice
         options:
-          - ""
+          # "off" rather than "" as the no-override value: actionlint rejects
+          # an empty choice option (syntax-check), and floxhub runs actionlint
+          # in pre-commit, so a blank option cannot be used here. The env
+          # expression below maps "off" back to an empty RENOVATE_DRY_RUN.
+          - "off"
           - "lookup"
           - "extract"
           - "full"
@@ -75,7 +79,15 @@ jobs:
           RENOVATE_REQUIRE_CONFIG: "required"
           # Safety net: any run NOT on main is forced into full dry-run.
           # Prevents stray branch runs from opening real PRs/issues.
-          RENOVATE_DRY_RUN: "${{ github.ref != 'refs/heads/main' && 'full' || inputs.dryRun }}"
+          #
+          # The nested ternary exists because GitHub treats "" as falsy, so the
+          # obvious `cond && a || inputs.dryRun` form cannot yield an empty
+          # string. Reading it: off main -> "full"; on main -> the dispatch
+          # input, except "off" (and the empty value a scheduled run supplies),
+          # which both collapse to "" = no override.
+          RENOVATE_DRY_RUN: >-
+            ${{ github.ref != 'refs/heads/main' && 'full'
+                || (inputs.dryRun != 'off' && inputs.dryRun || '') }}
           RENOVATE_PERSIST_REPO_DATA: "true"
         with:
           configurationFile: ".github/renovate.json5"
