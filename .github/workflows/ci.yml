@@ -42,7 +42,7 @@ jobs:
           fetch-depth: 0
 
       - name: "Install Flox"
-        uses: flox/install-flox-action@3b80351ae97bbe063f264dc88fbd505507054963 # main
+        uses: flox/install-flox-action@5bb9eaaffbeaa699a8251a1ae21ecf4c8e0e37d4 # main
 
 
       - name: "Restore npm cache"
@@ -117,7 +117,7 @@ jobs:
           fetch-depth: 0
 
       - name: "Install Flox"
-        uses: flox/install-flox-action@3b80351ae97bbe063f264dc88fbd505507054963 # main
+        uses: flox/install-flox-action@5bb9eaaffbeaa699a8251a1ae21ecf4c8e0e37d4 # main
 
 
       - name: "Restore npm cache"
