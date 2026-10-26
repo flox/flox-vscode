@@ -1,9 +1,17 @@
 import * as vscode from 'vscode';
 
 /**
+ * Docs page opened by the "Learn More" buttons in the MCP prompts.
+ * Covers Flox's current AI agent integration (flox-skills).
+ */
+export const FLOX_AGENT_DOCS_URL = 'https://flox.dev/docs/install-flox/ide-extensions/';
+
+/**
  * MCP Server Definition Provider for Flox.
  *
- * This provider tells VSCode how to start the flox-mcp server.
+ * This provider tells VSCode how to start the flox-mcp server
+ * (from the flox/flox-mcp-server package, built from the archived
+ * flox/mcp-server repo).
  * When Copilot needs to use the server, VSCode calls provideMcpServerDefinitions().
  */
 export class FloxMcpProvider implements vscode.McpServerDefinitionProvider<any> {

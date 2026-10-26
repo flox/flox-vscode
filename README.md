@@ -129,7 +129,9 @@ The extension integrates with GitHub Copilot via the Model Context Protocol (MCP
 ### Prerequisites
 - VSCode 1.102 or higher
 - GitHub Copilot extension installed
-- `flox-mcp` command available in PATH (from [Flox Agentic](https://github.com/flox/flox-agentic))
+- `flox-mcp` command available in PATH (from the `flox/flox-mcp-server` package; its source repo, [flox/mcp-server](https://github.com/flox/mcp-server), is archived)
+
+For Flox's current AI agent integration, see [flox-skills](https://github.com/flox/flox-skills) and the [IDE extensions docs](https://flox.dev/docs/install-flox/ide-extensions/).
 
 ### Setup
 1. Activate your Flox environment

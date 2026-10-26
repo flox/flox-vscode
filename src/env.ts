@@ -4,6 +4,7 @@ import { promises as fs } from "fs";
 import { promisify } from 'util';
 import { spawn, execFile, ExecOptions, ChildProcess } from 'child_process';
 import { View, System, Packages, Package, Services, ItemState, Variable } from './config';
+import { FLOX_AGENT_DOCS_URL } from './mcp';
 
 /** Append an invocation source tag, preserving any existing sources. */
 function appendInvocationSource(
@@ -1438,7 +1439,7 @@ export default class Env implements vscode.Disposable {
     if (action === 'Configure MCP') {
       await vscode.commands.executeCommand('flox.configureMcp');
     } else if (action === 'Learn More') {
-      vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs/tutorials/flox-agentic/'));
+      vscode.env.openExternal(vscode.Uri.parse(FLOX_AGENT_DOCS_URL));
     }
 
     return true;
@@ -1534,7 +1535,7 @@ export default class Env implements vscode.Disposable {
         }
       });
     } else if (action === 'Learn More') {
-      vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs/tutorials/flox-agentic/'));
+      vscode.env.openExternal(vscode.Uri.parse(FLOX_AGENT_DOCS_URL));
     }
 
     // User clicked "Not Now" or dismissed

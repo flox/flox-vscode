@@ -4,6 +4,13 @@ All notable changes to the "flox" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [Unreleased]
+
+### Fixed
+
+- **Broken "Learn More" links** - MCP prompts now open the IDE extensions
+  docs instead of the removed Flox Agentic tutorial page
+
 ## [1.1.0] - 2026-08-25
 
 ### Added

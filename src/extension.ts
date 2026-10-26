@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as os from 'os';
 import Env from './env';
 import { VarsView, InstallView, ServicesView, SettingsView, PackageItem, ServiceItem } from './view';
-import { registerMcpProvider, FloxMcpProvider } from './mcp';
+import { registerMcpProvider, FloxMcpProvider, FLOX_AGENT_DOCS_URL } from './mcp';
 
 /**
  * Show auto-activate prompt and handle user selection
@@ -907,7 +907,7 @@ export async function activate(context: vscode.ExtensionContext) {
           }
         });
       } else if (action === 'Learn More') {
-        vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs/tutorials/flox-agentic/'));
+        vscode.env.openExternal(vscode.Uri.parse(FLOX_AGENT_DOCS_URL));
       }
       return;
     }
@@ -944,7 +944,7 @@ export async function activate(context: vscode.ExtensionContext) {
         if (action === 'Upgrade VSCode') {
           vscode.env.openExternal(vscode.Uri.parse('https://code.visualstudio.com/download'));
         } else if (action === 'Learn More') {
-          vscode.env.openExternal(vscode.Uri.parse('https://flox.dev/docs/tutorials/flox-agentic/'));
+          vscode.env.openExternal(vscode.Uri.parse(FLOX_AGENT_DOCS_URL));
         }
       });
     }

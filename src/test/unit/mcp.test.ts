@@ -1,6 +1,6 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
-import { FloxMcpProvider, registerMcpProvider } from '../../mcp';
+import { FloxMcpProvider, registerMcpProvider, FLOX_AGENT_DOCS_URL } from '../../mcp';
 import { createMockExtensionContext } from '../mocks/vscode';
 
 suite('MCP Unit Tests', () => {
@@ -90,6 +90,15 @@ suite('MCP Unit Tests', () => {
       assert.doesNotThrow(() => {
         registerMcpProvider(mockContext, workspaceUri);
       });
+    });
+  });
+
+  suite('FLOX_AGENT_DOCS_URL', () => {
+    test('should point at the IDE extensions docs page', () => {
+      // The old tutorials/flox-agentic page was removed when flox-agentic
+      // was archived; Learn More buttons must not link to it.
+      assert.strictEqual(FLOX_AGENT_DOCS_URL, 'https://flox.dev/docs/install-flox/ide-extensions/');
+      assert.ok(!FLOX_AGENT_DOCS_URL.includes('flox-agentic'));
     });
   });
 });
