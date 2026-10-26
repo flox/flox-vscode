@@ -27,6 +27,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import * as os from 'os';
 import Env from '../../env';
+import { FLOX_AGENT_DOCS_URL } from '../../mcp';
 import { System } from '../../config';
 import { createMockExtensionContext, MockOutputChannel } from '../mocks/vscode';
 
@@ -1318,6 +1319,43 @@ nested = { a = "1", b = "2" }
    * Tests the offerToInstallMcp() method that prompts users to install
    * the flox-mcp-server package when MCP is not detected.
    */
+  /**
+   * Stub the notification to answer "Learn More" and capture openExternal
+   * URIs, restoring the real APIs afterwards.
+   */
+  async function withLearnMoreStubs(fn: () => Promise<unknown>): Promise<string[]> {
+    const opened: string[] = [];
+    const window = vscode.window as any;
+    const env = vscode.env as any;
+    const origShow = window.showInformationMessage;
+    const origOpen = env.openExternal;
+    window.showInformationMessage = async () => 'Learn More';
+    env.openExternal = async (uri: vscode.Uri) => { opened.push(uri.toString(true)); return true; };
+    try {
+      await fn();
+    } finally {
+      window.showInformationMessage = origShow;
+      env.openExternal = origOpen;
+    }
+    return opened;
+  }
+
+  suite('showMcpSuggestion', () => {
+    test('Learn More should open the IDE extensions docs', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+      env.isEnvActive = true;
+      (env as any).checkCopilotInstalled = () => true;
+      (env as any).checkFloxMcpAvailable = async () => true;
+      await mockContext.workspaceState.update('flox.mcpSuggestionShown', false);
+
+      const opened = await withLearnMoreStubs(() => env.showMcpSuggestion());
+
+      assert.deepStrictEqual(opened, [FLOX_AGENT_DOCS_URL]);
+      env.dispose();
+    });
+  });
+
   suite('offerToInstallMcp', () => {
     test('should skip if prompt already shown', async () => {
       const workspaceUri = vscode.Uri.file(tempDir);
@@ -1366,6 +1404,19 @@ nested = { a = "1", b = "2" }
       assert.strictEqual(result.installed, false);
       assert.strictEqual(result.mcpAvailable, false);
 
+      env.dispose();
+    });
+
+    test('Learn More should open the IDE extensions docs', async () => {
+      const workspaceUri = vscode.Uri.file(tempDir);
+      const env = new Env(mockContext, workspaceUri);
+      env.isEnvActive = true;
+      await mockContext.workspaceState.update('flox.envExists', true);
+      await mockContext.workspaceState.update('flox.mcpInstallPromptShown', false);
+
+      const opened = await withLearnMoreStubs(() => env.offerToInstallMcp());
+
+      assert.deepStrictEqual(opened, [FLOX_AGENT_DOCS_URL]);
       env.dispose();
     });
 
