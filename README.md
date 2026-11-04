@@ -30,6 +30,7 @@
 - ✅ **Update Checks** - Notifies when newer Flox versions are available
 - 🎨 **Status Bar** - Shows active environment with custom Flox icon
 - 📝 **TOML Support** - Syntax highlighting and validation for manifest.toml
+- **Upgrade Hints** - manifest.toml shows which packages `flox upgrade` would change, with one-click upgrades
 
 ## Installation
 
@@ -101,7 +102,8 @@ Access these via Command Palette (Cmd+Shift+P / Ctrl+Shift+P):
 - `Flox: Deactivate` - Deactivate the current environment
 - `Flox: Install` - Install a package
 - `Flox: Uninstall` - Remove a package
-- `Flox: Upgrade` - Upgrade a package to latest version
+- `Flox: Check for Package Upgrades` - Check which packages `flox upgrade` would change
+- `Flox: Upgrade All Packages` - Run `flox upgrade` for the environment
 - `Flox: Edit` - Open manifest in editor
 - `Flox: Search` - Search for packages in Flox catalog
 - `Flox: Show service logs` - Open terminal with live service logs
@@ -117,6 +119,15 @@ Configure the extension behavior via VSCode settings:
 |---------|---------|-------------|
 | `flox.promptToActivate` | `true` | Show popup when Flox environment is detected |
 | `flox.checkForUpdates` | `true` | Check for Flox CLI updates (once per 24 hours) |
+| `flox.showPackageUpgrades` | `true` | Show package upgrades above each package in manifest.toml |
+
+**Package upgrade hints:** when a workspace has a Flox environment, the extension runs
+`flox upgrade --dry-run` on startup and whenever `manifest.lock` changes. In
+`.flox/env/manifest.toml`, each package that would change gets a hint such as
+`Upgrade available: 8.9.0 -> 8.10.1` (or `Rebuild available` for a newer build of the same
+version) that runs `flox upgrade <package>` when clicked, and the `[install]` table gets an
+`Upgrade all` hint. Because the hints come from `flox upgrade` itself, they respect version
+constraints and package groups.
 
 **Per-Workspace Behavior:**
 - After activation prompt, choose "Always Activate" or "Never Activate" to remember preference

@@ -1,6 +1,11 @@
 import * as vscode from 'vscode';
 import * as os from 'os';
-import Env from './env';
+import * as fs from 'fs';
+import * as path from 'path';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import Env, { floxInvocationEnv } from './env';
+import { registerUpgradeHints } from './upgrades';
 import { VarsView, InstallView, ServicesView, SettingsView, PackageItem, ServiceItem } from './view';
 import { registerMcpProvider, FloxMcpProvider } from './mcp';
 
@@ -367,6 +372,21 @@ export async function activate(context: vscode.ExtensionContext) {
   if (checkForUpdates) {
     env.checkForFloxUpdate();
   }
+
+  // Package upgrade hints in manifest.toml (flox upgrade --dry-run)
+  registerUpgradeHints(context, {
+    runFlox: (argv) => promisify(execFile)('flox', argv, {
+      env: floxInvocationEnv(),
+      cwd: env.workspaceUri?.fsPath,
+    }),
+    workspaceDir: () => {
+      const dir = env.workspaceUri?.fsPath;
+      return dir && fs.existsSync(path.join(dir, '.flox', 'env', 'manifest.toml')) ? dir : undefined;
+    },
+    registerCommand: (name, command) => env.registerCommand(name, command),
+    log: (message) => output.appendLine(message),
+    enabled: () => vscode.workspace.getConfiguration('flox').get<boolean>('showPackageUpgrades', true),
+  });
 
   env.registerCommand('flox.checkForUpdates', async () => {
     await vscode.window.withProgress({

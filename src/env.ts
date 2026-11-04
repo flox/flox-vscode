@@ -14,7 +14,7 @@ function appendInvocationSource(
 }
 
 /** Build env for flox subprocess calls with invocation source set. */
-function floxInvocationEnv(): NodeJS.ProcessEnv {
+export function floxInvocationEnv(): NodeJS.ProcessEnv {
   return {
     ...process.env,
     FLOX_INVOCATION_SOURCE: appendInvocationSource(
