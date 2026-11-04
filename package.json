@@ -197,6 +197,21 @@
         "title": "Check for Updates"
       },
       {
+        "command": "flox.checkPackageUpgrades",
+        "category": "Flox",
+        "title": "Check for Package Upgrades"
+      },
+      {
+        "command": "flox.upgradePackage",
+        "category": "Flox",
+        "title": "Upgrade Package"
+      },
+      {
+        "command": "flox.upgradeAll",
+        "category": "Flox",
+        "title": "Upgrade All Packages"
+      },
+      {
         "command": "flox.activate",
         "category": "Flox",
         "title": "Activate environment"
@@ -286,6 +301,20 @@
         {
           "command": "flox.checkForUpdates",
           "when": "flox.isInstalled",
+          "group": "commandPalette"
+        },
+        {
+          "command": "flox.checkPackageUpgrades",
+          "when": "flox.isInstalled && flox.envExists",
+          "group": "commandPalette"
+        },
+        {
+          "command": "flox.upgradePackage",
+          "when": "false"
+        },
+        {
+          "command": "flox.upgradeAll",
+          "when": "flox.isInstalled && flox.envExists",
           "group": "commandPalette"
         },
         {
@@ -389,6 +418,11 @@
           "type": "boolean",
           "default": true,
           "description": "Periodically check for newer versions of Flox and show a notification when an update is available."
+        },
+        "flox.showPackageUpgrades": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show package upgrades in manifest.toml, above each package that `flox upgrade` would change. Runs `flox upgrade --dry-run` when the extension starts and whenever manifest.lock changes."
         }
       }
     }

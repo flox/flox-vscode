@@ -4,6 +4,16 @@ All notable changes to the "flox" extension will be documented in this file.
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [Unreleased]
+
+### Added
+
+- **Package upgrade hints** - `manifest.toml` shows which packages
+  `flox upgrade` would change, with a one-click upgrade per package and for
+  the whole environment, based on `flox upgrade --dry-run` (#237). New
+  commands `Flox: Check for Package Upgrades` and `Flox: Upgrade All
+  Packages`, and the `flox.showPackageUpgrades` setting.
+
 ## [1.1.0] - 2026-08-25
 
 ### Added
